@@ -54,6 +54,9 @@
   .zoek{display:flex;gap:10px;flex-wrap:wrap}
   .zoek input{flex:1 1 360px;font-size:16px;padding:14px 16px}
   .zoek button{padding:14px 26px;font-size:16px}
+  .btns.actie{margin-top:14px}
+  .btns.actie button{padding:14px 26px;font-size:16px}
+  @media(max-width:560px){.btns.actie button{flex:1 1 100%}}
   .hint{font-size:13px;color:var(--muted);margin:8px 0 0}
   .hint.herkend{color:var(--ok)}
   .opties{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
@@ -181,7 +184,6 @@
   <div class="panel zoekpanel">
     <div class="zoek">
       <input type="text" id="q" placeholder="Adres met huisnummer of Funda-link" autocomplete="off">
-      <button id="btnGo">Analyseren</button>
     </div>
     <p class="hint" id="qHint">Vul een adres met huisnummer in, of plak een Funda-link — het adres wordt uit de link gelezen.</p>
     <div class="btns" style="margin-top:6px">
@@ -201,6 +203,10 @@
       <div class="row" style="margin-top:12px">
         <div><label for="oStaatBinnen">Staat binnen</label><select id="oStaatBinnen" data-staat="binnen"></select><p class="hint" id="hStaatBinnen"></p></div>
         <div><label for="oStaatBuiten">Staat buiten</label><select id="oStaatBuiten" data-staat="buiten"></select><p class="hint" id="hStaatBuiten"></p></div>
+      </div>
+      <div class="btns actie">
+        <button id="btnGo">Analyseren</button>
+        <button class="sec-btn" id="btnNieuw" type="button">Nieuwe berekening</button>
       </div>
       <p class="hint">Woningdata uit woningadvertentie, optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking. Bij een bod wordt de prijs per m² ook op het bod berekend en het verschil met de vraagprijs getoond.</p>
     </div>
@@ -1106,8 +1112,8 @@ function indicInit(d){
   const a=d.advertentie||{};
   const mi=d.registers&&d.registers.marktindex;
   if(d.indic.factor==null){ d.indic.factor = mi ? mi.factor : 1.15; d.indic.handmatig = !mi; }
-  if(d.indic.binnen==null) d.indic.binnen=a.staatBinnen||3;
-  if(d.indic.buiten==null) d.indic.buiten=a.staatBuiten||3;
+  if(d.indic.binnen==null) d.indic.binnen=a.staatBinnen||4;
+  if(d.indic.buiten==null) d.indic.buiten=a.staatBuiten||4;
   return d.indic;
 }
 function staatMarge(bi,bu){
@@ -1117,7 +1123,7 @@ function staatMarge(bi,bu){
 }
 function indicBereken(d){
   const b=d.registers.buurt, wm=b&&b.woningM2; if(!b||!b.wozGem||!wm||!wm.gemiddelde) return null;
-  const st=indicInit(d), f=st.factor||1, bi=+st.binnen||3, bu=+st.buiten||3, a=d.advertentie;
+  const st=indicInit(d), f=st.factor||1, bi=+st.binnen||4, bu=+st.buiten||4, a=d.advertentie;
   const bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte;
   const perM2=b.wozGem/wm.gemiddelde, mg=staatMarge(bi,bu);
   const r1=v=>Math.round(v/1000)*1000, r5=v=>Math.round(v/5000)*5000;
@@ -1198,10 +1204,23 @@ $('q').oninput=()=>{ const el=$('qHint'), v=$('q').value.trim(); el.className='h
   if(isFundaUrl(v)){ try{ const a=adresUitUrl(v); el.className='hint herkend'; el.textContent=`Herkend uit de link: ${a.straat} ${a.huisnummer}${a.toevoeging?' '+a.toevoeging:''}, ${a.plaats} (${a.soort}, Funda-ID ${a.id})`; } catch(e){ el.textContent='Nog geen adres herkend in deze link.'; } }
   else el.textContent=/\d/.test(v)?'Adres wordt opgezocht in de PDOK Locatieserver.':'Voeg een huisnummer toe.'; };
 $('q').onkeydown=e=>{ if(e.key==='Enter') $('btnGo').click(); };
+$('btnNieuw').onclick=()=>{
+  dossiers.length=0;
+  $('result').innerHTML='';
+  $('q').value='';
+  ['oVraagprijs','oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value='');
+  ['oStaatBinnen','oStaatBuiten'].forEach(i=>{ $(i).value='4'; $(i).dispatchEvent(new Event('change')); });
+  $('msg').className='msg'; $('msg').textContent='';
+  $('qHint').className='hint'; $('qHint').textContent=HINT_STD;
+  bronReset();
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  window.scrollTo({top:0,behavior:'smooth'});
+  $('q').focus();
+};
 $('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||3, staatBuiten:+$('oStaatBuiten').value||3, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
+  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||4, staatBuiten:+$('oStaatBuiten').value||4, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
 }
 $('btnGo').onclick=()=>{
   const v=$('q').value.trim(); const m=$('msg');
@@ -1254,7 +1273,7 @@ function calcUpdate(e){
   o[path[path.length-1]] = el.tagName==='SELECT' ? el.value : (el.dataset.dec ? dec(el.value) : nlNum(el.value));
   if(path[0]==='koper') $('bo-'+i).innerHTML=biedUit(d);
   else if(path[0]==='verkoper') $('vo-'+i).innerHTML=verkoopUit(d);
-  else if(path[0]==='indic'){ const was=!!d.indic.handmatig; if(path[1]==='factor') d.indic.handmatig=true; if(!d.indic.factor) d.indic.factor=1; const ixe=$('ix-'+i); if(ixe&&was!==d.indic.handmatig) ixe.innerHTML=indexUitleg(d,i); d.indic.binnen=+d.indic.binnen||3; d.indic.buiten=+d.indic.buiten||3; $('io-'+i).innerHTML=indicUit(d); const k=$('ik-'+i); if(k) k.innerHTML=indicKpi(d); }
+  else if(path[0]==='indic'){ const was=!!d.indic.handmatig; if(path[1]==='factor') d.indic.handmatig=true; if(!d.indic.factor) d.indic.factor=1; const ixe=$('ix-'+i); if(ixe&&was!==d.indic.handmatig) ixe.innerHTML=indexUitleg(d,i); d.indic.binnen=+d.indic.binnen||4; d.indic.buiten=+d.indic.buiten||4; $('io-'+i).innerHTML=indicUit(d); const k=$('ik-'+i); if(k) k.innerHTML=indicKpi(d); }
 }
 $('result').addEventListener('input',calcUpdate);
 $('result').addEventListener('change',calcUpdate);
@@ -1265,7 +1284,7 @@ document.addEventListener('input',e=>{
 
 ['binnen','buiten'].forEach(k=>{
   const sel=$(k==='binnen'?'oStaatBinnen':'oStaatBuiten'), hint=$(k==='binnen'?'hStaatBinnen':'hStaatBuiten');
-  sel.innerHTML=staatOpties(3);
+  sel.innerHTML=staatOpties(4);
   const upd=()=>{ hint.textContent=STAAT[k][+sel.value]; };
   sel.addEventListener('change',upd); upd();
 });
