@@ -140,6 +140,20 @@
   .chip-facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .chip-facts span{font-size:12px;padding:5px 10px;border-radius:99px;background:var(--bg);color:var(--text);border:1px solid var(--line)}
   .compare th:first-child,.compare td:first-child{position:sticky;left:0;background:#fff}
+  .dtabs{display:flex;gap:2px;margin:20px 0 -22px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .dtabs button{background:none;border:none;border-bottom:3px solid transparent;border-radius:0;color:var(--muted);padding:12px 16px;font-weight:600}
+  .dtabs button:hover{box-shadow:none;color:var(--primary)}
+  .dtabs button[aria-selected=true]{color:var(--primary);border-bottom-color:var(--accent)}
+  .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:900px){.row4{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.row4{grid-template-columns:1fr}}
+  select{width:100%;font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
+  ul.check{list-style:none;padding:0;margin:0}
+  ul.check li{position:relative;padding:7px 0 7px 26px;border-bottom:1px solid var(--line);font-size:14px}
+  ul.check li::before{content:'';position:absolute;left:2px;top:10px;width:14px;height:14px;border:2px solid var(--primary-2);border-radius:4px}
+  ol.stappen{margin:0;padding-left:22px}
+  ol.stappen li{padding:6px 0;font-size:14px}
+  [hidden]{display:none!important}
   @media print{header,.zoekpanel,.sticky,.btns,.del{display:none!important} .panel{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
@@ -166,8 +180,8 @@
 
     <div class="opties" id="opties">
       <div class="row5">
-        <div><label for="oVraagprijs">Vraagprijs</label><input type="text" id="oVraagprijs" placeholder="€ 2.050.000" inputmode="numeric"></div>
-        <div><label for="oBod">Bod (al geboden)</label><input type="text" id="oBod" placeholder="€ 2.100.000" inputmode="numeric"></div>
+        <div><label for="oVraagprijs">Vraagprijs</label><input type="text" class="eur" id="oVraagprijs" placeholder="€ 2.050.000" inputmode="numeric"></div>
+        <div><label for="oBod">Bod (al geboden)</label><input type="text" class="eur" id="oBod" placeholder="€ 2.100.000" inputmode="numeric"></div>
         <div><label for="oWonen">Wonen m²</label><input type="text" id="oWonen" placeholder="217" inputmode="numeric"></div>
         <div><label for="oOverig">Overige inpandige m²</label><input type="text" id="oOverig" placeholder="7" inputmode="numeric"></div>
         <div><label for="oPerceel">Perceel m²</label><input type="text" id="oPerceel" placeholder="336" inputmode="numeric"></div>
@@ -611,6 +625,7 @@ function render(d, idx){
   const advChips=[a.soortWoning, a.energielabel?'Energielabel '+a.energielabel:null, a.bouwjaar?'Bouwjaar '+a.bouwjaar:null, a.wonen?'Wonen '+m2(a.wonen):null, a.perceel?'Perceel '+m2(a.perceel):null, a.eigendom].filter(Boolean);
 
   /* --- hero --- */
+  const tab=d.tab||'dossier';
   const hero=`<div class="panel" id="dossier-${idx}">
     <div class="hero">
       <div><span class="eyebrow">Dossier ${idx+1}</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
@@ -627,14 +642,238 @@ function render(d, idx){
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.jaar}</span></div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['bied','Biedstrategie'],['verkoop','Verkoopstrategie']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}</div>
   </div>`;
 
-  return hero
+  return `<div class="dwrap" id="dw-${idx}">` + hero
+    + `<div data-pane="dossier"${tab!=='dossier'?' hidden':''}>`
     + sectie('01 / Signalen','Signalen voor het dossier','Wat afwijkt, wat aandacht vraagt en wat in orde is',kleurSec,sig)
     + (d.heeftAdvertentie?sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld):'')
     + sectie('03 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('04 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
-    + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p>`;
+    + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p></div>`
+    + `<div data-pane="bied"${tab!=='bied'?' hidden':''}>${biedHtml(d,idx)}</div>`
+    + `<div data-pane="verkoop"${tab!=='verkoop'?' hidden':''}>${verkoopHtml(d,idx)}</div>`
+    + `</div>`;
+}
+
+/* ============ bied- en verkoopstrategie ============ */
+const OVB = {
+  eigen:{l:'Eigen bewoning (2%)',p:2},
+  starter:{l:'Startersvrijstelling (0% tot € 555.000)',p:0},
+  overig:{l:'Geen eigen bewoning (8%)',p:8}
+};
+function stratInit(d){
+  if(d.strat) return d.strat;
+  const a=d.advertentie;
+  d.strat={
+    koper:{sc:[a.vraagprijs||null, a.bod||null, null], ovb:'eigen', kosten:null, taxatie:null, eigen:null},
+    verkoper:{sc:[a.vraagprijs||null, a.bod||null, null], courtage:null, kosten:null, hypotheek:null, boete:null}
+  };
+  return d.strat;
+}
+const fmtIn = v => v!=null ? Math.round(v).toLocaleString('nl-NL') : '';
+const eurIn = (key,val,ph) => `<input type="text" class="eur" inputmode="numeric" data-calc="${key}" value="${fmtIn(val)}" placeholder="${esc(ph||'€ 0')}">`;
+const lijst = items => `<ul class="check">${items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+const punt = ([niv,titel,tekst]) => `<div class="dossier ${niv}"><p><b>${esc(titel)}</b></p><p class="small">${esc(tekst)}</p></div>`;
+const strategieDisclaimer = soort => `<div class="notice"><b>Geen advies.</b> ${soort==='bied'?'Deze biedstrategie noemt bewust geen bedrag dat je zou moeten bieden.':'Deze verkoopstrategie noemt bewust geen vraagprijs of verkoopmethode die je zou moeten kiezen.'} Het is een rekenkundige doorrekening van je eigen invoer plus aandachtspunten uit de registers — geen financieel advies in de zin van de Wft, geen waardebepaling volgens NRVT/NWWI en geen juridisch of fiscaal advies. ${soort==='bied'?'Laat maximale hypotheek en marktwaarde vaststellen door een erkend hypotheekadviseur en een gecertificeerd taxateur.':'Laat de waarde bepalen door een gecertificeerd taxateur of je verkopend makelaar, en de fiscale gevolgen toetsen door een adviseur.'}</div>`;
+
+function biedUit(d){
+  const k=stratInit(d).koper, a=d.advertentie;
+  const bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte, wonen=a.wonen;
+  const cols=k.sc.map(b=>{
+    if(!b) return null;
+    const ovb = (k.ovb==='starter' && b>555000) ? b*0.02 : b*OVB[k.ovb].p/100;
+    const totaal=b+ovb+(k.kosten||0);
+    const maxHyp=k.taxatie?Math.min(b,k.taxatie):null;
+    const eigenNodig=maxHyp!=null?totaal-maxHyp:null;
+    return { b, tov:a.vraagprijs?(b-a.vraagprijs)/a.vraagprijs*100:null, m2bag:bag?b/bag:null, m2adv:wonen?b/wonen:null,
+      ovb, kosten:k.kosten, totaal, tekort:k.taxatie?Math.max(0,b-k.taxatie):null, maxHyp, eigenNodig,
+      rest:(eigenNodig!=null&&k.eigen!=null)?k.eigen-eigenNodig:null, nhg:b<=470000 };
+  });
+  if(!cols.some(Boolean)) return '<p class="small">Vul minimaal één bodbedrag in om de doorrekening te zien.</p>';
+  const row=(l,f,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="k">${l}</td>${cols.map(c=>`<td class="num">${c?f(c):'–'}</td>`).join('')}</tr>`;
+  const kleur=v=>`<span style="color:${v<0?'var(--err)':'var(--ok)'}">${eur(v)}</span>`;
+  return `<div class="tabwrap"><table>
+    <tr><th></th><th class="num">Scenario A</th><th class="num">Scenario B</th><th class="num">Scenario C</th></tr>
+    ${row('Bodbedrag',c=>eur(c.b),'tot')}
+    ${row('T.o.v. vraagprijs',c=>c.tov!=null?pct(c.tov):'–')}
+    ${row('Per m² BAG-oppervlakte',c=>eur(c.m2bag))}
+    ${row('Per m² advertentie-woonoppervlak',c=>eur(c.m2adv))}
+    ${row('Overdrachtsbelasting',c=>eur(c.ovb))}
+    ${row('Overige kosten koper',c=>eur(c.kosten))}
+    ${row('Totale verwervingskosten',c=>eur(c.totaal),'tot')}
+    ${row('Deel boven marktwaarde',c=>c.tekort!=null?eur(c.tekort):'–')}
+    ${row('Maximaal te financieren o.b.v. marktwaarde',c=>c.maxHyp!=null?eur(c.maxHyp):'–')}
+    ${row('Eigen geld nodig',c=>c.eigenNodig!=null?eur(c.eigenNodig):'–','tot')}
+    ${row('Resterend eigen geld',c=>c.rest!=null?kleur(c.rest):'–')}
+    ${row('Binnen NHG-kostengrens 2026',c=>c.nhg?'ja':'nee')}
+  </table></div>`;
+}
+
+function biedHtml(d,idx){
+  const k=stratInit(d).koper, a=d.advertentie, r=d.registers, an=d.analyse||{};
+  const pand=r.pand||{}, vbo=r.verblijfsobject||{}, omg=r.omgeving, b=r.buurt, opp=an.oppervlakte;
+
+  const kpis=`<div class="kpis" style="margin-top:0">
+    <div class="kpi"><span class="lab">Vraagprijs</span><b>${eur(a.vraagprijs)}</b><span class="src">${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² BAG':'invoer'}</span></div>
+    <div class="kpi"><span class="lab">Al geboden</span><b>${eur(a.bod)}</b><span class="src">${an.bod&&an.bod.verschilPct!=null?pct(an.bod.verschilPct)+' t.o.v. vraagprijs':'invoer'}</span></div>
+    <div class="kpi"><span class="lab">BAG-oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em>${opp?' · advertentie '+m2(opp.advertentieTotaal):''}</span></div>
+    <div class="kpi"><span class="lab">Bouwjaar</span><b>${pand.bouwjaar??'–'}</b><span class="src"><em>BAG</em> pand</span></div>
+    ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem)}</b><span class="src"><em>CBS</em> context, geen objectwaarde</span></div>`:''}
+  </div>`;
+
+  const punten=[];
+  if(opp && opp.verschilPct<-4) punten.push(['geel','BAG-oppervlakte lager dan de advertentie',
+    `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)} (${pct(opp.verschilPct)}). Vraag de meetstaat NEN 2580 op.${an.waardeEffect!=null?` Bij de geadverteerde prijs per m² vertegenwoordigt het verschil rekenkundig ${eur(Math.abs(an.waardeEffect))}.`:''}`]);
+  else if(opp && opp.verschilPct>4) punten.push(['grijs','BAG-oppervlakte hoger dan de advertentie',
+    `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)}. Dit is geen argument voor een lager bod; waarschijnlijk telt de BAG ruimtes mee die volgens NEN 2580 buiten wonen vallen.`]);
+  if(pand.bouwjaar && pand.bouwjaar<1970) punten.push(['geel','Bouwjaar '+pand.bouwjaar,
+    `Neem een bouwkundige keuring op als voorbehoud en vraag naar funderingsonderzoek of -herstel.${omg&&omg.pctVoor1970>=50?` In de omgeving is ${omg.pctVoor1970}% van de panden van vóór 1970.`:''} De uitkomst van de keuring, met herstelkosten, is het concrete onderhandelingsmateriaal — niet het bouwjaar zelf.`]);
+  if(an.bouwjaar && Math.abs(an.bouwjaar.verschil)>2) punten.push(['geel','Bouwjaar in advertentie wijkt af',
+    `Advertentie ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Vraag welke delen zijn gerenoveerd of herbouwd en met welke vergunning.`]);
+  if(an.perceel && an.perceel.verschilPct!=null && Math.abs(an.perceel.verschilPct)>3) punten.push(['geel','Perceelgrootte wijkt af',
+    `BRK ${m2(an.perceel.brk)}, advertentie ${m2(an.perceel.advertentie)}. Laat in de koopovereenkomst vastleggen welke kadastrale percelen worden geleverd.`]);
+  if((pand.aantal_verblijfsobjecten||0)>1) punten.push(['geel','Meerdere objecten in het pand',
+    'Vraag de VvE-stukken op: splitsingsakte, meerjarenonderhoudsplan, stand reservefonds, notulen van de laatste vergaderingen en de maandelijkse bijdrage.']);
+  if(vbo.gebruiksdoel && !/woonfunctie/i.test(vbo.gebruiksdoel)) punten.push(['rood','Gebruiksdoel is geen woonfunctie',
+    `De BAG registreert "${vbo.gebruiksdoel}". Stem met de geldverstrekker af of financiering als woning mogelijk is vóórdat je biedt.`]);
+  if(a.bod && a.vraagprijs && a.bod>a.vraagprijs) punten.push(['geel','Bod boven de vraagprijs',
+    `Het ingevulde bod ligt ${pct((a.bod-a.vraagprijs)/a.vraagprijs*100)} boven de vraagprijs. Het deel boven de marktwaarde en de kosten koper zijn niet te financieren; reken dit hieronder door met de verwachte marktwaarde.`]);
+  if(!punten.length) punten.push(['groen','Geen registerafwijkingen',
+    'Het dossier levert geen afwijkingen op die als onderhandelingspunt dienen. Onderhandelingsruimte moet komen uit de bezichtiging, de bouwkundige keuring en referentietransacties van je aankoopmakelaar of taxateur.']);
+
+  const calc=`<div data-strat data-i="${idx}">
+    <div class="row3">
+      ${[0,1,2].map(j=>`<div><label>Scenario ${'ABC'[j]}: bodbedrag</label>${eurIn('koper.sc.'+j,k.sc[j])}</div>`).join('')}
+    </div>
+    <div class="row4" style="margin-top:12px">
+      <div><label>Overdrachtsbelasting</label><select data-calc="koper.ovb">${Object.entries(OVB).map(([key,o])=>`<option value="${key}"${k.ovb===key?' selected':''}>${o.l}</option>`).join('')}</select></div>
+      <div><label>Overige kosten koper</label>${eurIn('koper.kosten',k.kosten,'notaris, taxatie, advies')}</div>
+      <div><label>Verwachte marktwaarde</label>${eurIn('koper.taxatie',k.taxatie,'uit taxatierapport')}</div>
+      <div><label>Beschikbaar eigen geld</label>${eurIn('koper.eigen',k.eigen)}</div>
+    </div>
+    <div id="bo-${idx}" style="margin-top:16px">${biedUit(d)}</div>
+    <p class="small">Maximaal te financieren is gerekend als 100% van de marktwaarde (Tijdelijke regeling hypothecair krediet), zonder toets op inkomen — de werkelijke maximale hypotheek kan lager zijn. Kosten koper zijn niet mee te financieren. Startersvrijstelling alleen bij eerste aankoop, leeftijd onder 35 jaar en eigen bewoning; boven € 555.000 geldt 2%. NHG-kostengrens 2026: € 470.000, met energiebesparende voorzieningen € 498.200. Controleer tarieven en grenzen altijd actueel.</p>
+  </div>`;
+
+  const vp=a.bod||a.vraagprijs;
+  const voorbehouden=[
+    ['Financiering','Neem het concrete hypotheekbedrag, de maximale rente of maandlast en een uiterste datum op. Een algemeen voorbehoud zonder bedrag beschermt minder.'],
+    ['Bouwkundige keuring', pand.bouwjaar&&pand.bouwjaar<1970 ? `Bij bouwjaar ${pand.bouwjaar} sterk aan te raden, inclusief beoordeling van de fundering. Leg een grensbedrag aan herstelkosten vast.` : 'Aan te raden. Leg een grensbedrag aan herstelkosten vast waarboven je mag ontbinden.'],
+    vp&&vp<=470000?['Nationale Hypotheek Garantie','De koopsom valt binnen de NHG-kostengrens 2026. Neem het verkrijgen van NHG op als voorbehoud.']:null,
+    ['Verkoop huidige woning','Alleen als de aankoop daarvan afhangt; verkopers accepteren dit zelden. Een overbruggingsfinanciering is het gebruikelijke alternatief.'],
+    vbo.gebruiksdoel&&!/woonfunctie/i.test(vbo.gebruiksdoel)?['Gebruik als woning','Voorbehoud dat bewoning is toegestaan volgens omgevingsplan en vergunningen.']:null
+  ].filter(Boolean);
+
+  const vragen=['Waarom wordt de woning verkocht en wat is de gewenste opleverdatum?','Is er een meetrapport volgens NEN 2580?','Zijn er bekende gebreken, lekkages of vochtproblemen? Vraag de ingevulde vragenlijst verkoper op.','Welke zaken blijven achter of zijn over te nemen (lijst van zaken)?','Wat is het energielabel en welke verduurzaming is uitgevoerd, met facturen?'];
+  if(pand.bouwjaar&&pand.bouwjaar<1970) vragen.push('Is funderingsonderzoek gedaan, en is het pand bekend bij een gemeentelijk funderingsloket?');
+  if((pand.aantal_verblijfsobjecten||0)>1) vragen.push('Is de VvE actief, wat is de maandbijdrage en zijn er grote uitgaven gepland?');
+  if(/erfpacht/i.test(a.eigendom||'')) vragen.push('Wat zijn canon, looptijd en voorwaarden van de erfpacht, en is afkoop mogelijk?');
+  if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) vragen.push('Welke kadastrale percelen worden precies geleverd?');
+
+  const stappen=['Bezichtig en stel je vragen aan de verkopend makelaar.','Laat je maximale hypotheek berekenen door een erkend hypotheekadviseur, vóór je biedt.','Breng je bod schriftelijk uit met bedrag, voorbehouden, gewenste opleverdatum en geldigheidstermijn.','Mondelinge overeenstemming is nog geen koop: de koop komt pas tot stand bij een schriftelijke koopovereenkomst.','Na ontvangst van de getekende koopovereenkomst heb je 3 dagen wettelijke bedenktijd (art. 7:2 BW).','Laat taxatie en bouwkundige keuring uitvoeren binnen de termijn van de voorbehouden.','Regel de waarborgsom of bankgarantie (gebruikelijk 10% van de koopsom) en plan de overdracht bij de notaris.'];
+
+  return strategieDisclaimer('bied')
+    + sectie('A / Uitgangspositie','Uitgangspositie','Wat je invulde, naast de registers','blauw',kpis)
+    + sectie('B / Onderhandelingspunten','Onderhandelingspunten uit het dossier','Controleerbare afwijkingen en aandachtspunten om in je bod of vragen te gebruiken','geel',punten.map(punt).join(''))
+    + sectie('C / Doorrekening','Scenario\'s doorrekenen','Vul zelf bodbedragen, marktwaarde en eigen geld in','',calc)
+    + sectie('D / Voorbehouden','Voorbehouden in je bod','Ontbindende voorwaarden die bij dit object passen','groen',`<table>${voorbehouden.map(([t,x])=>`<tr><td class="k"><b>${esc(t)}</b></td><td>${esc(x)}</td></tr>`).join('')}</table>`)
+    + sectie('E / Vragen en stappen','Vragen en stappen','Wat je vraagt vóór je biedt en hoe het proces verloopt','paars',`<div class="grid2"><div><h3 style="margin-top:0">Vragen aan de verkopend makelaar</h3>${lijst(vragen.map(esc))}</div><div><h3 style="margin-top:0">Stappen</h3><ol class="stappen">${stappen.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div></div>`);
+}
+
+function verkoopUit(d){
+  const v=stratInit(d).verkoper, bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte;
+  const cols=v.sc.map(p=>{
+    if(!p) return null;
+    const court=v.courtage!=null?p*v.courtage/100:null;
+    const opbrengst=p-(court||0)-(v.kosten||0);
+    const schuld=(v.hypotheek!=null||v.boete!=null)?(v.hypotheek||0)+(v.boete||0):null;
+    return { p, m2:bag?p/bag:null, court, kosten:v.kosten, opbrengst, schuld, netto:opbrengst-(schuld||0),
+      ewr:v.hypotheek!=null?Math.max(0,opbrengst-v.hypotheek):null };
+  });
+  if(!cols.some(Boolean)) return '<p class="small">Vul minimaal één verkoopprijs in om de doorrekening te zien.</p>';
+  const row=(l,f,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="k">${l}</td>${cols.map(c=>`<td class="num">${c?f(c):'–'}</td>`).join('')}</tr>`;
+  return `<div class="tabwrap"><table>
+    <tr><th></th><th class="num">Scenario A</th><th class="num">Scenario B</th><th class="num">Scenario C</th></tr>
+    ${row('Verkoopprijs',c=>eur(c.p),'tot')}
+    ${row('Per m² BAG-oppervlakte',c=>eur(c.m2))}
+    ${row('Makelaarscourtage',c=>c.court!=null?eur(c.court):'–')}
+    ${row('Overige verkoopkosten',c=>eur(c.kosten))}
+    ${row('Opbrengst na verkoopkosten',c=>eur(c.opbrengst),'tot')}
+    ${row('Aflossing hypotheek en boeterente',c=>c.schuld!=null?eur(c.schuld):'–')}
+    ${row('Netto opbrengst (overwaarde)',c=>`<span style="color:${c.netto<0?'var(--err)':'var(--ok)'}">${eur(c.netto)}</span>`,'tot')}
+    ${row('Indicatie eigenwoningreserve',c=>c.ewr!=null?eur(c.ewr):'–')}
+  </table></div>`;
+}
+
+function verkoopHtml(d,idx){
+  const v=stratInit(d).verkoper, a=d.advertentie, r=d.registers, an=d.analyse||{};
+  const pand=r.pand||{}, vbo=r.verblijfsobject||{}, b=r.buurt, opp=an.oppervlakte;
+  const oudbouw=pand.bouwjaar&&pand.bouwjaar<1970, meer=(pand.aantal_verblijfsobjecten||0)>1, erfpacht=/erfpacht/i.test(a.eigendom||'');
+  const oppAfw=opp&&Math.abs(opp.verschilPct)>4;
+
+  const positie=`<table>
+      <tr><td class="k">Vraagprijs (invoer)</td><td>${eur(a.vraagprijs)}</td></tr>
+      <tr><td class="k">Per m² BAG-oppervlakte</td><td>${eur(an.prijsPerM2Bag)}</td></tr>
+      <tr><td class="k">Per m² advertentie-woonoppervlak</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>
+      ${b&&b.wozGem?`<tr><td class="k">Gemiddelde WOZ-waarde buurt (CBS ${b.jaar})</td><td>${eur(b.wozGem)} <span class="small">— context, geen objectwaarde</span></td></tr>`:''}
+    </table>
+    ${oppAfw?punt(['geel','Oppervlakte uitlegbaar maken',`De advertentie (${m2(opp.advertentieTotaal)}) wijkt ${pct(opp.verschilPct)} af van de BAG (${m2(opp.bag)}). Kopers en taxateurs vergelijken met de BAG: laat een meetrapport NEN 2580 opstellen vóór publicatie en noem de BAG-oppervlakte niet als woonoppervlak.`]):''}
+    <p class="small">De tool doet geen uitspraak over de hoogte van de vraagprijs. Laat die onderbouwen met referentietransacties door de verkopend makelaar of een gecertificeerd taxateur.</p>`;
+
+  const meld=[['grijs','Mededelingsplicht','De verkoper moet bekende gebreken en feiten melden die voor een koper van belang zijn; de koper heeft een onderzoeksplicht. Wat je weet en niet meldt, kan later tot aansprakelijkheid leiden.']];
+  if(oudbouw) meld.push(['geel','Fundering en bouwjaar '+pand.bouwjaar,'Kopers vragen bij dit bouwjaar vrijwel altijd naar de fundering. Leg vast wat bekend is: eerder onderzoek, herstel, meldingen bij de gemeente. Onbekend is ook een antwoord — maar zeg het expliciet.']);
+  if(an.bouwjaar&&Math.abs(an.bouwjaar.verschil)>2) meld.push(['geel','Bouwjaar advertentie versus BAG',`Advertentie ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Licht toe wat is herbouwd of gerenoveerd en houd vergunningen beschikbaar.`]);
+  if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) meld.push(['geel','Perceel',`BRK ${m2(an.perceel.brk)} tegenover ${m2(an.perceel.advertentie)} in de advertentie. Controleer welke percelen je in eigendom hebt en levert.`]);
+  if(meer) meld.push(['geel','Appartementsrecht / VvE','Het pand telt '+pand.aantal_verblijfsobjecten+' verblijfsobjecten. Kopers en geldverstrekkers verwachten actuele VvE-stukken.']);
+  if(vbo.gebruiksdoel&&!/woonfunctie/i.test(vbo.gebruiksdoel)) meld.push(['rood','Gebruiksdoel',`De BAG registreert "${vbo.gebruiksdoel}". Dit beperkt de financierbaarheid voor kopers; zoek vooraf uit of wijziging mogelijk is.`]);
+
+  const docs=[
+    ['Energielabel','verplicht','Bij verkoop verplicht; ontbreken kan tot een boete leiden.'],
+    ['Eigendomsbewijs en kadastraal uittreksel','basis',''],
+    ['Vragenlijst verkoper en lijst van zaken','standaard',''],
+    ['Meetrapport NEN 2580', oppAfw?'sterk aanbevolen':'aanbevolen', oppAfw?'Advertentie en BAG wijken meer dan 4% af.':''],
+    oudbouw?['Bouwkundig verkooprapport','aanbevolen','Neemt onzekerheid bij kopers weg bij bouwjaar vóór 1970.']:null,
+    oudbouw?['Funderingsinformatie','aanbevolen','Eerder onderzoek, herstel of informatie van het gemeentelijk funderingsloket.']:null,
+    meer?['VvE-stukken','nodig','Splitsingsakte, meerjarenonderhoudsplan, reservefonds, notulen, bijdrage.']:null,
+    erfpacht?['Erfpachtvoorwaarden','nodig','Canon, looptijd, afkoopregeling.']:null,
+    ['Vergunningen van verbouwingen','als van toepassing','Uitbouw, dakkapel, samenvoeging.'],
+    ['Onderhouds- en verduurzamingsfacturen','aanbevolen','Onderbouwt staat van onderhoud en energielabel.']
+  ].filter(Boolean);
+  const docTabel=`<table>${docs.map(([t,s,x])=>`<tr><td class="k"><b>${esc(t)}</b></td><td><span class="sig ${s==='verplicht'||s==='nodig'?'rood':s==='sterk aanbevolen'?'geel':'grijs'}">${esc(s)}</span>${x?` <span class="small">${esc(x)}</span>`:''}</td></tr>`).join('')}</table>`;
+
+  const methodes=`<div class="tabwrap"><table>
+    <tr><th>Methode</th><th>Past vooral bij</th><th>Let op</th></tr>
+    <tr><td><b>Vraagprijs</b></td><td>Breed toepasbaar; duidelijk voor kopers en geldverstrekkers.</td><td>Te hoog verlengt de looptijd; te laag wekt verwachtingen die de uiteindelijke prijs moeilijker maken.</td></tr>
+    <tr><td><b>Vanafprijs</b></td><td>Gewilde objecten met veel verwachte belangstelling.</td><td>Kopers gebruiken de vanafprijs als maatstaf; de eindprijs moet door de taxatie van de koper gedekt worden.</td></tr>
+    <tr><td><b>Inschrijving</b></td><td>Unieke of zeer courante objecten.</td><td>Communiceer de procedure vooraf en vergelijk biedingen inclusief voorbehouden en opleverdatum, niet alleen op bedrag.</td></tr>
+    <tr><td><b>Onderhandse verkoop</b></td><td>Privacy, beperkte doelgroep.</td><td>Minder marktwerking; lastiger aan te tonen dat de prijs marktconform is.</td></tr>
+  </table></div><p class="small">De tool kiest geen methode; de keuze hangt af van courantheid en marktomstandigheden en hoort bij het advies van de verkopend makelaar.</p>`;
+
+  const calc=`<div data-strat data-i="${idx}">
+    <div class="row3">
+      ${[0,1,2].map(j=>`<div><label>Scenario ${'ABC'[j]}: verkoopprijs</label>${eurIn('verkoper.sc.'+j,v.sc[j])}</div>`).join('')}
+    </div>
+    <div class="row4" style="margin-top:12px">
+      <div><label>Makelaarscourtage %</label><input type="text" inputmode="decimal" data-calc="verkoper.courtage" value="${v.courtage!=null?String(v.courtage).replace('.',','):''}" placeholder="bijv. 1,25"></div>
+      <div><label>Overige verkoopkosten</label>${eurIn('verkoper.kosten',v.kosten,'label, meetrapport, promotie')}</div>
+      <div><label>Openstaande hypotheek</label>${eurIn('verkoper.hypotheek',v.hypotheek)}</div>
+      <div><label>Boeterente</label>${eurIn('verkoper.boete',v.boete)}</div>
+    </div>
+    <div id="vo-${idx}" style="margin-top:16px">${verkoopUit(d)}</div>
+    <p class="small">Indicatie eigenwoningreserve = verkoopprijs minus verkoopkosten minus eigenwoningschuld, hier gerekend alsof de hele hypotheek eigenwoningschuld is. Bij aankoop van een volgende woning beperkt die reserve de fiscaal aftrekbare hypotheek (bijleenregeling). Boeterente telt niet als verkoopkost. Laat dit fiscaal toetsen door een adviseur.</p>
+  </div>`;
+
+  const stappen=['Laat een waardebepaling of verkoopadvies opstellen, onderbouwd met referentietransacties.','Zet de documenten klaar en vul de vragenlijst verkoper volledig in.','Kies verkoopmethode en vraagprijs met je makelaar; laat de oppervlakte volgens NEN 2580 meten.','Beoordeel biedingen op bedrag, voorbehouden, opleverdatum en financierbaarheid.','Na mondelinge overeenstemming stelt de makelaar de koopovereenkomst op; de koper heeft 3 dagen bedenktijd.','Na het verlopen van de voorbehouden: overdracht en aflossing via de notaris. Vraag tijdig een aflosnota en boeterenteberekening op bij je geldverstrekker.'];
+
+  return strategieDisclaimer('verkoop')
+    + sectie('A / Positionering','Positionering','Vraagprijs rekenkundig naast de registers','blauw',positie)
+    + sectie('B / Mededelingsplicht','Mededelingsplicht en aandachtspunten','Wat kopers gaan vragen, op basis van de registers','geel',meld.map(punt).join(''))
+    + sectie('C / Documenten','Documenten klaarzetten','Afgestemd op dit object','groen',docTabel)
+    + sectie('D / Verkoopmethode','Verkoopmethode','Neutraal overzicht van de gangbare methoden','',methodes)
+    + sectie('E / Netto-opbrengst','Netto-opbrengst doorrekenen','Vul zelf verkoopprijzen, kosten en hypotheek in','',calc)
+    + sectie('F / Stappen','Stappen in het verkoopproces','','paars',`<ol class="stappen">${stappen.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`);
 }
 
 function renderSticky(){
@@ -789,6 +1028,28 @@ $('btnPrint').onclick=()=>{
     <p style="font-size:10px;color:#666">Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adresgegevens via PDOK Locatieserver. Indicatief overzicht, geen taxatie of waardebepaling in de zin van NRVT of NWWI.</p></body></html>`);
   win.document.close(); win.focus(); setTimeout(()=>win.print(),300);
 };
+
+$('result').addEventListener('click',e=>{
+  const b=e.target.closest('.dtabs button'); if(!b) return;
+  const i=+b.closest('.dtabs').dataset.i, t=b.dataset.tab; dossiers[i].tab=t;
+  const w=$('dw-'+i);
+  w.querySelectorAll('.dtabs button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===t)));
+  w.querySelectorAll('[data-pane]').forEach(p=>{ p.hidden=p.dataset.pane!==t; });
+});
+function calcUpdate(e){
+  const el=e.target; if(!el.dataset||!el.dataset.calc) return;
+  const box=el.closest('[data-strat]'); if(!box) return;
+  const i=+box.dataset.i, d=dossiers[i], st=stratInit(d);
+  const path=el.dataset.calc.split('.'); let o=st; for(let k=0;k<path.length-1;k++) o=o[path[k]];
+  o[path[path.length-1]] = el.tagName==='SELECT' ? el.value : nlNum(el.value);
+  if(path[0]==='koper') $('bo-'+i).innerHTML=biedUit(d); else $('vo-'+i).innerHTML=verkoopUit(d);
+}
+$('result').addEventListener('input',calcUpdate);
+$('result').addEventListener('change',calcUpdate);
+document.addEventListener('input',e=>{
+  const el=e.target; if(!el.classList||!el.classList.contains('eur')) return;
+  const digits=el.value.replace(/[^\d]/g,''); el.value=digits?(+digits).toLocaleString('nl-NL'):'';
+},true);
 
 bronReset();
 // Deeplink: #q=Molenweg 34 Amstelveen
