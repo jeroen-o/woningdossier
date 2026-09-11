@@ -469,7 +469,10 @@ function analyse(d){
   if(b && b.wozGem && d.analyse.prijsPerM2Bag && bag){
     d.analyse.wozBuurtGem=b.wozGem;
   }
-  if(!S.length) S.push({niveau:'grijs', titel:'Geen vergelijking mogelijk', tekst:'Vul de advertentiegegevens aan om afwijkingen te laten berekenen.'});
+  d.heeftAdvertentie = !!(wonen || a.perceel || a.bouwjaar || prijs || a.bod);
+  if(!S.length) S.push({niveau:'grijs', titel:d.heeftAdvertentie?'Geen afwijkingen gevonden':'Registercontroles zonder bijzonderheden',
+    tekst:d.heeftAdvertentie?'De ingevulde advertentiegegevens sluiten aan op BAG en BRK; gebruiksdoel, BAG-status en het aantal objecten in het pand geven geen aanleiding tot opmerkingen.'
+      :'Gecontroleerd op gebruiksdoel, BAG-status, bouwjaar vóór 1970 en meerdere verblijfsobjecten in het pand: geen bijzonderheden. Vul vraagprijs, bod of oppervlakten in om de advertentie te vergelijken met de registers.'});
 }
 
 /* ============ kaarten ============ */
@@ -628,7 +631,7 @@ function render(d, idx){
 
   return hero
     + sectie('01 / Signalen','Signalen voor het dossier','Wat afwijkt, wat aandacht vraagt en wat in orde is',kleurSec,sig)
-    + sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld)
+    + (d.heeftAdvertentie?sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld):'')
     + sectie('03 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('04 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
     + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p>`;
