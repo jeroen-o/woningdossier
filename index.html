@@ -159,6 +159,9 @@
   .gevel-link{position:absolute;top:12px;right:12px;background:rgba(0,48,87,.88);color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;text-decoration:none}
   .gevel-link:hover{background:var(--primary)}
   @media(max-width:600px){.gevel{height:220px;margin:-22px -24px 16px}}
+  .dtabs .printbtn{margin-left:auto;align-self:center;border:1px solid var(--primary);border-radius:8px;background:var(--primary);color:#fff;padding:8px 14px;font-size:13px}
+  .dtabs .printbtn:hover{background:var(--primary-2);color:#fff;box-shadow:0 2px 8px rgba(0,48,87,.2)}
+  @media(max-width:600px){.dtabs .printbtn{margin:8px 0 4px;width:100%}}
   @media print{header,.zoekpanel,.sticky,.btns,.del{display:none!important} .panel{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
@@ -175,7 +178,7 @@
 <main>
   <div class="panel zoekpanel">
     <div class="zoek">
-      <input type="text" id="q" placeholder="Adres (Molenweg 34, Amstelveen) of Funda-link" autocomplete="off">
+      <input type="text" id="q" value="Darthuizerberg 1, 3825 BK Amersfoort" placeholder="Adres (Darthuizerberg 1, Amersfoort) of Funda-link" autocomplete="off">
       <button id="btnGo">Analyseren</button>
     </div>
     <p class="hint" id="qHint">Vul een adres met huisnummer in, of plak een Funda-link — het adres wordt uit de link gelezen.</p>
@@ -185,7 +188,7 @@
 
     <div class="opties" id="opties">
       <div class="row5">
-        <div><label for="oVraagprijs">Vraagprijs</label><input type="text" class="eur" id="oVraagprijs" placeholder="€ 2.050.000" inputmode="numeric"></div>
+        <div><label for="oVraagprijs">Vraagprijs</label><input type="text" class="eur" id="oVraagprijs" value="1.100.000" placeholder="€ 1.100.000" inputmode="numeric"></div>
         <div><label for="oBod">Bod (al geboden)</label><input type="text" class="eur" id="oBod" placeholder="€ 2.100.000" inputmode="numeric"></div>
         <div><label for="oWonen">Wonen m²</label><input type="text" id="oWonen" placeholder="217" inputmode="numeric"></div>
         <div><label for="oOverig">Overige inpandige m²</label><input type="text" id="oOverig" placeholder="7" inputmode="numeric"></div>
@@ -221,7 +224,7 @@
     <div class="btns">
       <button class="acc" id="btnJson">Download JSON</button>
       <button class="acc" id="btnCsv">Download CSV</button>
-      <button class="sec-btn" id="btnPrint">Print dossier</button>
+      <button class="sec-btn" id="btnPrint">Overzicht afdrukken</button>
       <button class="sec-btn" id="btnReset">Alles wissen</button>
     </div>
   </div>
@@ -682,7 +685,7 @@ function render(d, idx){
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.jaar}</span></div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['bied','Biedstrategie'],['verkoop','Verkoopstrategie']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}</div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['bied','Biedstrategie'],['verkoop','Verkoopstrategie']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -916,6 +919,66 @@ function verkoopHtml(d,idx){
     + sectie('F / Stappen','Stappen in het verkoopproces','','paars',`<ol class="stappen">${stappen.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`);
 }
 
+/* ============ rapport afdrukken ============ */
+function rapportAfdrukken(i){
+  const d=dossiers[i], src=$('dw-'+i); if(!d||!src) return;
+  const tab=d.tab||'dossier';
+  const titels={dossier:'Woningdossier',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
+  // window.open() in plaats van window.print(): werkt ook als de tool in een iframe (Google Sites) staat.
+  const win=window.open('','_blank');
+  if(!win){ alert('Sta pop-ups toe voor deze pagina om het rapport af te drukken.'); return; }
+  const c=src.cloneNode(true);
+  // ingevulde waarden meenemen: invoervelden omzetten naar tekst
+  const srcVelden=[...src.querySelectorAll('input,select')], kloonVelden=[...c.querySelectorAll('input,select')];
+  kloonVelden.forEach((el,k)=>{ const o=srcVelden[k]; const v=o.tagName==='SELECT'?(o.options[o.selectedIndex]||{}).text:o.value;
+    const div=document.createElement('div'); div.className='printval'; div.textContent=v||'–'; el.replaceWith(div); });
+  c.querySelectorAll('.gevel,.dtabs,.gevel-link,script').forEach(x=>x.remove());
+  c.querySelectorAll('[data-pane]').forEach(p=>{ if(p.dataset.pane!==tab) p.remove(); else p.removeAttribute('hidden'); });
+  c.querySelectorAll('details').forEach(x=>x.setAttribute('open',''));
+  c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
+  const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
+  const adres=(d.registers.adres&&d.registers.adres.weergavenaam)||'';
+  const datum=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><title>${esc(titels[tab])} — ${esc(adres)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>${css}
+  @page{size:A4;margin:14mm 12mm}
+  html,body{background:#fff}
+  body{font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main{max-width:960px;padding:18px 20px}
+  .panel{box-shadow:none;border-color:#D5DCE3;padding:14px 16px;margin-bottom:12px}
+  .panel.sec{break-inside:auto}
+  .dossier,.kpi,tr,.kaart,.stat,.bar{break-inside:avoid}
+  h2{font-size:17px} h3{font-size:14px;break-after:avoid}
+  .hero .adres,.hero .prijs{font-size:22px}
+  .kpis{grid-template-columns:repeat(3,1fr)} .kpi b{font-size:20px}
+  .kaarten{grid-template-columns:1fr 1fr}
+  .row3,.row4{grid-template-columns:repeat(3,1fr)}
+  .printval{padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#FAFBFC;font-weight:600}
+  .rap-kop{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:3px solid var(--accent);padding-bottom:10px;margin-bottom:16px}
+  .rap-kop h1{font-family:var(--head);color:var(--primary);font-size:22px;margin:0}
+  .rap-kop p{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .rap-voet{margin-top:16px;padding-top:10px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
+  .noprint{margin:0 0 14px;display:flex;gap:8px}
+  @media print{.noprint{display:none!important}}
+</style></head><body><main>
+  <div class="noprint"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button class="sec-btn" onclick="window.close()">Sluiten</button></div>
+  <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>Opgesteld ${esc(datum)}</p></div>
+  ${c.innerHTML}
+  <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.</div>
+</main>
+<script>
+  (function(){ var imgs=[].slice.call(document.images), n=imgs.length, klaar=false;
+    function go(){ if(klaar) return; klaar=true; setTimeout(function(){ window.focus(); window.print(); },300); }
+    if(!n) return go();
+    imgs.forEach(function(im){ if(im.complete) { if(--n<=0) go(); } else { im.onload=im.onerror=function(){ if(--n<=0) go(); }; } });
+    setTimeout(go,6000);
+  })();
+<\/script></body></html>`);
+  win.document.close();
+}
+
 function renderSticky(){
   const el=$('sticky'); if(!dossiers.length){ el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
@@ -1008,7 +1071,7 @@ $('q').oninput=()=>{ const el=$('qHint'), v=$('q').value.trim(); el.className='h
   if(isFundaUrl(v)){ try{ const a=adresUitUrl(v); el.className='hint herkend'; el.textContent=`Herkend uit de link: ${a.straat} ${a.huisnummer}${a.toevoeging?' '+a.toevoeging:''}, ${a.plaats} (${a.soort}, Funda-ID ${a.id})`; } catch(e){ el.textContent='Nog geen adres herkend in deze link.'; } }
   else el.textContent=/\d/.test(v)?'Adres wordt opgezocht in de PDOK Locatieserver.':'Voeg een huisnummer toe.'; };
 $('q').onkeydown=e=>{ if(e.key==='Enter') $('btnGo').click(); };
-$('btnVoorbeeld').onclick=()=>{ $('q').value='Molenweg 34, Amstelveen'; $('oVraagprijs').value='2.050.000'; $('oBod').value='2.100.000'; $('oWonen').value='217'; $('oOverig').value='7'; $('oPerceel').value='336'; $('oBouwjaar').value='1935'; $('q').oninput(); $('btnGo').click(); };
+$('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
   return Object.assign({ vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
@@ -1070,7 +1133,8 @@ $('btnPrint').onclick=()=>{
 };
 
 $('result').addEventListener('click',e=>{
-  const b=e.target.closest('.dtabs button'); if(!b) return;
+  const pr=e.target.closest('[data-print]'); if(pr){ rapportAfdrukken(+pr.dataset.print); return; }
+  const b=e.target.closest('.dtabs button[data-tab]'); if(!b) return;
   const i=+b.closest('.dtabs').dataset.i, t=b.dataset.tab; dossiers[i].tab=t;
   const w=$('dw-'+i);
   w.querySelectorAll('.dtabs button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===t)));
