@@ -83,6 +83,23 @@
   .kpi b{display:block;font-family:var(--head);font-size:26px;font-weight:800;color:var(--primary);line-height:1.15;margin:4px 0 2px;letter-spacing:-.01em}
   .kpi b.small{font-size:16px;word-break:break-word}
   .kpi .src{font-size:11px;color:var(--muted)}
+  .kpi-fund{cursor:pointer;border:1px solid transparent}
+  .kpi-fund:hover{border-color:var(--accent)}
+  .fc-top{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .fc-cijfer{width:116px;height:116px;border-radius:18px;color:#fff;font-family:var(--head);font-weight:800;font-size:58px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,48,87,.18)}
+  .fc-cijfer small{font-size:13px;font-weight:600;opacity:.8;margin-top:4px}
+  .fc-titel{font-family:var(--head);font-size:26px;font-weight:800;color:var(--primary);margin:4px 0 0;letter-spacing:-.01em}
+  .fc-schaal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:18px}
+  .fc-schaal span{text-align:center;padding:8px 0;border-radius:8px;background:var(--bg);border:1px solid var(--line);color:var(--muted);font-family:var(--head);font-weight:700}
+  .fc-schaal span.on{color:#fff;transform:scale(1.06)}
+  .fc-corr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:12px 14px;margin-top:14px}
+  .fc-corr input{width:110px;padding:9px 11px}
+  .fc-corr button{padding:9px 16px}
+  @media(max-width:560px){.fc-cijfer{width:88px;height:88px;font-size:44px}}
+  .woz-knop{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-left:5px solid var(--accent)}
+  .btn-woz{display:inline-block;background:var(--accent);color:var(--primary);font-weight:700;font-size:16px;padding:14px 24px;border-radius:8px;text-decoration:none;box-shadow:0 3px 10px rgba(229,161,56,.4)}
+  .btn-woz:hover{background:#D9912A}
+  @media(max-width:560px){.btn-woz{width:100%;text-align:center}}
   .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:span 2}
   .kpi b.band{font-size:21px}
   @media(max-width:560px){.kpi-ind{grid-column:auto}}
@@ -145,10 +162,11 @@
   /* sticky balk */
   .chip-facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .chip-facts span{font-size:12px;padding:5px 10px;border-radius:99px;background:var(--bg);color:var(--text);border:1px solid var(--line)}
-  .dtabs{display:flex;gap:2px;margin:20px 0 -22px;border-top:1px solid var(--line);flex-wrap:wrap}
-  .dtabs button{background:none;border:none;border-bottom:3px solid transparent;border-radius:0;color:var(--muted);padding:12px 16px;font-weight:600}
-  .dtabs button:hover{box-shadow:none;color:var(--primary)}
-  .dtabs button[aria-selected=true]{color:var(--primary);border-bottom-color:var(--accent)}
+  .dtabs{display:flex;gap:10px;margin:20px 0 0;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+  .dtabs button[data-tab]{background:#FCEBCF;border:2px solid var(--accent);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px}
+  .dtabs button[data-tab]:hover{background:#F6D9A6;box-shadow:0 2px 8px rgba(229,161,56,.35)}
+  .dtabs button[data-tab][aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--primary);box-shadow:0 3px 10px rgba(229,161,56,.45)}
+  @media(max-width:560px){.dtabs button[data-tab]{flex:1 1 100%}}
   .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   @media(max-width:900px){.row4{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){.row4{grid-template-columns:1fr}}
@@ -175,7 +193,7 @@
   <div class="wrap">
     <div>
       <h1>Woningdossier</h1>
-      <p>Advertentie naast de officiële registers: BAG, BRK, CBS — met afwijkingsanalyse volgens de meetinstructie NEN 2580.</p>
+      <p>Bereken de woningwaarde en meer</p>
     </div>
     <div class="badgerow"><span>BAG · Kadaster</span><span>BRK · Kadaster</span><span>CBS Wijken &amp; Buurten</span><span>Geen account, geen opslag</span></div>
   </div>
@@ -245,7 +263,7 @@ const pctPlain = n => n==null?'–':n.toLocaleString('nl-NL',{maximumFractionDig
 const cbsVal = v => (v==null||v<=-99990)?null:v;
 
 /* ============ bronstatus ============ */
-const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex'};
+const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', fund:'Funderingscijfer'};
 function bronReset(){ $('bronnen').innerHTML = Object.entries(BRONNEN).map(([k,v])=>`<span id="b-${k}">${v}</span>`).join(''); }
 function bronStatus(k,cls,extra){ const el=$('b-'+k); if(el){ el.className=cls; el.textContent=BRONNEN[k]+(extra?' · '+extra:''); } }
 
@@ -533,11 +551,20 @@ async function bouwDossier(input){
     try{ const ix=await cbsPrijsindex(adr.gemeentecode); if(ix){ d._index=ix; bronStatus('idx','ok',ix.niveau+' · '+kwartaalTekst(ix.laatste.p)); } else bronStatus('idx','fail','niet beschikbaar'); }
     catch(e){ d.fouten.push('CBS prijsindex: '+e.message); bronStatus('idx','fail','fout'); }
   })();
+  const pFund = (async()=>{
+    bronStatus('fund','busy');
+    try{ d._fundRaw=await Fund.ophalen(d.registers.adres); }catch(e){ d.fouten.push('Funderingscijfer: '+e.message); }
+  })();
   const pSv = (async()=>{
     try{ d.streetview=await streetviewCamera(pt); }catch(e){ d.streetview=null; }
     if(!d.streetview) d.streetview={lat:pt.lat, lon:pt.lon, heading:null};
   })();
-  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx]);
+  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund]);
+  if(d._fundRaw){
+    try{ d.fundering=Fund.samenstellen(d._fundRaw,d); const sc=Fund.bereken(d.fundering).score; bronStatus('fund','ok',sc.cijfer+'/10 · '+sc.titel); }
+    catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
+    delete d._fundRaw;
+  } else bronStatus('fund','fail','niet beschikbaar');
   if(d._index){
     const bu=d.registers.buurt, peiljaar=bu?bu.wozPeiljaar:null, ix=d._index, peil=peiljaar?indexOp1Januari(ix,peiljaar):null;
     d.registers.marktindex = peil ? {niveau:ix.niveau, tabel:ix.tabel, peildatum:'1 januari '+peiljaar, indexPeil:Math.round(peil.waarde*10)/10, peilUitleg:peil.uitleg,
@@ -787,10 +814,11 @@ function render(d, idx){
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
+      ${Fund.kpi(d,idx)}
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['bied','Biedstrategie'],['verkoop','Verkoopstrategie']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['bied','Biedstrategie'],['verkoop','Verkoopstrategie']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -801,8 +829,10 @@ function render(d, idx){
     + sectie('04 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('05 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
     + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p></div>`
+    + `<div data-pane="fund"${tab!=='fund'?' hidden':''}>${Fund.uit(d,idx)}</div>`
     + `<div data-pane="bied"${tab!=='bied'?' hidden':''}>${biedHtml(d,idx)}</div>`
     + `<div data-pane="verkoop"${tab!=='verkoop'?' hidden':''}>${verkoopHtml(d,idx)}</div>`
+    + wozKnop(d)
     + `</div>`;
 }
 
@@ -1028,10 +1058,329 @@ function verkoopHtml(d,idx){
 }
 
 /* ============ rapport afdrukken ============ */
+function wozLink(adr){
+  // Directe link naar het object in het WOZ-waardeloket, notatie: ?locatie=3824PN%2020
+  if(!adr||!adr.postcode||!(adr.huis_nlt||adr.huisnummer)) return null;
+  return 'https://www.wozwaardeloket.nl/?locatie='+encodeURIComponent(String(adr.postcode).replace(/\s+/g,'').toUpperCase()+' '+(adr.huis_nlt||adr.huisnummer));
+}
+function wozKnop(d){
+  const url=wozLink(d.registers.adres); if(!url) return '';
+  return `<div class="panel woz-knop"><div><h2 style="margin:0">WOZ-waarde van deze woning</h2><p class="small" style="margin:4px 0 0">Bekijk de officiële WOZ-waarde en de waardes van vorige jaren in het WOZ-waardeloket van het Kadaster.</p></div>
+    <a class="btn-woz" href="${esc(url)}" target="_blank" rel="noopener">Bekijk WOZ-waarde ↗</a></div>`;
+}
+/* ============ funderingscijfer (overgenomen uit Funderingscijfer.nl) ============ */
+const Fund = (()=>{
+  const haal = async url => { const r=await fetch(url,{signal:AbortSignal.timeout(9000)}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); };
+
+  async function buurtPanden(lat,lon){
+    const d=0.0009; // ca. 100 m
+    const data=await haal('https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json&srsName=EPSG:4326&count=60&bbox='+(lon-d)+','+(lat-d)+','+(lon+d)+','+(lat+d)+',EPSG:4326');
+    return (data.features||[]).map(f=>({id:f.properties&&f.properties.identificatie?String(f.properties.identificatie):null,
+      bouwjaar:parseInt(f.properties&&f.properties.bouwjaar),
+      vbo:(f.properties&&f.properties.aantal_verblijfsobjecten!=null&&f.properties.aantal_verblijfsobjecten!=='')?parseInt(f.properties.aantal_verblijfsobjecten):null,
+      geom:f.geometry||null}));
+  }
+  function ringPunten(g){ const u=[]; const v=c=>{ if(Array.isArray(c)&&c.length>=2&&typeof c[0]==='number') u.push(c); else if(Array.isArray(c)) c.forEach(v); }; if(g) v(g.coordinates); return u; }
+  function puntInPoly(lon,lat,g){
+    const rings=!g?[]:g.type==='Polygon'?[g.coordinates[0]]:g.type==='MultiPolygon'?g.coordinates.map(p=>p[0]):[];
+    for(const ring of rings){ let ins=false; for(let i=0,j=ring.length-1;i<ring.length;j=i++){ const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1]; if(((yi>lat)!==(yj>lat))&&(lon<(xj-xi)*(lat-yi)/(yj-yi)+xi)) ins=!ins; } if(ins) return true; }
+    return false;
+  }
+  function pandenRaken(g1,g2,lat){
+    const p1=ringPunten(g1),p2=ringPunten(g2); if(!p1.length||!p2.length) return false;
+    const kx=111320*Math.cos(lat*Math.PI/180),ky=110540;
+    for(const a of p1) for(const b of p2){ const dx=(a[0]-b[0])*kx,dy=(a[1]-b[1])*ky; if(dx*dx+dy*dy<1.44) return true; }
+    return false;
+  }
+  function woningtype(pandId,lat,lon,feats){
+    if(!feats||!feats.length) return null;
+    let eigen=pandId?feats.find(f=>f.id===pandId):null;
+    if(!eigen) eigen=feats.find(f=>f.geom&&puntInPoly(lon,lat,f.geom))||null;
+    if(!eigen||!eigen.geom) return null;
+    const vbo=eigen.vbo; let buren=0;
+    for(const f of feats){ if(f!==eigen&&f.geom&&pandenRaken(eigen.geom,f.geom,lat)) buren++; }
+    if(vbo!==null&&vbo>=3) return {naam:'Appartement / meergezinspand',uitleg:'Het pand bevat '+vbo+' verblijfsobjecten. Funderingsherstel is bij een meergezinspand een collectieve aangelegenheid (via de VvE).',buren,vbo};
+    if(buren===0) return {naam:'Vrijstaande woning',uitleg:'Het pand grenst niet aan andere panden. Funderingsherstel kan zelfstandig worden uitgevoerd.',buren,vbo};
+    if(buren===1) return {naam:'Hoekwoning of twee-onder-een-kap',uitleg:'Het pand deelt een bouwmuur met een buurpand. Funderingsherstel wordt bij voorkeur samen met de buren uitgevoerd.',buren,vbo};
+    return {naam:'Tussenwoning',uitleg:'Het pand deelt bouwmuren met '+buren+' buurpanden. Funderingsherstel wordt bij rijwoningen vrijwel altijd samen met de buren uitgevoerd; alleen het eigen deel herstellen is technisch riskant.',buren,vbo};
+  }
+  async function rijksmonument(lat,lon){
+    const d=0.0002;
+    for(const [base,tn] of [['https://data.geo.cultureelerfgoed.nl/openbaar/wfs','geolinq:rijksmonumentpunten'],['https://services.rce.geovoorziening.nl/rce/ows','rce:NationalListedMonuments']]){
+      try{
+        const data=await haal(base+'?service=WFS&version=2.0.0&request=GetFeature&typeName='+tn+'&outputFormat=application/json&srsName=EPSG:4326&count=3&bbox='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+',urn:ogc:def:crs:EPSG::4326');
+        if(data&&Array.isArray(data.features)){
+          const f=data.features[0]; if(!f) return {gevonden:false};
+          const p=f.properties||{}, keys=Object.keys(p), pak=re=>{ const k=keys.find(x=>re.test(x)); return k?p[k]:null; };
+          return {gevonden:true, nummer:pak(/rijksmonument.*nummer|monument.*nummer|^nummer$|inspireid|localid/i)};
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  const IMG_GEMEENTEN=['Noordenveld','Tynaarlo','Aa en Hunze'];
+  const imgGebied=(gem,prov)=>(prov||'').trim()==='Groningen'||IMG_GEMEENTEN.includes((gem||'').trim());
+  async function hoogteNAP(lat,lon){
+    try{ const d=0.0015; const r=await haal('https://service.pdok.nl/ahn/ahn4/wms/v1_0?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=dtm_05m&QUERY_LAYERS=dtm_05m&CRS=EPSG:4326&BBOX='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+'&WIDTH=11&HEIGHT=11&I=5&J=5&INFO_FORMAT=application/json');
+      const p=(r.features&&r.features[0]&&r.features[0].properties)||{}; const v=p.GRAY_INDEX??p.value_list??p['cell value']??p[Object.keys(p)[0]]??null;
+      return (v!=null&&!isNaN(parseFloat(v)))?parseFloat(v):null; }catch(e){ return null; }
+  }
+  async function bodemtype(lat,lon){
+    try{ const d=0.001; const r=await haal('https://service.pdok.nl/bro/brk/wms/v2_0?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=bodemkaart250&QUERY_LAYERS=bodemkaart250&CRS=EPSG:4326&BBOX='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+'&WIDTH=11&HEIGHT=11&I=5&J=5&INFO_FORMAT=application/json');
+      const p=r.features&&r.features[0]&&r.features[0].properties;
+      if(p){ const code=p.bodemcode||p.code||p.grondsoort||null, naam=p.bodem_omschrijving||p.omschrijving||null;
+        if(code||naam) return {code:code||'?', naam:naam||{V:'Veengrond',K:'Kleigrond',Z:'Zandgrond',L:'Lossgrond'}[code]||'Onbekend', geschat:false}; }
+    }catch(e){}
+    return null;
+  }
+  async function rvoAandachtsgebied(lat,lon){
+    const d=0.0004;
+    for(const base of ['https://service.pdok.nl/rvo/indgebfunderingsproblematiek/wfs/v1_0','https://service.pdok.nl/rvo/indicatieve-aandachtsgebieden-funderingsproblematiek/wfs/v1_0']){
+      try{
+        const data=await haal(base+'?service=WFS&version=2.0.0&request=GetFeature&typeName=indgebfunderingsproblematiek:indgebfunderingsproblematiek&outputFormat=application/json&srsName=EPSG:4326&count=1&bbox='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+',urn:ogc:def:crs:EPSG::4326');
+        const p=data.features&&data.features[0]&&data.features[0].properties;
+        if(p){ const keys=Object.keys(p);
+          const vind=(...n)=>{ for(const x of n){ const k=keys.find(y=>y.toLowerCase().replace(/[_\s]/g,'')===x.toLowerCase().replace(/[_\s]/g,'')); if(k&&p[k]!=null&&p[k]!=='') return p[k]; } return null; };
+          return {gevonden:true, aantalPanden:vind('aantalpanden','aantal_panden','panden','aantal','totaalpanden'),
+            pctVoor1970:vind('percentagevoor1970','perc_voor1970','pctvoor1970','percentage','perc1970','pndvoor1970'),
+            bodemgesteldheid:vind('bodemgesteldheid','bodem','gebied','bodemtype','omschrijving','gebiedsnaam'),
+            klasse:vind('klasse','categorie','risico','aandachtsgebied','legenda')}; }
+      }catch(e){}
+    }
+    return null;
+  }
+  async function grondwater(lat,lon){
+    const base='https://service.pdok.nl/bzk/bro-grondwaterspiegeldiepte/wms/v2_0', d=0.0016;
+    const laag=async naam=>{ try{
+      const r=await haal(base+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS='+naam+'&QUERY_LAYERS='+naam+'&CRS=EPSG:4326&BBOX='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+'&WIDTH=11&HEIGHT=11&I=5&J=5&INFO_FORMAT=application/json');
+      const p=r.features&&r.features[0]&&r.features[0].properties; if(!p) return null;
+      const keys=Object.keys(p), k=keys.find(x=>/mediaan|median|waarde|value|gray/i.test(x))||keys[0], v=p[k];
+      if(v==null||v===''||v==='nodata') return null; const n=parseFloat(String(v).replace(',','.'));
+      return {waarde:isNaN(n)?null:n, tekst:String(v)}; }catch(e){ return null; } };
+    const [ghg,glg,gt]=await Promise.all([laag('bro-grondwaterspiegeldieptemetingen-GHG'),laag('bro-grondwaterspiegeldieptemetingen-GLG'),laag('bro-grondwaterspiegeldieptemetingen-GT')]);
+    if(!ghg&&!glg&&!gt) return null;
+    const ghgCm=ghg?ghg.waarde:null, glgCm=glg?glg.waarde:null;
+    let gtCode=null; if(gt){ const m=String(gt.tekst).match(/\b(V{1,3}I{0,3}|I{1,3}V?|[IVX]+)\s*[a-z]?\b/i); gtCode=m?m[0].trim():String(gt.tekst).slice(0,6); }
+    return {ghgCm, glgCm, gtCode, fluct:(ghgCm!==null&&glgCm!==null)?Math.abs(glgCm-ghgCm):null, gevonden:true};
+  }
+  function beoordeelGrondwater(gw,houtenPalen){
+    if(!gw||gw.glgCm===null) return {correctie:0,niveau:'onbekend',kop:'Geen grondwaterdata beschikbaar',tekst:'Het BRO-model grondwaterspiegeldiepte dekt vooral het onverharde, onbebouwde deel van Nederland. Voor bebouwde percelen is vaak geen waarde beschikbaar. Vraag zo nodig peilbuisgegevens op bij de gemeente of het waterschap.'};
+    const glg=gw.glgCm;
+    if(!houtenPalen) return {correctie:0,niveau:'nvt',kop:'Niet bepalend voor dit funderingstype',tekst:'De grondwaterstand daalt in de zomer tot circa '+Math.round(glg)+' cm onder maaiveld. Bij een betonnen paalfundering of fundering op draagkrachtig zand is dit geen risicofactor voor houtrot.'};
+    if(glg>=150) return {correctie:-2,niveau:'hoog',kop:'Hoog risico op droogstand van paalkoppen',tekst:'De grondwaterstand zakt in droge zomers tot circa '+Math.round(glg)+' cm onder maaiveld. Houten paalkoppen liggen doorgaans op 100 tot 150 cm diepte en kunnen daarmee periodiek droog komen te staan. Droogstand is de belangrijkste oorzaak van paalrot.'};
+    if(glg>=120) return {correctie:-1,niveau:'verhoogd',kop:'Verhoogd risico op droogstand',tekst:'De grondwaterstand zakt in de zomer tot circa '+Math.round(glg)+' cm onder maaiveld. Dat ligt dicht bij de gebruikelijke diepte van houten paalkoppen. In droge jaren kunnen de koppen droog komen te staan.'};
+    if(glg>=80) return {correctie:0,niveau:'matig',kop:'Grondwaterstand blijft doorgaans voldoende hoog',tekst:'De grondwaterstand zakt in de zomer tot circa '+Math.round(glg)+' cm onder maaiveld. Houten paalkoppen blijven naar verwachting onder water, wat gunstig is. Bij extreme droogte blijft waakzaamheid geboden.'};
+    return {correctie:1,niveau:'laag',kop:'Grondwaterstand gunstig voor houten palen',tekst:'De grondwaterstand blijft ook in de zomer hoog (circa '+Math.round(glg)+' cm onder maaiveld). Houten palen blijven permanent onder water, waardoor paalrot vrijwel is uitgesloten. Let bij een sterk wisselende stand wel op bacteriële aantasting.'};
+  }
+  const NAP_TAB=[[1000,1099,-2.5],[1100,1199,-2],[1200,1299,8],[1300,1399,-2],[1400,1499,-3],[1500,1599,-2.5],[1600,1699,-1.5],[1700,1799,-.5],[1800,1999,.5],[2000,2099,-1],[2100,2299,-4.5],[2300,2499,-1.5],[2500,2599,-.5],[2600,2699,-1],[2700,2799,-.5],[2800,2899,-3],[2900,2999,-4],[3000,3099,-4.5],[3100,3199,-3.5],[3200,3299,-2],[3300,3499,-2.5],[3500,3599,-1.5],[3600,3699,-1],[3700,3799,5],[3800,3859,7],[3860,3869,3],[3870,3999,8],[4000,4299,2],[4300,4599,-.5],[5000,5099,14],[5100,5299,5],[5300,5399,6],[5400,5499,18],[5500,5599,20],[5600,5699,18],[5700,5799,20],[5800,5999,10],[6000,6099,35],[6100,6199,25],[6200,6299,50],[6300,6499,90],[6500,6599,10],[6600,6699,-2],[6700,6799,15],[6800,6899,30],[6900,6999,15],[7000,7099,25],[7100,7299,35],[7300,7399,28],[7400,7499,5],[7500,7599,40],[7600,7699,20],[7700,7799,15],[7800,7999,12],[8000,8099,1.5],[8100,8199,8],[8200,8299,-3.5],[8800,8899,-1.5],[8900,8999,-.5],[9700,9799,.5],[9800,9999,-.5]];
+  const napSchatting=pc=>{ if(!pc) return null; const r=NAP_TAB.find(x=>pc>=x[0]&&pc<=x[1]); return r?r[2]:null; };
+  function bodemSchatting(p,prov){
+    if(p>=1000&&p<=2899) return {code:'V',naam:'Waarschijnlijk veen/klei (Hollands laagland)',geschat:true};
+    if(p>=3000&&p<=3499) return {code:'V',naam:'Waarschijnlijk veen/klei (Rijnmond/Zuid-Holland)',geschat:true};
+    if(p>=3500&&p<=3699) return {code:'K',naam:'Waarschijnlijk klei/veen (Utrecht laagland)',geschat:true};
+    if(p>=3700&&p<=3999) return {code:'Z',naam:'Waarschijnlijk zand (Heuvelrug/Veluwerand)',geschat:true};
+    if(p>=5000&&p<=5999) return {code:'Z',naam:'Waarschijnlijk zand (Noord-Brabant)',geschat:true};
+    if(p>=6300&&p<=6499) return {code:'L',naam:'Waarschijnlijk löss (Zuid-Limburg)',geschat:true};
+    if(p>=6000&&p<=6299) return {code:'Z',naam:'Waarschijnlijk zand/löss (Midden-Limburg)',geschat:true};
+    if(p>=7000&&p<=7999) return {code:'Z',naam:'Waarschijnlijk zand (Gelderland/Overijssel)',geschat:true};
+    if(p>=8000&&p<=8999) return {code:'K',naam:'Waarschijnlijk klei/veen (Noord-Nederland)',geschat:true};
+    if(p>=9000&&p<=9999) return {code:'K',naam:'Waarschijnlijk klei/veen (Groningen/Friesland)',geschat:true};
+    if((prov||'').includes('Zeeland')) return {code:'K',naam:'Waarschijnlijk zeeklei (Zeeland)',geschat:true};
+    return {code:'?',naam:'Bodemtype onbekend',geschat:true};
+  }
+  function bodemTypeUit(code){ if(!code) return 'onbekend'; const c=String(code).toUpperCase();
+    if(/^V|VEEN/.test(c)) return 'veen'; if(/^(K|E|MK)|KLEI/.test(c)) return 'klei'; if(/^Z|ZAND/.test(c)) return 'zand'; if(/^L/.test(c)) return 'löss'; return 'onbekend'; }
+  function funderingsType(bj,bt){
+    if(!bj) return {naam:'Onbekend',uitleg:'Zonder bouwjaar is geen inschatting van het funderingstype mogelijk.',hout:false};
+    const slap=(bt==='veen'||bt==='klei');
+    if(bj>=1970) return {naam:'Betonpalen',uitleg:'Vanaf circa 1970 werd vrijwel uitsluitend op betonnen palen gefundeerd. Deze zijn niet gevoelig voor paalrot of droogstand.',hout:false};
+    if(bj>=1960) return {naam:'Beton of hout (overgangsperiode)',uitleg:'In de jaren zestig werd overgestapt van houten op betonnen palen. Beide funderingstypen komen in deze periode voor.',hout:true};
+    if(slap) return {naam:'Houten paalfundering (waarschijnlijk)',uitleg:'Op slappe bodem werd vóór 1960 vrijwel altijd op houten palen gefundeerd. Bij droogstand ontstaat paalrot; bij een schommelende grondwaterstand bacteriële aantasting.',hout:true};
+    return {naam:'Ondiepe fundering / fundering op staal (waarschijnlijk)',uitleg:'Op draagkrachtige zand- of lössgrond werd vóór 1960 doorgaans ondiep gefundeerd, zonder palen. Dit is minder risicovol dan houten palen op slappe bodem.',hout:false};
+  }
+  function berekenCijfer(bj,bodemCode,nap,rvo,gwO){
+    const bType=bodemTypeUit(bodemCode); let basis,bjU;
+    if(!bj){basis=5;bjU='Bouwjaar onbekend — neutrale middenscore aangehouden';}
+    else if(bj>=1970){basis=8;bjU=bj+' — betonpaalfundering vrijwel zeker';}
+    else if(bj>=1960){basis=7;bjU=bj+' — overgangsperiode beton/hout, laag risico';}
+    else if(bj>=1945){basis=6;bjU=bj+' — naoorlogs, houten palen mogelijk aanwezig';}
+    else if(bj>=1900){basis=4;bjU=bj+' — oud pand, houten palen met slijtagerisico';}
+    else{basis=3;bjU=bj+' — zeer oud pand, hoog risico op paalrot of ondiepe fundering';}
+    let bC=0,bU='Bodemtype onbekend — geen correctie toegepast';
+    if(bType==='veen'){bC=-1;bU='Veengrond verlaagt de score: risico op droogstand en paalrot';}
+    else if(bType==='zand'){bC=1;bU='Zandgrond verhoogt de score: draagkrachtige, stabiele ondergrond';}
+    else if(bType==='löss'){bC=1;bU='Lössgrond verhoogt de score: relatief stabiele ondergrond';}
+    else if(bType==='klei'){bC=0;bU='Kleigrond — neutraal, kan krimpen bij langdurige droogte';}
+    let nC=0,nU=null;
+    if(nap!==null){ if(nap<-3){nC=-1;nU=nap.toFixed(1).replace('.',',')+' m NAP — laag peil, verhoogd risico op grondwaterschommeling';}
+      else if(nap>5){nC=1;nU='+'+nap.toFixed(1).replace('.',',')+' m NAP — ruim boven zeeniveau, gunstig';}
+      else nU=(nap>=0?'+':'')+nap.toFixed(1).replace('.',',')+' m NAP — rond zeeniveau, neutraal'; }
+    let rC=0,rU='Valt buiten de RVO-aandachtsgebieden funderingsproblematiek (gunstig signaal)';
+    if(rvo&&rvo.gevonden){ rC=-1; const pct=parseFloat(String(rvo.pctVoor1970||'').replace(',','.'));
+      rU=!isNaN(pct)&&pct>=40?'Ligt in RVO-aandachtsgebied: '+String(pct).replace('.',',')+'% van de panden in dit postcodegebied is van vóór 1970':'Ligt binnen een door RVO aangemerkt indicatief aandachtsgebied funderingsproblematiek'; }
+    const gC=gwO?gwO.correctie:0, gU=gwO?gwO.kop:'Geen grondwaterdata beschikbaar';
+    const cijfer=Math.max(2,Math.min(8,basis+bC+nC+rC+gC));
+    const labels={8:'A',7:'A/B',6:'B',5:'B/C',4:'C/D',3:'D',2:'D/E'};
+    const INFO={8:['Uitstekend','Zeer lage kans op funderingsproblemen. Het pand heeft vrijwel zeker een betonpaalfundering. Funderingsonderzoek is doorgaans niet nodig.'],
+      7:['Goed','Lage kans op funderingsproblemen. Bouwjaar, bodem en omgeving geven geen aanleiding tot zorg.'],
+      6:['Voldoende','Beperkt risico. Het pand stamt uit een periode waarin houten palen voorkwamen. Let bij aankoop op zichtbare signalen zoals scheuren of klemmende deuren.'],
+      5:['Matig','Matig risico. Bouwjaar en/of bodemtype vragen aandacht. Laat de fundering meenemen in een bouwkundige keuring.'],
+      4:['Onvoldoende','Verhoogd funderingsrisico. De combinatie van bouwjaar, bodem en ligging is ongunstig. Funderingsonderzoek wordt aanbevolen vóór aankoop.'],
+      3:['Slecht','Hoog funderingsrisico. Oud pand op risicovolle bodem binnen een RVO-aandachtsgebied. Professioneel funderingsonderzoek is sterk aanbevolen.'],
+      2:['Zeer slecht','Zeer hoog funderingsrisico. Meerdere ongunstige factoren komen samen. Laat vóór aankoop of financiering een volledig funderingsonderzoek uitvoeren door een gecertificeerd bureau.']};
+    return {cijfer,basis,bC,nC,rC,gC,bType,bjU,bU,nU,rU,gU,label:labels[cijfer],titel:INFO[cijfer][0],tekst:INFO[cijfer][1]};
+  }
+
+  // Ophalen: alles wat alleen de locatie nodig heeft, parallel aan de overige registers.
+  async function ophalen(adr){
+    const lat=adr.lat, lon=adr.lon;
+    const [nap,bodem,rvo,gw,monument,feats]=await Promise.all([
+      hoogteNAP(lat,lon), bodemtype(lat,lon), rvoAandachtsgebied(lat,lon), grondwater(lat,lon), rijksmonument(lat,lon),
+      buurtPanden(lat,lon).catch(()=>null)
+    ]);
+    return {nap,bodem,rvo,gw,monument,feats};
+  }
+  // Samenvoegen met BAG-gegevens uit het dossier; geometrie wordt niet bewaard.
+  function samenstellen(raw,d){
+    const adr=d.registers.adres, pand=d.registers.pand||{}, vbo=d.registers.verblijfsobject||{};
+    const pcNum=parseInt(String(adr.postcode||'').slice(0,4))||null;
+    let nap=raw.nap, napGeschat=false; if(nap===null){ const e=napSchatting(pcNum); if(e!==null){ nap=e; napGeschat=true; } }
+    const bodem=raw.bodem||bodemSchatting(pcNum,adr.provincie);
+    const jaren=(raw.feats||[]).map(f=>f.bouwjaar).filter(j=>!isNaN(j)&&j>1500&&j<2100);
+    return {bagBouwjaar:pand.bouwjaar||null, bouwjaarOverride:null, oppervlakte:vbo.oppervlakte||null,
+      nap, napGeschat, napBron:raw.nap!==null, bodem, bodemBron:!!raw.bodem, rvo:raw.rvo, gw:raw.gw, monument:raw.monument,
+      img:imgGebied(adr.gemeente,adr.provincie), jaren,
+      woningtype:woningtype(pand.identificatie?String(pand.identificatie):null, adr.lat, adr.lon, raw.feats)};
+  }
+  function bereken(F){
+    const bj=F.bouwjaarOverride||F.bagBouwjaar;
+    const ftype=funderingsType(bj,bodemTypeUit(F.bodem&&F.bodem.code));
+    const gwO=beoordeelGrondwater(F.gw,ftype.hout);
+    const score=berekenCijfer(bj,F.bodem&&F.bodem.code,F.nap,F.rvo,gwO);
+    let buurt=null;
+    if(F.jaren.length>=3){ const s=[...F.jaren].sort((a,b)=>a-b), v70=s.filter(j=>j<1970).length;
+      buurt={totaal:s.length, voor1970:v70, pct:Math.round(v70/s.length*100), mediaan:s[Math.floor(s.length/2)], oudste:s[0], nieuwste:s[s.length-1], zelfde:bj?s.filter(j=>Math.abs(j-bj)<=3).length:null}; }
+    return {bj, ftype, gwO, score, buurt};
+  }
+
+  const KLEUR={2:'#A81C1C',3:'#C03A1A',4:'#D4860F',5:'#B07C00',6:'#7A9A2A',7:'#3A7A3A',8:'#1B6B3A'};
+  const niv=c=>c>=7?'groen':c>=5?'geel':'rood';
+  function kpi(d,idx){
+    const F=d.fundering; if(!F) return '';
+    const {score}=bereken(F);
+    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}</span></div>`;
+  }
+  function uit(d,idx){
+    const F=d.fundering;
+    if(!F) return `<div class="panel"><p class="small">Het funderingscijfer kon voor dit adres niet worden berekend.</p></div>`;
+    const {bj,ftype,gwO,score,buurt}=bereken(F), c=score.cijfer, adr=d.registers.adres;
+    const bNaam=F.bodem?String(F.bodem.naam).split('(')[0].trim():'Onbekend';
+    const napStr=F.nap!==null?(F.napGeschat?'~ ':'')+(F.nap>=0?'+':'')+num(F.nap,2)+' m NAP':'–';
+    const delta=v=>`<span class="sig ${v>0?'groen':v<0?'rood':'grijs'}">${v>0?'+':''}${v}</span>`;
+    const gwNiv={hoog:'rood',verhoogd:'geel',matig:'groen',laag:'groen',nvt:'grijs',onbekend:'grijs'}[gwO.niveau]||'grijs';
+
+    const schaal=`<div class="fc-schaal">${[2,3,4,5,6,7,8].map(n=>`<span class="${n===c?'on':''}" style="${n===c?`background:${KLEUR[n]};border-color:${KLEUR[n]}`:''}">${n}</span>`).join('')}</div>`;
+    const kop=`<div class="fc-top">
+        <div class="fc-cijfer" style="background:${KLEUR[c]}">${c}<small>/ 10</small></div>
+        <div style="flex:1;min-width:220px"><span class="eyebrow">Funderingscijfer · hoe hoger, hoe beter</span>
+          <p class="fc-titel">${esc(score.titel)}</p><p style="margin:4px 0 10px">${esc(score.tekst)}</p>
+          <div class="oordeel" style="margin:0"><span class="pill ${niv(c)}"><i></i>Verwacht funderingslabel ${esc(score.label)}</span><span class="pill grijs"><i></i>${esc(ftype.naam.split('(')[0].trim())}</span></div>
+        </div></div>${schaal}`;
+
+    const kpis=`<div class="kpis" style="margin-top:0">
+      <div class="kpi"><span class="lab">Bouwjaar</span><b>${bj??'–'}</b><span class="src"><em>BAG</em>${F.bouwjaarOverride?' · gecorrigeerd (BAG '+(F.bagBouwjaar??'–')+')':' pand'}</span></div>
+      <div class="kpi"><span class="lab">Bodemtype</span><b class="small">${esc(bNaam)}</b><span class="src"><em>BRO</em> ${F.bodemBron?'bodemkaart':'regionale schatting'}</span></div>
+      <div class="kpi"><span class="lab">Maaiveld</span><b class="small">${napStr}</b><span class="src"><em>AHN4</em>${F.napGeschat?' · schatting':''}</span></div>
+      <div class="kpi"><span class="lab">RVO-aandachtsgebied</span><b class="small">${F.rvo&&F.rvo.gevonden?'Ja':'Nee'}</b><span class="src"><em>RVO</em> funderingsviewer</span></div>
+      <div class="kpi"><span class="lab">Grondwater zomer</span><b class="small">${F.gw&&F.gw.glgCm!==null?Math.round(F.gw.glgCm)+' cm −mv':'–'}</b><span class="src"><em>BRO</em> GLG-model</span></div>
+      ${F.woningtype?`<div class="kpi"><span class="lab">Woningtype</span><b class="small">${esc(F.woningtype.naam)}</b><span class="src"><em>BAG</em> indicatie uit pandgeometrie</span></div>`:''}
+    </div>`;
+
+    const typeBlok=punt(['grijs',ftype.naam,ftype.uitleg])
+      +`<p class="small">Inschatting op basis van bouwjaar en bodemtype, geen vastgestelde constructiegegevens. Alleen funderingsonderzoek of het bouwdossier bij de gemeente geeft uitsluitsel.</p>`
+      +(F.woningtype?punt([F.woningtype.buren>=1?'geel':'grijs','Woningtype: '+F.woningtype.naam,F.woningtype.uitleg]):'')
+      +`<div class="fc-corr" data-strat data-i="${idx}"><label for="fcbj-${idx}" style="margin:0">Bouwjaar klopt niet?</label><input type="text" inputmode="numeric" id="fcbj-${idx}" value="${F.bouwjaarOverride||''}" placeholder="${F.bagBouwjaar||'jaar'}"><button type="button" data-fund-bj="${idx}">Herbereken</button>${F.bouwjaarOverride?`<button type="button" class="link" data-fund-bj-reset="${idx}">BAG-bouwjaar herstellen</button>`:''}</div>`;
+
+    let rvoBlok;
+    if(F.rvo&&F.rvo.gevonden){
+      const st=[F.rvo.pctVoor1970!=null?['Panden vóór 1970',String(F.rvo.pctVoor1970).replace('.',',')+'%']:null, F.rvo.aantalPanden?['Panden in postcodegebied',F.rvo.aantalPanden]:null, F.rvo.bodemgesteldheid?['Bodemgesteldheid',F.rvo.bodemgesteldheid]:null, F.rvo.klasse?['Klasse',F.rvo.klasse]:null].filter(Boolean);
+      rvoBlok=punt(['geel','Ligt in een indicatief aandachtsgebied','De RVO Funderingsviewer merkt dit postcodegebied aan als aandachtsgebied: er staan relatief veel panden van vóór 1970 op een minder draagkrachtige bodem. De kaart doet geen uitspraak over de staat van deze specifieke woning.'])+st.map(([l,v])=>stat(l,esc(v))).join('');
+    } else rvoBlok=punt(['groen','Valt buiten de RVO-aandachtsgebieden','Deze locatie is niet aangemerkt als indicatief aandachtsgebied funderingsproblematiek. Dat is een gunstig signaal, maar sluit problemen bij een individueel pand niet uit.']);
+
+    let gwBlok=punt([gwNiv,gwO.kop,gwO.tekst]);
+    if(F.gw&&F.gw.gevonden){
+      gwBlok+=`<div class="grid2">${[F.gw.ghgCm!==null?stat('GHG — hoogste stand (winter)',Math.round(F.gw.ghgCm)+' cm −mv'):'', F.gw.glgCm!==null?stat('GLG — laagste stand (zomer)',Math.round(F.gw.glgCm)+' cm −mv'):'', F.gw.fluct!==null?stat('Jaarlijkse fluctuatie',Math.round(F.gw.fluct)+' cm'):'', F.gw.gtCode?stat('Grondwatertrap (Gt)',esc(F.gw.gtCode)):''].join('')}</div>`;
+      if(F.gw.fluct!==null&&F.gw.fluct>=100) gwBlok+=`<p class="small" style="color:var(--warn)"><b>Let op:</b> de grondwaterstand schommelt jaarlijks meer dan een meter. Sterke fluctuatie vergroot het risico op bacteriële aantasting van houten palen, ook als de koppen niet volledig droogvallen.</p>`;
+    }
+    gwBlok+=`<p class="small">GHG en GLG zijn langjarige modelgemiddelden (BRO Model Grondwaterspiegeldiepte, raster 50 × 50 m), geen actuele peilbuismetingen. In bebouwd gebied kan de werkelijke stand afwijken door riolering, drainage en peilbeheer.</p>`;
+
+    const buurtBlok=buurt?`${stat('Panden onderzocht (± 100 m)',num(buurt.totaal))}${stat('Mediaan bouwjaar',String(buurt.mediaan))}${stat('Bouwjaren',buurt.oudste+' – '+buurt.nieuwste)}${meterRow('Gebouwd vóór 1970',buurt.pct)}${buurt.zelfde&&buurt.zelfde>1?`<p class="small"><b>${buurt.zelfde} van de ${buurt.totaal} panden</b> delen (bij benadering) het bouwjaar van deze woning. Panden uit dezelfde bouwstroom hebben vrijwel altijd hetzelfde funderingstype.</p>`:''}`:'<p class="small">Geen omgevingsgegevens beschikbaar.</p>';
+
+    let mon;
+    if(F.monument===null) mon=punt(['grijs','Rijksmonumentcheck niet beschikbaar','Het rijksmonumentenregister kon niet worden geraadpleegd. Controleer zo nodig handmatig via monumentenregister.cultureelerfgoed.nl.']);
+    else if(F.monument.gevonden) mon=punt(['geel','Rijksmonument op of direct naast dit adres','Op of vlak bij deze locatie staat een geregistreerd rijksmonument'+(F.monument.nummer?' (monumentnummer '+F.monument.nummer+')':'')+'. Is deze woning zelf het monument, dan is funderingsherstel vergunningplichtig en doorgaans duurder, maar zijn er ook subsidie- en financieringsregelingen, onder meer via het Nationaal Restauratiefonds.']);
+    else mon=punt(['groen','Geen rijksmonument','Dit adres valt niet samen met een geregistreerd rijksmonument. Gemeentelijke monumenten en beschermde stads- of dorpsgezichten zijn hierin niet meegenomen.']);
+    mon+= F.img ? punt(['geel','Ligt in het IMG-effectgebied aardbevingen','De gemeente '+(adr.gemeente||'')+' valt binnen het werkgebied van het Instituut Mijnbouwschade Groningen. Schade door bodembeweging als gevolg van gaswinning wordt via het IMG afgehandeld. Controleer bij aankoop of eerdere schademeldingen of herstelde schade bekend zijn.'])
+                : punt(['groen','Buiten het IMG-effectgebied aardbevingen','Deze gemeente valt buiten het werkgebied van het Instituut Mijnbouwschade Groningen.']);
+    mon+=`<p class="small">Beide checks zijn indicatief en tellen niet mee in het funderingscijfer.</p>`;
+
+    const berekening=`<div class="tabwrap"><table>
+      <tr><th>Factor</th><th>Waarde</th><th class="num">Effect</th><th>Toelichting</th></tr>
+      <tr><td><b>Bouwjaar</b></td><td>${bj??'Onbekend'}</td><td class="num"><span class="sig grijs">basis ${score.basis}</span></td><td class="small">${esc(score.bjU)}</td></tr>
+      <tr><td><b>Bodemtype</b></td><td>${esc(bNaam)}</td><td class="num">${delta(score.bC)}</td><td class="small">${esc(score.bU)}</td></tr>
+      <tr><td><b>Hoogte NAP</b></td><td>${napStr}</td><td class="num">${delta(score.nC)}</td><td class="small">${esc(score.nU||'Geen data')}</td></tr>
+      <tr><td><b>RVO-aandachtsgebied</b></td><td>${F.rvo&&F.rvo.gevonden?'Ja':'Nee'}</td><td class="num">${delta(score.rC)}</td><td class="small">${esc(score.rU)}</td></tr>
+      <tr><td><b>Grondwater (GLG)</b></td><td>${F.gw&&F.gw.glgCm!==null?Math.round(F.gw.glgCm)+' cm −mv':'Onbekend'}</td><td class="num">${delta(score.gC)}</td><td class="small">${esc(score.gU)}</td></tr>
+      <tr class="tot"><td colspan="2">Funderingscijfer</td><td class="num">${c} / 10</td><td class="small">Basis ${score.basis} · bodem ${score.bC>0?'+':''}${score.bC} · NAP ${score.nC>0?'+':''}${score.nC} · RVO ${score.rC>0?'+':''}${score.rC} · grondwater ${score.gC>0?'+':''}${score.gC}, begrensd op 2 t/m 8</td></tr>
+    </table></div>`;
+
+    let vervolg='';
+    if(c<=6){
+      vervolg+=`<h3 style="margin-top:0">Waar u op kunt letten</h3>${lijst(['Scheve vloeren of muren die uit het lood staan','Deuren en ramen die klemmen of niet meer goed sluiten','Scheuren in gevel, binnenmuren of rond kozijnen','Verzakkingen van bestrating of tuin rondom de woning','Een kruipruimte die vaker onder water staat dan vroeger','Een zichtbaar hoogteverschil tussen woning en buurpand'])}`;
+    }
+    if(c<=5&&F.oppervlakte){
+      const bg=Math.round(F.oppervlakte*0.55);
+      vervolg+=`<h3>Indicatie herstelkosten</h3><table>
+        <tr><td class="k">Richtprijs funderingsherstel (RVO)</td><td>€ 1.000 per m²</td></tr>
+        <tr><td class="k">Geschat oppervlak begane grond</td><td>± ${num(bg)} m² <span class="small">(55% van BAG-oppervlakte)</span></td></tr>
+        <tr class="tot"><td class="k">Indicatieve bandbreedte</td><td>${eur(bg*800)} – ${eur(bg*1300)}</td></tr></table>
+        <p class="small">Zeer ruwe indicatie. Werkelijke kosten hangen af van funderingstype, bereikbaarheid, pandbreedte en gemeente. Vraag altijd meerdere offertes op.</p>`;
+    }
+    if(c<=5){
+      vervolg+=`<h3>Vervolgstappen</h3><p class="small">Bij dit cijfer is nader onderzoek verstandig. Het KCAF kan wijzen op gecertificeerde onderzoeksbureaus; de gemeente heeft mogelijk het bouwdossier met de oorspronkelijke funderingstekening.</p>
+        <div class="btns"><a class="btn-woz" href="https://www.kcaf.nl" target="_blank" rel="noopener">KCAF — kenniscentrum ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://www.rvo.nl/onderwerpen/funderingsproblematiek" target="_blank" rel="noopener">RVO — funderingsaanpak ↗</a></div>`;
+    }
+
+    const br=[
+      ['BAG (Kadaster)', F.bagBouwjaar?'ok':'schat', F.bagBouwjaar?'Bouwjaar '+F.bagBouwjaar:'Geen bouwjaar', 'https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag'],
+      ['AHN4 hoogtebestand', F.napBron?'ok':'schat', F.napBron?napStr:'Regionale schatting', 'https://www.ahn.nl'],
+      ['BRO Bodemkaart', F.bodemBron?'ok':'schat', F.bodemBron?bNaam:'Regionale schatting', 'https://www.dinoloket.nl'],
+      ['BRO Model Grondwaterspiegeldiepte', F.gw?'ok':'schat', F.gw&&F.gw.glgCm!==null?'GLG '+Math.round(F.gw.glgCm)+' cm':'Niet beschikbaar', 'https://basisregistratieondergrond.nl/inhoud-bro/registratieobjecten/modellen/model-grondwaterspiegeldiepte-wdm/'],
+      ['RVO Funderingsviewer', 'ok', F.rvo&&F.rvo.gevonden?'In aandachtsgebied':'Buiten aandachtsgebied', 'https://geocontent.rvo.nl/funderingsviewer_storymap/'],
+      ['RCE Rijksmonumentenregister', F.monument?'ok':'schat', F.monument?(F.monument.gevonden?'Rijksmonument nabij':'Geen monument'):'Niet gecontroleerd', 'https://monumentenregister.cultureelerfgoed.nl'],
+      ['KCAF', 'info', 'Informatief', 'https://www.kcaf.nl']
+    ];
+    const bronnen=`<table>${br.map(([n,s,v,u])=>`<tr><td class="k"><a href="${u}" target="_blank" rel="noopener">${esc(n)}</a></td><td><span class="sig ${s==='ok'?'groen':s==='schat'?'geel':'grijs'}">${s==='ok'?'opgehaald':s==='schat'?'schatting / geen data':'info'}</span> ${esc(v)}</td></tr>`).join('')}</table>`;
+
+    return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het funderingscijfer is algemene informatie uit openbare registers, geen advies over een financieel product en geen officieel funderingsrapport. Gebruik je dit in een adviesgesprek, leg dan vast dat het een indicatie uit publieke bronnen is en dat funderingsonderzoek nodig is voordat er financiële conclusies aan worden verbonden.</div>`
+      + `<div class="panel sec ${niv(c)}">${kop}</div>`
+      + sectie('A / Woning en ondergrond','Woning en ondergrond','Bouwjaar, bodem, hoogte, grondwater en ligging','blauw',kpis)
+      + sectie('B / Funderingstype','Verwacht funderingstype','Afgeleid uit bouwjaar en bodemtype','',typeBlok)
+      + sectie('C / RVO en grondwater','RVO-aandachtsgebied en grondwaterstand','Officiële aandachtsgebieden en droogstandrisico voor houten palen','geel',`<h3 style="margin-top:0">RVO-aandachtsgebied</h3>${rvoBlok}<h3>Grondwaterstand</h3>${gwBlok}`)
+      + sectie('D / Omgeving','Panden in de omgeving','Bouwjaren binnen circa 100 meter (BAG)','paars',buurtBlok)
+      + sectie('E / Monument en aardbeving','Monument en aardbeving','Aanvullende checks, tellen niet mee in het cijfer','',mon)
+      + sectie('F / Berekening','Berekening funderingscijfer','Hoe het cijfer is opgebouwd','blauw',berekening)
+      + (vervolg?sectie('G / Vervolg','Signalen, kosten en vervolgstappen','Wat je kunt controleren en doen',c<=4?'rood':'geel',vervolg):'')
+      + sectie('H / Bronnen','Gebruikte databronnen','Status per bron','',bronnen)
+      + `<p class="small" style="margin:-8px 0 26px">Indicatief model: bouwjaar (BAG), bodemtype (BRO), maaiveldhoogte (AHN4), grondwater (BRO-model) en RVO-aandachtsgebieden. Er is geen rekening gehouden met eerder funderingsherstel, uitvoeringskwaliteit of inspectie ter plaatse. Methode overgenomen uit Funderingscijfer.nl.</p>`;
+  }
+  return {ophalen, samenstellen, bereken, uit, kpi};
+})();
+
 function rapportAfdrukken(i){
   const d=dossiers[i], src=$('dw-'+i); if(!d||!src) return;
   const tab=d.tab||'dossier';
-  const titels={dossier:'Woningdossier',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
+  const titels={dossier:'Woningdossier',fund:'Funderingscijfer',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
   // window.open() in plaats van window.print(): werkt ook als de tool in een iframe (Google Sites) staat.
   const win=window.open('','_blank');
   if(!win){ alert('Sta pop-ups toe voor deze pagina om het rapport af te drukken.'); return; }
@@ -1040,7 +1389,7 @@ function rapportAfdrukken(i){
   const srcVelden=[...src.querySelectorAll('input,select')], kloonVelden=[...c.querySelectorAll('input,select')];
   kloonVelden.forEach((el,k)=>{ const o=srcVelden[k]; const v=o.tagName==='SELECT'?(o.options[o.selectedIndex]||{}).text:o.value;
     const div=document.createElement('div'); div.className='printval'; div.textContent=v||'–'; el.replaceWith(div); });
-  c.querySelectorAll('.gevel,.dtabs,.gevel-link,script').forEach(x=>x.remove());
+  c.querySelectorAll('.gevel,.dtabs,.gevel-link,.woz-knop,.fc-corr,script').forEach(x=>x.remove());
   c.querySelectorAll('[data-pane]').forEach(p=>{ if(p.dataset.pane!==tab) p.remove(); else p.removeAttribute('hidden'); });
   c.querySelectorAll('details').forEach(x=>x.setAttribute('open',''));
   c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
@@ -1256,11 +1605,18 @@ $('result').addEventListener('click',e=>{
   if(hx){ const i=+hx.dataset.indexherstel, d=dossiers[i], mi=d.registers.marktindex; if(mi){ d.indic.factor=mi.factor; d.indic.handmatig=false;
     const w=$('dw-'+i), inp=w.querySelector('[data-calc="indic.factor"]'); if(inp) inp.value=num(mi.factor,3);
     $('io-'+i).innerHTML=indicUit(d); const k=$('ik-'+i); if(k) k.innerHTML=indicKpi(d); $('ix-'+i).innerHTML=indexUitleg(d,i); } return; }
-  const b=e.target.closest('.dtabs button[data-tab]'); if(!b) return;
-  const i=+b.closest('.dtabs').dataset.i, t=b.dataset.tab; dossiers[i].tab=t;
+  const fb=e.target.closest('[data-fund-bj]'), fr=e.target.closest('[data-fund-bj-reset]');
+  if(fb||fr){ const i=+(fb||fr).dataset[fb?'fundBj':'fundBjReset'], d=dossiers[i]; if(!d||!d.fundering) return;
+    if(fb){ const v=parseInt($('fcbj-'+i).value,10); if(!(v>=1500&&v<=2030)){ $('fcbj-'+i).focus(); alert('Vul een geldig bouwjaar in (1500–2030).'); return; } d.fundering.bouwjaarOverride=v; }
+    else d.fundering.bouwjaarOverride=null;
+    const w=$('dw-'+i); w.querySelector('[data-pane="fund"]').innerHTML=Fund.uit(d,i); const k=$('fk-'+i); if(k) k.outerHTML=Fund.kpi(d,i); return; }
+  const gt=e.target.closest('[data-gotab]');
+  const b=gt||e.target.closest('.dtabs button[data-tab]'); if(!b) return;
+  const i=+(gt?gt.dataset.i:b.closest('.dtabs').dataset.i), t=gt?gt.dataset.gotab:b.dataset.tab; dossiers[i].tab=t;
   const w=$('dw-'+i);
   w.querySelectorAll('.dtabs button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===t)));
   w.querySelectorAll('[data-pane]').forEach(p=>{ p.hidden=p.dataset.pane!==t; });
+  if(gt){ const tb=w.querySelector('.dtabs'); if(tb) tb.scrollIntoView({behavior:'smooth',block:'start'}); }
 });
 function calcUpdate(e){
   const el=e.target; if(!el.dataset||!el.dataset.calc) return;
