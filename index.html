@@ -37,10 +37,10 @@
   .num-eye{display:inline-block;font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--primary);background:var(--bg);padding:3px 9px;border-radius:6px;margin-bottom:6px}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .row5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .row5{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
   @media(max-width:900px){.row,.row3,.row5{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){.row,.row3,.row5{grid-template-columns:1fr}}
-  label{display:block;font-weight:600;font-size:13px;color:var(--primary);margin-bottom:5px}
+  label{display:block;font-weight:600;font-size:13px;color:var(--primary);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   input[type=text],textarea{width:100%;font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
   textarea{min-height:160px;resize:vertical;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
   input:focus,textarea:focus,button:focus-visible{outline:3px solid rgba(229,161,56,.5);outline-offset:1px}
@@ -162,30 +162,20 @@
     <p class="hint" id="qHint">Vul een adres met huisnummer in, of plak een Funda-link — het adres wordt uit de link gelezen.</p>
     <div class="btns" style="margin-top:6px">
       <button class="link" id="btnVoorbeeld">Voorbeeld bekijken</button>
-      <button class="link" id="btnOpties">Advertentiegegevens toevoegen</button>
-      <button class="link" id="btnPlak">Funda-pagina plakken</button>
     </div>
 
-    <div class="opties hidden" id="opties">
+    <div class="opties" id="opties">
       <div class="row5">
         <div><label for="oVraagprijs">Vraagprijs</label><input type="text" id="oVraagprijs" placeholder="€ 2.050.000" inputmode="numeric"></div>
+        <div><label for="oBod">Bod (al geboden)</label><input type="text" id="oBod" placeholder="€ 2.100.000" inputmode="numeric"></div>
         <div><label for="oWonen">Wonen m²</label><input type="text" id="oWonen" placeholder="217" inputmode="numeric"></div>
         <div><label for="oOverig">Overige inpandige m²</label><input type="text" id="oOverig" placeholder="7" inputmode="numeric"></div>
         <div><label for="oPerceel">Perceel m²</label><input type="text" id="oPerceel" placeholder="336" inputmode="numeric"></div>
         <div><label for="oBouwjaar">Bouwjaar</label><input type="text" id="oBouwjaar" placeholder="1935" inputmode="numeric"></div>
       </div>
-      <p class="hint">Optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking.</p>
+      <p class="hint">Advertentiegegevens, optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking. Bij een bod wordt de prijs per m² ook op het bod berekend en het verschil met de vraagprijs getoond.</p>
     </div>
 
-    <div class="opties hidden" id="plak">
-      <label for="src">Paginatekst of broncode van de Funda-detailpagina</label>
-      <textarea id="src" placeholder="Open de advertentie, klik op 'Lees de volledige omschrijving' en 'Bekijk alle kenmerken', selecteer alles (Ctrl+A), kopieer en plak hier."></textarea>
-      <div class="btns">
-        <button id="btnFunda">Verwerk en verifieer</button>
-        <button class="sec-btn" id="btnLeegF">Leegmaken</button>
-      </div>
-      <p class="hint">De advertentie levert vraagprijs, indeling, kadastrale aanduidingen en omschrijving; de registers leveren de controleerbare feiten. Bewaar of publiceer Funda-content niet zonder licentie.</p>
-    </div>
 
     <div class="bron" id="bronnen"></div>
     <div class="msg" id="msg"></div>
@@ -217,7 +207,7 @@
     </div>
   </div>
 
-  <p class="small">Alle bevragingen lopen rechtstreeks vanuit deze pagina naar de open PDOK-services (BAG, BRK Kadastrale Kaart, CBS Wijken en Buurten, Locatieserver, luchtfoto). Geen account, geen tussenserver, geen opslag. Funda-gegevens komen alleen binnen als je ze zelf invult of plakt. Dit dossier is een feitencheck en geen taxatie of waardebepaling in de zin van NRVT of NWWI.</p>
+  <p class="small">Alle bevragingen lopen rechtstreeks vanuit deze pagina naar de open PDOK-services (BAG, BRK Kadastrale Kaart, CBS Wijken en Buurten, Locatieserver, luchtfoto). Geen account, geen tussenserver, geen opslag. Advertentiegegevens komen alleen binnen als je ze zelf invult. Dit dossier is een feitencheck en geen taxatie of waardebepaling in de zin van NRVT of NWWI.</p>
 </main>
 
 <script>
@@ -438,6 +428,12 @@ function analyse(d){
     else S.push({niveau:'groen', titel:'Oppervlakte sluit aan op de BAG', tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de advertentie: ${pct(pctSom)}.`});
     if(prijs){ d.analyse.prijsPerM2Advertentie=Math.round(prijs/wonen); d.analyse.prijsPerM2Bag=Math.round(prijs/bag); d.analyse.waardeEffect=Math.round(verschilSom*(prijs/somAdv)); }
   } else if(bag && prijs){ d.analyse.prijsPerM2Bag=Math.round(prijs/bag); }
+  if(a.bod){
+    d.analyse.bod={bod:a.bod};
+    if(bag) d.analyse.bod.prijsPerM2Bag=Math.round(a.bod/bag);
+    if(wonen) d.analyse.bod.prijsPerM2Advertentie=Math.round(a.bod/wonen);
+    if(prijs){ d.analyse.bod.verschil=a.bod-prijs; d.analyse.bod.verschilPct=(a.bod-prijs)/prijs*100; }
+  }
 
   const bj = r.pand && r.pand.bouwjaar;
   if(bj && a.bouwjaar){
@@ -474,68 +470,6 @@ function analyse(d){
     d.analyse.wozBuurtGem=b.wozGem;
   }
   if(!S.length) S.push({niveau:'grijs', titel:'Geen vergelijking mogelijk', tekst:'Vul de advertentiegegevens aan om afwijkingen te laten berekenen.'});
-}
-
-/* ============ Funda-parser ============ */
-const SECTIES=new Set(['Overdracht','Bouw','Oppervlakten en inhoud','Indeling','Energie','Kadastrale gegevens','Buitenruimte','Bergruimte','Garage','Parkeergelegenheid','VvE (Vereniging van Eigenaren)','Nieuwbouw','Kosten','Isolatie']);
-const STOP=/^(Bekijk alle kenmerken|Populariteit|Buurt|Advertentie)$/;
-const BLOCK=new Set(['P','DIV','LI','UL','OL','H1','H2','H3','H4','TR','TD','TH','DT','DD','SECTION','BR','TABLE','SPAN','A','BUTTON','SUMMARY']);
-function domToText(node,out){ node.childNodes.forEach(n=>{
-  if(n.nodeType===3){out.push(n.nodeValue);return;} if(n.nodeType!==1) return;
-  const t=n.tagName; if(t==='SCRIPT'||t==='STYLE'||t==='NOSCRIPT'||t==='SVG') return;
-  const b=BLOCK.has(t); if(b) out.push('\n'); if(t==='IMG'&&n.alt) out.push('\n'+n.alt+'\n');
-  domToText(n,out); if(b) out.push('\n'); }); }
-function parseFunda(raw){
-  const isHtml=/<(html|body|div|head|script)[\s>]/i.test(raw);
-  let text=raw, html=null, title=null;
-  if(isHtml){ html=raw; const doc=new DOMParser().parseFromString(raw,'text/html'); title=(doc.querySelector('title')||{}).textContent||null; const o=[]; domToText(doc.body||doc,o); text=o.join(''); }
-  const lines=text.replace(/\u00a0/g,' ').split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
-  if(lines.length<10) throw new Error('Te weinig tekst herkend. Plak de volledige paginatekst of broncode.');
-  const w={kenmerken:{},percelen:[],buurt:{},populariteit:{},omschrijving:'',fotos:[],adres:{},prijs:{}};
-  let url=''; const lu=lines.find(x=>/funda\.nl\/detail\//.test(x));
-  if(lu) url=(lu.match(/https?:\/\/www\.funda\.nl\/detail\/\S+?\/\d+\/?/)||[''])[0];
-  if(!url&&html){ const m=html.match(/https?:\/\/www\.funda\.nl\/detail\/(?:koop|huur)\/[a-z0-9-]+\/[a-z0-9-]+\/\d+\//i); if(m) url=m[0]; }
-  w.url=url; const um=url.match(/\/detail\/(koop|huur)\/([^/]+)\/([^/]+)\/(\d+)/i); if(um){ w.soort=um[1]; w.id=um[4]; }
-  const tm=title&&title.match(/te (?:koop|huur):\s*(.+?)\s+(\d{4}\s?[A-Z]{2})\s+(.+?)\s*\|/);
-  if(tm){ w.adres.straat=tm[1]; w.adres.postcode=tm[2]; w.adres.plaats=tm[3]; }
-  else{
-    const f=lines.find(l=>/^Foto 1 van /.test(l)); if(f) w.adres.straat=f.replace(/^Foto 1 van /,'');
-    const pc=lines.find(l=>/\d{4}\s?[A-Z]{2}\s+[A-Za-z]/.test(l)&&!/^Foto/.test(l));
-    if(pc){ const m=pc.match(/(\d{4})\s?([A-Z]{2})\s+([A-Za-z' -]+)/); if(m){ w.adres.postcode=m[1]+' '+m[2]; w.adres.plaats=m[3].trim(); } }
-    if(!w.adres.straat&&um) w.adres.straat=um[3].replace(/^(huis|appartement|woning)-/,'').replace(/-/g,' ').replace(/^\w/,c=>c.toUpperCase());
-  }
-  const pm=lines.map(l=>l.match(/€\s?([\d.]{4,})\s?(k\.k\.|v\.o\.n\.|kosten koper|vrij op naam)/i)).find(Boolean);
-  if(pm){ w.prijs.vraagprijs=nlNum(pm[1]); w.prijs.conditie=/k\.k|kosten koper/i.test(pm[2])?'k.k.':'v.o.n.'; }
-  const oi=lines.findIndex(l=>l==='Omschrijving');
-  if(oi>-1){ const b=[]; for(let i=oi+1;i<lines.length;i++){ if(/^(Lees de volledige omschrijving|Kenmerken|Advertentie)$/.test(lines[i]))break; b.push(lines[i]); } w.omschrijving=b.join('\n'); }
-  let ki=lines.findIndex((l,i)=>l==='Kenmerken'&&lines.slice(i+1,i+4).some(x=>SECTIES.has(x)));
-  if(ki===-1) throw new Error('Geen kenmerkenblok gevonden — is dit een Funda-detailpagina?');
-  let sec=null,groep=null,perc=null;
-  for(let i=ki+1;i<lines.length;i++){
-    const l=lines[i]; if(STOP.test(l)) break;
-    if(SECTIES.has(l)){ sec=l; groep=null; perc=null; w.kenmerken[sec]=w.kenmerken[sec]||{}; continue; }
-    if(!sec) continue; if(l==='Kadastrale kaart') continue;
-    if(sec==='Kadastrale gegevens'&&/^[A-Z][A-Z .'-]+ [A-Z]{1,2} \d+$/.test(l)){ perc={perceel:l}; w.percelen.push(perc); continue; }
-    if(l==='Gebruiksoppervlakten'){ groep=l; continue; }
-    const v=lines[i+1]; if(v==null||SECTIES.has(v)||STOP.test(v)) continue;
-    if(groep&&!/^(Wonen|Overige inpandige ruimte|Gebouwgebonden buitenruimte|Externe bergruimte)$/.test(l)) groep=null;
-    if(perc) perc[l]=v; else w.kenmerken[sec][groep?`${groep} – ${l}`:l]=v;
-    i++;
-  }
-  ['Bekeken','Bewaard','Op Funda'].forEach(lab=>{ const i=lines.findIndex((l,j)=>l===lab&&j>ki); if(i>0) w.populariteit[lab]=lines[i-1]; });
-  const set=new Set(); (String(html||text).match(/https:\/\/cloud\.funda\.nl\/valentina_media\/[\d/]+\.jpg/g)||[]).forEach(u=>set.add(u)); w.fotos=[...set];
-  const g=(s,l)=>w.kenmerken[s]&&w.kenmerken[s][l];
-  w.samenvatting={
-    wonen:nlNum(g('Oppervlakten en inhoud','Gebruiksoppervlakten – Wonen')), overigInpandig:nlNum(g('Oppervlakten en inhoud','Gebruiksoppervlakten – Overige inpandige ruimte')),
-    gebouwgebonden:nlNum(g('Oppervlakten en inhoud','Gebruiksoppervlakten – Gebouwgebonden buitenruimte')), externeBerging:nlNum(g('Oppervlakten en inhoud','Gebruiksoppervlakten – Externe bergruimte')),
-    perceel:nlNum(g('Oppervlakten en inhoud','Perceel')), inhoud:nlNum(g('Oppervlakten en inhoud','Inhoud')),
-    bouwjaar:nlNum(g('Bouw','Bouwjaar')), energielabel:g('Energie','Energielabel')||null,
-    soortWoning:g('Bouw','Soort woonhuis')||g('Bouw','Soort appartement')||null,
-    kamers:nlNum(g('Indeling','Aantal kamers')), badkamers:nlNum(g('Indeling','Aantal badkamers')), woonlagen:nlNum(g('Indeling','Aantal woonlagen')),
-    status:g('Overdracht','Status')||null, eigendom:g('Kadastrale gegevens','Eigendomssituatie')||(w.percelen[0]&&w.percelen[0].Eigendomssituatie)||null
-  };
-  if(w.prijs.vraagprijs==null){ const vp=g('Overdracht','Vraagprijs'); if(vp) w.prijs.vraagprijs=nlNum((vp.match(/€\s?([\d.]+)/)||[])[1]); }
-  return w;
 }
 
 /* ============ kaarten ============ */
@@ -623,21 +557,24 @@ function render(d, idx){
     </table></div>
     <p class="small">De BAG registreert de gebruiksoppervlakte van het hele verblijfsobject; de meetinstructie NEN 2580 splitst dat in wonen en overige inpandige ruimte. Vergelijk daarom de som, niet alleen het woonoppervlak. Gebouwgebonden buitenruimte en externe bergruimte tellen in geen van beide mee.</p>`;
   } else {
-    vergelijk=`<p class="small">Geen advertentie-oppervlakte ingevuld. Voeg wonen m² (en eventueel overige inpandige m²) toe via "Advertentiegegevens toevoegen" of plak de Funda-pagina om de afwijking te berekenen.</p>
+    vergelijk=`<p class="small">Geen advertentie-oppervlakte ingevuld. Vul wonen m² (en eventueel overige inpandige m²) in om de afwijking te berekenen.</p>
     ${a.bouwjaar||pand.bouwjaar||perc.grootte?`<table><tr><th>Grootheid</th><th class="num">Advertentie</th><th class="num">Register</th></tr>
       <tr><td>Gebruiksoppervlakte</td><td class="num">${m2(a.wonen)}</td><td class="num">${m2(vbo.oppervlakte)}</td></tr>
       <tr><td>Perceel</td><td class="num">${m2(a.perceel)}</td><td class="num">${m2(r.percelenTotaal||perc.grootte)}</td></tr>
       <tr><td>Bouwjaar</td><td class="num">${a.bouwjaar??'–'}</td><td class="num">${pand.bouwjaar??'–'}</td></tr></table>`:''}`;
   }
-  const geld = (a.vraagprijs&&vbo.oppervlakte)?`<h3>Wat dit betekent voor de prijs</h3>
+  const geld = ((a.vraagprijs||a.bod)&&vbo.oppervlakte)?`<h3>Wat dit betekent voor de prijs</h3>
     <table>
-      <tr><td class="k">Vraagprijs</td><td>${eur(a.vraagprijs)}</td></tr>
-      ${an.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>`:''}
-      <tr><td class="k">Prijs per m² op BAG-oppervlakte</td><td>${eur(an.prijsPerM2Bag)}</td></tr>
+      ${a.vraagprijs?`<tr><td class="k">Vraagprijs</td><td>${eur(a.vraagprijs)}</td></tr>`:''}
+      ${an.bod?`<tr><td class="k">Al geboden / voorgenomen bod</td><td>${eur(an.bod.bod)}${an.bod.verschil!=null?` <span class="small">— ${an.bod.verschil>=0?'+ ':'− '}${eur(Math.abs(an.bod.verschil))} (${pct(an.bod.verschilPct)}) t.o.v. de vraagprijs</span>`:''}</td></tr>`:''}
+      ${an.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak (vraagprijs)</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>`:''}
+      ${an.prijsPerM2Bag?`<tr><td class="k">Prijs per m² op BAG-oppervlakte (vraagprijs)</td><td>${eur(an.prijsPerM2Bag)}</td></tr>`:''}
+      ${an.bod&&an.bod.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak (bod)</td><td>${eur(an.bod.prijsPerM2Advertentie)}</td></tr>`:''}
+      ${an.bod&&an.bod.prijsPerM2Bag?`<tr><td class="k">Prijs per m² op BAG-oppervlakte (bod)</td><td>${eur(an.bod.prijsPerM2Bag)}</td></tr>`:''}
       ${an.waardeEffect!=null?`<tr><td class="k">Effect van de m²-afwijking bij gelijke prijs per m²</td><td>${eur(an.waardeEffect)}</td></tr>`:''}
       ${b&&b.wozGem?`<tr><td class="k">Gemiddelde WOZ-waarde in de buurt (CBS, ${b.jaar})</td><td>${eur(b.wozGem)} <span class="small">— buurtgemiddelde, geen indicatie voor dit object</span></td></tr>`:''}
     </table>
-    <p class="small">Rekenkundig afgeleid uit de vraagprijs. Dit is geen taxatie en geen waardebepaling in de zin van de NRVT- of NWWI-normen en mag niet als zodanig in een adviesdossier worden opgenomen.</p>`:'';
+    <p class="small">Rekenkundig afgeleid uit vraagprijs en bod. Dit is geen taxatie en geen waardebepaling in de zin van de NRVT- of NWWI-normen en mag niet als zodanig in een adviesdossier worden opgenomen.</p>`:'';
 
   /* --- perceel & pand --- */
   const percelenTabel=(r.percelen&&r.percelen.length>1)?`<h3>Kadastrale percelen uit de advertentie</h3><table><tr><th>Aanduiding</th><th class="num">Grootte (BRK)</th><th>Soort</th></tr>${r.percelen.map(x=>`<tr><td>${esc(x.aanduiding)}</td><td class="num">${m2(x.grootte)}</td><td>${esc(x.soort_grootte||'')}</td></tr>`).join('')}<tr class="tot"><td>Totaal</td><td class="num">${m2(r.percelenTotaal)}</td><td></td></tr></table>`:'';
@@ -668,12 +605,6 @@ function render(d, idx){
   }
 
   /* --- advertentie --- */
-  const fundaBlok = f?`<details><summary>Alle advertentiegegevens (Funda)</summary>
-      ${Object.keys(f.kenmerken).map(s=>`<h3>${esc(s)}</h3>${kv(f.kenmerken[s])}`).join('')}
-      ${f.percelen.length?`<h3>Kadastrale gegevens in de advertentie</h3><table><tr><th>Perceel</th><th>Oppervlakte</th><th>Eigendom</th></tr>${f.percelen.map(p=>`<tr><td>${esc(p.perceel)}</td><td>${esc(p.Oppervlakte||'')}</td><td>${esc(p.Eigendomssituatie||'')}</td></tr>`).join('')}</table>`:''}
-      ${f.fotos.length?`<h3>Foto's (${f.fotos.length})</h3><div class="fotos">${f.fotos.slice(0,12).map(u=>`<a href="${esc(u)}?options=width=1440" target="_blank" rel="noopener"><img loading="lazy" src="${esc(u)}?options=width=320" alt=""></a>`).join('')}</div>`:''}
-      ${f.omschrijving?`<h3>Omschrijving</h3><div class="oms">${esc(f.omschrijving)}</div>`:''}
-    </details>`:'';
   const advChips=[a.soortWoning, a.energielabel?'Energielabel '+a.energielabel:null, a.bouwjaar?'Bouwjaar '+a.bouwjaar:null, a.wonen?'Wonen '+m2(a.wonen):null, a.perceel?'Perceel '+m2(a.perceel):null, a.eigendom].filter(Boolean);
 
   /* --- hero --- */
@@ -682,7 +613,7 @@ function render(d, idx){
       <div><span class="eyebrow">Dossier ${idx+1}</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
       <p class="sub">${esc([adr.buurt,adr.gemeente,adr.provincie].filter(Boolean).join(' · '))}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">advertentie</a>`:''}</p>
       ${oordeel}</div>
-      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small></div>
+      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
     </div>
     <div class="kpis">
       <div class="kpi"><span class="lab">Oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em> gebruiksoppervlakte${a.wonen?' · advertentie '+m2(a.wonen+(a.overigInpandig||0)):''}</span></div>
@@ -700,7 +631,6 @@ function render(d, idx){
     + sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld)
     + sectie('03 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('04 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
-    + (f?sectie('05 / Advertentie','Advertentiegegevens','Zoals door jou geplakt uit de Funda-detailpagina','geel',fundaBlok):'')
     + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p>`;
 }
 
@@ -713,9 +643,9 @@ function renderAll(){
   if(!dossiers.length){ $('overzicht').classList.add('hidden'); renderSticky(); return; }
   $('overzicht').classList.remove('hidden'); renderSticky();
   const t=$('tblAll');
-  t.innerHTML=`<tr><th>Adres</th><th class="num">Vraagprijs</th><th class="num">Adv. m²</th><th class="num">BAG m²</th><th class="num">Verschil</th><th class="num">€/m² BAG</th><th class="num">Perceel BRK</th><th>Bouwjaar</th><th>Gebruiksdoel</th><th>Signalen</th><th></th></tr>`+
+  t.innerHTML=`<tr><th>Adres</th><th class="num">Vraagprijs</th><th class="num">Bod</th><th class="num">Adv. m²</th><th class="num">BAG m²</th><th class="num">Verschil</th><th class="num">€/m² BAG</th><th class="num">Perceel BRK</th><th>Bouwjaar</th><th>Gebruiksdoel</th><th>Signalen</th><th></th></tr>`+
   dossiers.map((d,i)=>{ const r=d.registers,an=d.analyse||{},o=an.oppervlakte,rood=d.signalen.filter(s=>s.niveau==='rood').length,geel=d.signalen.filter(s=>s.niveau==='geel').length;
-    return `<tr><td><a href="#dossier-${i}">${esc((r.adres&&r.adres.weergavenaam)||'')}</a></td><td class="num">${eur(d.advertentie.vraagprijs)}</td>
+    return `<tr><td><a href="#dossier-${i}">${esc((r.adres&&r.adres.weergavenaam)||'')}</a></td><td class="num">${eur(d.advertentie.vraagprijs)}</td><td class="num">${eur(d.advertentie.bod)}</td>
     <td class="num">${o?m2(o.advertentieTotaal):'–'}</td><td class="num">${m2(r.verblijfsobject&&r.verblijfsobject.oppervlakte)}</td>
     <td class="num">${o?pct(o.verschilPct):'–'}</td><td class="num">${eur(an.prijsPerM2Bag)}</td><td class="num">${m2(r.percelenTotaal||(r.perceel&&r.perceel.grootte))}</td>
     <td>${(r.pand&&r.pand.bouwjaar)??'–'}</td><td>${esc((r.verblijfsobject&&r.verblijfsobject.gebruiksdoel)||'–')}</td>
@@ -729,6 +659,9 @@ function renderAll(){
     const sel=dossiers.slice(-3);
     const rows=[
       ['Vraagprijs',d=>eur(d.advertentie.vraagprijs)],
+      ['Al geboden / bod',d=>eur(d.advertentie.bod)],
+      ['Bod t.o.v. vraagprijs',d=>d.analyse.bod&&d.analyse.bod.verschilPct!=null?pct(d.analyse.bod.verschilPct):'–'],
+      ['€ per m² (BAG) op bod',d=>d.analyse.bod?eur(d.analyse.bod.prijsPerM2Bag):'–'],
       ['Advertentie m² (wonen + overig)',d=>d.analyse.oppervlakte?m2(d.analyse.oppervlakte.advertentieTotaal):m2(d.advertentie.wonen)],
       ['BAG-oppervlakte',d=>m2(d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte)],
       ['Verschil',d=>d.analyse.oppervlakte?pct(d.analyse.oppervlakte.verschilPct):'–'],
@@ -752,7 +685,7 @@ function renderResult(){ $('result').innerHTML=dossiers.map(render).join(''); }
 function flat(d){
   const r=d.registers,an=d.analyse||{},o=an.oppervlakte||{},a=d.advertentie,b=r.buurt||{},om=r.omgeving||{};
   return {adres:(r.adres&&r.adres.weergavenaam)||'', gemeente:r.adres&&r.adres.gemeente, buurt:r.adres&&r.adres.buurt, buurtcode:r.adres&&r.adres.buurtcode,
-    vraagprijs:a.vraagprijs, advertentie_wonen:a.wonen, advertentie_overig:a.overigInpandig, advertentie_totaal:o.advertentieTotaal,
+    vraagprijs:a.vraagprijs, bod:a.bod, bod_verschil_pct:an.bod&&an.bod.verschilPct!=null?Math.round(an.bod.verschilPct*10)/10:null, prijs_per_m2_bag_bod:an.bod&&an.bod.prijsPerM2Bag, advertentie_wonen:a.wonen, advertentie_overig:a.overigInpandig, advertentie_totaal:o.advertentieTotaal,
     bag_oppervlakte:r.verblijfsobject&&r.verblijfsobject.oppervlakte, verschil_m2:o.verschil, verschil_pct:o.verschilPct!=null?Math.round(o.verschilPct*10)/10:null,
     prijs_per_m2_bag:an.prijsPerM2Bag, bag_gebruiksdoel:r.verblijfsobject&&r.verblijfsobject.gebruiksdoel, bag_status:r.verblijfsobject&&r.verblijfsobject.status,
     bag_verblijfsobject_id:r.verblijfsobject&&r.verblijfsobject.identificatie, bag_pand_id:r.pand&&r.pand.identificatie,
@@ -793,13 +726,10 @@ $('q').oninput=()=>{ const el=$('qHint'), v=$('q').value.trim(); el.className='h
   if(isFundaUrl(v)){ try{ const a=adresUitUrl(v); el.className='hint herkend'; el.textContent=`Herkend uit de link: ${a.straat} ${a.huisnummer}${a.toevoeging?' '+a.toevoeging:''}, ${a.plaats} (${a.soort}, Funda-ID ${a.id})`; } catch(e){ el.textContent='Nog geen adres herkend in deze link.'; } }
   else el.textContent=/\d/.test(v)?'Adres wordt opgezocht in de PDOK Locatieserver.':'Voeg een huisnummer toe.'; };
 $('q').onkeydown=e=>{ if(e.key==='Enter') $('btnGo').click(); };
-$('btnOpties').onclick=()=>{ $('opties').classList.toggle('hidden'); $('plak').classList.add('hidden'); };
-$('btnPlak').onclick=()=>{ $('plak').classList.toggle('hidden'); $('opties').classList.add('hidden'); };
-$('btnLeegF').onclick=()=>{ $('src').value=''; };
-$('btnVoorbeeld').onclick=()=>{ $('q').value='Molenweg 34, Amstelveen'; $('opties').classList.remove('hidden'); $('oVraagprijs').value='2.050.000'; $('oWonen').value='217'; $('oOverig').value='7'; $('oPerceel').value='336'; $('oBouwjaar').value='1935'; $('q').oninput(); $('btnGo').click(); };
+$('btnVoorbeeld').onclick=()=>{ $('q').value='Molenweg 34, Amstelveen'; $('oVraagprijs').value='2.050.000'; $('oBod').value='2.100.000'; $('oWonen').value='217'; $('oOverig').value='7'; $('oPerceel').value='336'; $('oBouwjaar').value='1935'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ vraagprijs:nlNum($('oVraagprijs').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
+  return Object.assign({ vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
 }
 $('btnGo').onclick=()=>{
   const v=$('q').value.trim(); const m=$('msg');
@@ -811,13 +741,6 @@ $('btnGo').onclick=()=>{
     if(!/\d/.test(v)){ m.className='msg err'; m.textContent='Vul minimaal straat met huisnummer in.'; return; }
     run({q:v, advertentie:advertentieUitOpties({adres:v})}, $('btnGo'));
   }
-};
-$('btnFunda').onclick=()=>{
-  let f; try{ f=parseFunda($('src').value); }catch(e){ $('msg').className='msg err'; $('msg').textContent=e.message; return; }
-  const s=f.samenvatting;
-  run({q:[f.adres.straat,f.adres.postcode,f.adres.plaats].filter(Boolean).join(' '), funda:f, percelen:f.percelen,
-    advertentie:{adres:[f.adres.straat,f.adres.postcode,f.adres.plaats].filter(Boolean).join(', '), vraagprijs:f.prijs.vraagprijs, wonen:s.wonen, overigInpandig:s.overigInpandig, perceel:s.perceel,
-      bouwjaar:s.bouwjaar, energielabel:s.energielabel, soortWoning:s.soortWoning, eigendom:s.eigendom, url:f.url}}, $('btnFunda'));
 };
 
 async function run(input, btn){
@@ -831,7 +754,7 @@ async function run(input, btn){
     m.className='msg '+(rood?'err':'ok');
     m.textContent = rood?`Dossier opgebouwd met ${rood} signaal${rood>1?'en':''} dat aandacht vraagt.`:geel?`Dossier opgebouwd met ${geel} aandachtspunt${geel>1?'en':''}.`:'Dossier opgebouwd.';
     try{ history.replaceState(null,'','#q='+encodeURIComponent(input.q)); }catch(e){}
-    ['oVraagprijs','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value='');
+    ['oVraagprijs','oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value='');
     setTimeout(()=>{ const el=$('dossier-'+(dossiers.length-1)); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },50);
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
   finally{ btn.disabled=false; $('btnGo').disabled=false; $('skelet').classList.add('hidden'); }
@@ -846,6 +769,7 @@ $('btnPrint').onclick=()=>{
     return `<h2>${esc((r.adres&&r.adres.weergavenaam)||'')}</h2>
     <table>
       <tr><td>Vraagprijs</td><td>${eur(d.advertentie.vraagprijs)}</td></tr>
+      ${an.bod?`<tr><td>Al geboden / bod</td><td>${eur(an.bod.bod)}${an.bod.verschilPct!=null?' ('+pct(an.bod.verschilPct)+' t.o.v. vraagprijs)':''}${an.bod.prijsPerM2Bag?' · '+eur(an.bod.prijsPerM2Bag)+' per m² BAG':''}</td></tr>`:''}
       <tr><td>Advertentie totaal binnen verblijfsobject</td><td>${m2(o.advertentieTotaal)}</td></tr>
       <tr><td>BAG-oppervlakte</td><td>${m2(r.verblijfsobject&&r.verblijfsobject.oppervlakte)}</td></tr>
       <tr><td>Verschil</td><td>${o.verschilPct!=null?pct(o.verschilPct):'–'}</td></tr>
