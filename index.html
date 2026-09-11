@@ -154,6 +154,11 @@
   ol.stappen{margin:0;padding-left:22px}
   ol.stappen li{padding:6px 0;font-size:14px}
   [hidden]{display:none!important}
+  .gevel{position:relative;margin:-22px -24px 20px;height:340px;background:#E9EEF3;border-radius:var(--r) var(--r) 0 0;overflow:hidden}
+  .gevel iframe{width:100%;height:100%;border:0;display:block}
+  .gevel-link{position:absolute;top:12px;right:12px;background:rgba(0,48,87,.88);color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;text-decoration:none}
+  .gevel-link:hover{background:var(--primary)}
+  @media(max-width:600px){.gevel{height:220px;margin:-22px -24px 16px}}
   @media print{header,.zoekpanel,.sticky,.btns,.del{display:none!important} .panel{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
@@ -252,6 +257,10 @@ const BRK = 'https://api.pdok.nl/kadaster/brk-kadastrale-kaart/ogc/v1/collection
 const CBS = 'https://service.pdok.nl/cbs/wijkenbuurten/2024/wfs/v1_0';
 const LUCHT = 'https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0';
 const KADWMS = 'https://service.pdok.nl/kadaster/kadastralekaart/wms/v5_0';
+const BGT = 'https://api.pdok.nl/lv/bgt/ogc/v1/collections';
+// Optioneel: vul een (gratis) Google Maps Embed API-sleutel in voor de officiële Street View-embed.
+// Leeg = embed zonder sleutel (werkt, maar is geen gedocumenteerde Google-dienst).
+const GOOGLE_EMBED_KEY = '';
 
 async function getJson(url){
   const r = await fetch(url, {headers:{'Accept':'application/json'}});
@@ -306,6 +315,31 @@ async function bagOmgeving(pt){
   if(!bj.length) return null;
   return {aantal:bj.length, voor1970:bj.filter(b=>b<1970).length, pctVoor1970:Math.round(100*bj.filter(b=>b<1970).length/bj.length),
     mediaan:bj[Math.floor(bj.length/2)], oudste:bj[0], nieuwste:bj[bj.length-1]};
+}
+async function streetviewCamera(pt){
+  // Camera op de dichtstbijzijnde rijbaan (BGT wegdeel), kijkrichting naar het adrespunt: zo toont Street View de voorgevel.
+  const d=0.0008;
+  const j=await getJson(`${BGT}/wegdeel/items?bbox=${bboxAround(pt,d)}&limit=200&f=json`);
+  const kx=111320*Math.cos(pt.lat*Math.PI/180), ky=110540;
+  const toXY=([x,y])=>[(x-pt.lon)*kx,(y-pt.lat)*ky];
+  const seg=([ax,ay],[bx,by])=>{ const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy; const t=L?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L)):0; const px=ax+t*dx,py=ay+t*dy; return [Math.hypot(px,py),px,py]; };
+  let best=null;
+  (j.features||[]).forEach(f=>{
+    if(!/rijbaan|woonerf|erf/i.test((f.properties&&f.properties.functie)||'')) return;
+    const g=f.geometry||{}; const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[];
+    polys.forEach(poly=>poly.forEach(ring=>{ const p=ring.map(toXY); for(let i=0;i<p.length-1;i++){ const [dd,px,py]=seg(p[i],p[i+1]); if(!best||dd<best.d) best={d:dd,px,py}; } }));
+  });
+  if(!best||best.d>80) return null;
+  const n=Math.hypot(best.px,best.py)||1, cx=best.px+best.px/n*2, cy=best.py+best.py/n*2;
+  return {lat:pt.lat+cy/ky, lon:pt.lon+cx/kx, heading:Math.round((Math.atan2(-cx,-cy)*180/Math.PI+360)%360), afstand:Math.round(best.d)};
+}
+function streetviewSrc(sv){
+  const ll=`${sv.lat.toFixed(6)},${sv.lon.toFixed(6)}`;
+  if(GOOGLE_EMBED_KEY) return `https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(GOOGLE_EMBED_KEY)}&location=${ll}${sv.heading!=null?'&heading='+sv.heading:''}&pitch=5&fov=80`;
+  return `https://maps.google.com/maps?layer=c&cbll=${ll}&cbp=12,${sv.heading??0},0,0,0&output=svembed`;
+}
+function streetviewLink(sv){
+  return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${sv.lat.toFixed(6)},${sv.lon.toFixed(6)}${sv.heading!=null?'&heading='+sv.heading:''}`;
 }
 async function brkPerceel(pt){
   const d=0.00002;
@@ -416,7 +450,11 @@ async function bouwDossier(input){
     try{ const o=await bagOmgeving(pt); if(o){ d.registers.omgeving=o; bronStatus('omg','ok',o.pctVoor1970+'% vóór 1970'); } else bronStatus('omg','fail',''); }
     catch(e){ d.fouten.push('BAG omgeving: '+e.message); bronStatus('omg','fail','fout'); }
   })();
-  await Promise.all([pVbo,pBrk,pCbs,pOmg]);
+  const pSv = (async()=>{
+    try{ d.streetview=await streetviewCamera(pt); }catch(e){ d.streetview=null; }
+    if(!d.streetview) d.streetview={lat:pt.lat, lon:pt.lon, heading:null};
+  })();
+  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv]);
 
   analyse(d);
   return d;
@@ -626,7 +664,9 @@ function render(d, idx){
 
   /* --- hero --- */
   const tab=d.tab||'dossier';
+  const sv=d.streetview;
   const hero=`<div class="panel" id="dossier-${idx}">
+    ${sv?`<div class="gevel"><iframe src="${esc(streetviewSrc(sv))}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View van ${esc(adr.weergavenaam||'de woning')}" allowfullscreen></iframe><a class="gevel-link" href="${esc(streetviewLink(sv))}" target="_blank" rel="noopener">Open in Google Street View ↗</a></div>`:''}
     <div class="hero">
       <div><span class="eyebrow">Dossier ${idx+1}</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
       <p class="sub">${esc([adr.buurt,adr.gemeente,adr.provincie].filter(Boolean).join(' · '))}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">advertentie</a>`:''}</p>
