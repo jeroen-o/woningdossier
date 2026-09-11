@@ -833,6 +833,7 @@ function render(d, idx){
     + `<div data-pane="bied"${tab!=='bied'?' hidden':''}>${biedHtml(d,idx)}</div>`
     + `<div data-pane="verkoop"${tab!=='verkoop'?' hidden':''}>${verkoopHtml(d,idx)}</div>`
     + wozKnop(d)
+    + duurzaamKnop(d)
     + `</div>`;
 }
 
@@ -1377,6 +1378,17 @@ const Fund = (()=>{
   return {ophalen, samenstellen, bereken, uit, kpi};
 })();
 
+function duurzaamLink(adr){
+  // Prefill: ?postal_code=3825%20BK&house_number=1
+  if(!adr||!adr.postcode||!adr.huisnummer) return null;
+  const pc=String(adr.postcode).replace(/\s+/g,'').toUpperCase().replace(/^(\d{4})([A-Z]{2})$/,'$1 $2');
+  return 'https://www.duurzaamheidsprofiel.nl/?postal_code='+encodeURIComponent(pc)+'&house_number='+encodeURIComponent(adr.huisnummer);
+}
+function duurzaamKnop(d){
+  const url=duurzaamLink(d.registers.adres); if(!url) return '';
+  return `<div class="panel woz-knop duurzaam-knop"><div><h2 style="margin:0">Duurzaamheidsprofiel van deze woning</h2><p class="small" style="margin:4px 0 0">Bekijk verduurzamingsmogelijkheden, besparing en extra leenruimte voor energiebesparende maatregelen op duurzaamheidsprofiel.nl.</p></div>
+    <a class="btn-woz" href="${esc(url)}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a></div>`;
+}
 function rapportAfdrukken(i){
   const d=dossiers[i], src=$('dw-'+i); if(!d||!src) return;
   const tab=d.tab||'dossier';
