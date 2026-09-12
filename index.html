@@ -176,6 +176,8 @@
   .chip-facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .chip-facts span{font-size:12px;padding:5px 10px;border-radius:99px;background:var(--bg);color:var(--text);border:1px solid var(--line)}
   .dtabs{display:flex;gap:10px;margin:20px 0 0;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+  .dtabs .tab-link{display:inline-block;background:#fff;border:2px solid var(--primary-2);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px;text-decoration:none}
+  .dtabs .tab-link:hover{background:var(--bg)}
   .dtabs button[data-tab]{background:#FCEBCF;border:2px solid var(--accent);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px}
   .dtabs button[data-tab]:hover{background:#F6D9A6;box-shadow:0 2px 8px rgba(229,161,56,.35)}
   .dtabs button[data-tab][aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--primary);box-shadow:0 3px 10px rgba(229,161,56,.45)}
@@ -833,7 +835,7 @@ function render(d, idx){
         ${Object.entries(b.afstand).map(([k,v])=>stat(k,v!=null?num(v,1)+' km':null)).join('')}
         ${b.gas||b.elektra?`<h3>Energie (buurtgemiddelde)</h3>${stat('Gasverbruik',b.gas?num(b.gas)+' m³/jaar':null)}${stat('Elektriciteit',b.elektra?num(b.elektra)+' kWh/jaar':null)}`:''}</div>
     </div>
-    <p class="small" style="margin-top:12px">Bron: CBS Wijken en Buurten ${b.jaar} via PDOK${b.wozJaar!==b.jaar?`, WOZ uit CBS Kerncijfers wijken en buurten ${b.wozJaar} via StatLine`:''} (buurt ${esc(b.buurt)}, ${esc(b.buurtcode)}) en BAG via PDOK.${b.woningM2?` Woningoppervlakte: gebruiksoppervlakte van ${num(b.woningM2.aantal)} verblijfsobjecten met woonfunctie binnen de buurtgrens (huur en koop, woningen en appartementen)${b.woningM2.afgekapt?'; grote buurt, eerste 10.000 objecten meegeteld':''}.`:''} Buurtcijfers zeggen iets over de omgeving, niet over dit object.</p>`;
+    `;
   }
 
   /* --- advertentie --- */
@@ -868,7 +870,7 @@ function render(d, idx){
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -879,9 +881,8 @@ function render(d, idx){
     + sectie('04 / WOZ','WOZ-waarde over de jaren','Vastgestelde WOZ-waarden per peildatum, ontwikkeling en verhouding tot vraagprijs en buurt','geel',wozBlok(d,idx),`woz-${idx}`)
     + sectie('05 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('06 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
-    + `<p class="small" style="margin:-8px 0 26px">${d.fouten.length?`Niet opgehaald: ${esc(d.fouten.join(' · '))}. `:''}Bronnen: BAG en BRK Kadastrale Kaart via PDOK, CBS Wijken en Buurten via PDOK, adres via PDOK Locatieserver, WOZ via WOZ-waardeloket of handmatige invoer. Opgehaald op ${new Date(d.gemaakt).toLocaleString('nl-NL')}.</p></div>`
+    + `${d.fouten.length?`<p class="small" style="margin:-8px 0 26px">Niet opgehaald: ${esc(d.fouten.join(' · '))}.</p>`:''}</div>`
     + `<div data-pane="fund"${tab!=='fund'?' hidden':''}>${Fund.uit(d,idx)}</div>`
-    + duurzaamKnop(d)
     + `</div>`;
 }
 
@@ -995,10 +996,19 @@ function biedHtml(d,idx){
     vbo.gebruiksdoel&&!/woonfunctie/i.test(vbo.gebruiksdoel)?['Gebruik als woning','Voorbehoud dat bewoning is toegestaan volgens omgevingsplan en vergunningen.']:null
   ].filter(Boolean);
 
-  const vragen=['Waarom wordt de woning verkocht en wat is de gewenste opleverdatum?','Is er een meetrapport volgens NEN 2580?','Zijn er bekende gebreken, lekkages of vochtproblemen? Vraag de ingevulde vragenlijst verkoper op.','Welke zaken blijven achter of zijn over te nemen (lijst van zaken)?','Wat is het energielabel en welke verduurzaming is uitgevoerd, met facturen?'];
-  if(pand.bouwjaar&&pand.bouwjaar<1970) vragen.push('Is funderingsonderzoek gedaan, en is het pand bekend bij een gemeentelijk funderingsloket?');
-  if((pand.aantal_verblijfsobjecten||0)>1) vragen.push('Is de VvE actief, wat is de maandbijdrage en zijn er grote uitgaven gepland?');
-  if(/erfpacht/i.test(a.eigendom||'')) vragen.push('Wat zijn canon, looptijd en voorwaarden van de erfpacht, en is afkoop mogelijk?');
+  const vragen=[
+    'Waarom verkopen de eigenaren en hoe lang staat de woning te koop?',
+    'Zijn er al biedingen en hoe verloopt het biedproces (gunning, deadline, vraag- of bodemprijs)?',
+    'Welke gebreken zijn bekend (vragenlijst en lijst van zaken opvragen)?',
+    'Wat is de staat van fundering, dak, kozijnen, cv-ketel, elektra en isolatie? Is er een bouwkundig rapport?',
+    'Wat is het energielabel en welke verduurzaming is al gedaan?',
+    'Erfpacht of eigen grond? Bij erfpacht: canon, looptijd, afkoop.',
+    'Bij appartement: VvE-reserves, MJOP, bijdrage, splitsingsakte, actieve VvE?',
+    'Welke ontbindende voorwaarden zijn bespreekbaar (financiering, bouwkundige keuring)?',
+    'Zijn er bestemmingsplannen, bodemverontreiniging of asbest bekend?',
+    'Wat is de opleverdatum en wat blijft achter?'];
+  let fsc=null; if(d.fundering){ try{ fsc=Fund.bereken(d.fundering).score; }catch(e){} }
+  if((pand.bouwjaar&&pand.bouwjaar<1970)||(fsc&&fsc.cijfer<=5)) vragen.push('Zijn er signalen van funderingsproblemen (scheuren, scheve vloeren, klemmende deuren, hoogteverschil met buurpand) en is het pand bekend bij een gemeentelijk funderingsloket of het KCAF?'+(fsc&&fsc.cijfer<=5?' Het Funderingscijfer van deze woning ('+fsc.cijfer+'/10) geeft hier aanleiding toe.':''));
   if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) vragen.push('Welke kadastrale percelen worden precies geleverd?');
 
   const stappen=['Bezichtig en stel je vragen aan de verkopend makelaar.','Laat je maximale hypotheek berekenen door een erkend hypotheekadviseur, vóór je biedt.','Breng je bod schriftelijk uit met bedrag, voorbehouden, gewenste opleverdatum en geldigheidstermijn.','Mondelinge overeenstemming is nog geen koop: de koop komt pas tot stand bij een schriftelijke koopovereenkomst.','Na ontvangst van de getekende koopovereenkomst heb je 3 dagen wettelijke bedenktijd (art. 7:2 BW).','Laat taxatie en bouwkundige keuring uitvoeren binnen de termijn van de voorbehouden.','Regel de waarborgsom of bankgarantie (gebruikelijk 10% van de koopsom) en plan de overdracht bij de notaris.'];
