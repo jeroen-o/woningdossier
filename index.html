@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Woningdossier — advertentie versus registers</title>
+<title>PandWise — jouw complete woningdossier en woningwaarderapport</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -95,6 +95,7 @@
   .fc-schaal span.on{color:#fff;transform:scale(1.06)}
   .fc-corr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:12px 14px;margin-top:14px}
   .fc-corr input{width:110px;padding:9px 11px}
+  .fc-corr select{padding:9px 11px;font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff}
   .fc-corr button{padding:9px 16px}
   @media(max-width:560px){.fc-cijfer{width:88px;height:88px;font-size:44px}}
   .woz-knop{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-left:5px solid var(--accent)}
@@ -207,8 +208,8 @@
 <header>
   <div class="wrap">
     <div>
-      <h1>Woningdossier</h1>
-      <p>Bereken de woningwaarde en meer</p>
+      <h1>PandWise</h1>
+      <p>Jouw complete woningdossier en woningwaarderapport</p>
     </div>
     <div class="badgerow"><span>BAG · Kadaster</span><span>BRK · Kadaster</span><span>CBS Wijken &amp; Buurten</span><span>Geen account, geen opslag</span></div>
   </div>
@@ -285,7 +286,7 @@ const pctPlain = n => n==null?'–':n.toLocaleString('nl-NL',{maximumFractionDig
 const cbsVal = v => (v==null||v<=-99990)?null:v;
 
 /* ============ bronstatus ============ */
-const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', woz:'WOZ-waardeloket', fund:'Funderingscijfer'};
+const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', woz:'WOZ-waardeloket', fund:'Funderingscijfer', klim:'Klimaatcijfer'};
 function bronReset(){ $('bronnen').innerHTML = Object.entries(BRONNEN).map(([k,v])=>`<span id="b-${k}">${v}</span>`).join(''); }
 function bronStatus(k,cls,extra){ const el=$('b-'+k); if(el){ el.className=cls; el.textContent=BRONNEN[k]+(extra?' · '+extra:''); } }
 
@@ -601,6 +602,10 @@ async function bouwDossier(input){
     try{ const ix=await cbsPrijsindex(adr.gemeentecode); if(ix){ d._index=ix; bronStatus('idx','ok',ix.niveau+' · '+kwartaalTekst(ix.laatste.p)); } else bronStatus('idx','fail','niet beschikbaar'); }
     catch(e){ d.fouten.push('CBS prijsindex: '+e.message); bronStatus('idx','fail','fout'); }
   })();
+  const pKlim = (async()=>{
+    bronStatus('klim','busy');
+    try{ d.klimaat=await Klim.ophalen(d.registers.adres); }catch(e){ d.klimaat={kea:{},ep:null,ovik:null,labelOverride:null}; d.fouten.push('Klimaatcijfer: '+e.message); }
+  })();
   const pFund = (async()=>{
     bronStatus('fund','busy');
     try{ d._fundRaw=await Fund.ophalen(d.registers.adres); }catch(e){ d.fouten.push('Funderingscijfer: '+e.message); }
@@ -615,12 +620,13 @@ async function bouwDossier(input){
     try{ d.streetview=await streetviewCamera(pt); }catch(e){ d.streetview=null; }
     if(!d.streetview) d.streetview={lat:pt.lat, lon:pt.lon, heading:null};
   })();
-  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz]);
+  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz,pKlim]);
   if(d._fundRaw){
     try{ d.fundering=Fund.samenstellen(d._fundRaw,d); const sc=Fund.bereken(d.fundering).score; bronStatus('fund','ok',sc.cijfer+'/10 · '+sc.titel); }
     catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
     delete d._fundRaw;
   } else bronStatus('fund','fail','niet beschikbaar');
+  try{ const kr=d.fundering?Klim.bereken(d):null; if(kr) bronStatus('klim','ok',num(kr.eind.cijfer,1)+'/10'); else bronStatus('klim','fail','niet beschikbaar'); }catch(e){ bronStatus('klim','fail','fout'); }
   if(d._index){
     const bu=d.registers.buurt, peiljaar=bu?bu.wozPeiljaar:null, ix=d._index, peil=peiljaar?indexOp1Januari(ix,peiljaar):null;
     d.registers.marktindex = peil ? {niveau:ix.niveau, tabel:ix.tabel, peildatum:'1 januari '+peiljaar, indexPeil:Math.round(peil.waarde*10)/10, peilUitleg:peil.uitleg,
@@ -853,7 +859,7 @@ function render(d, idx){
   const hero=`<div class="panel" id="dossier-${idx}">
     ${sv?`<div class="gevel"><iframe src="${esc(streetviewSrc(sv))}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View van ${esc(adr.weergavenaam||'de woning')}" allowfullscreen></iframe><a class="gevel-link" href="${esc(streetviewLink(sv))}" target="_blank" rel="noopener">Open in Google Street View ↗</a></div>`:''}
     <div class="hero">
-      <div><span class="eyebrow">Woningdossier</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
+      <div><span class="eyebrow">PandWise · Woningdossier</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
       <p class="sub">${esc([adr.buurt,adr.gemeente,adr.provincie].filter(Boolean).join(' · '))}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">advertentie</a>`:''}</p>
       ${oordeel}</div>
       <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
@@ -867,10 +873,11 @@ function render(d, idx){
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
       ${Fund.kpi(d,idx)}
+      ${Klim.kpi(d,idx)}
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -883,6 +890,7 @@ function render(d, idx){
     + sectie('06 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
     + `${d.fouten.length?`<p class="small" style="margin:-8px 0 26px">Niet opgehaald: ${esc(d.fouten.join(' · '))}.</p>`:''}</div>`
     + `<div data-pane="fund"${tab!=='fund'?' hidden':''}>${Fund.uit(d,idx)}</div>`
+    + `<div data-pane="klim"${tab!=='klim'?' hidden':''}>${Klim.uit(d,idx)}</div>`
     + `</div>`;
 }
 
@@ -1174,9 +1182,10 @@ function wozBlok(d,idx){
   const jaren=wozJaren(); const reg={}; (w.reeks||[]).forEach(x=>reg[x.jaar]=x.waarde); const hand=w.handmatig||{};
   const status = w.bron==='register'
     ? `<p class="small">Reeks automatisch opgehaald uit het WOZ-waardeloket (${w.reeks.length} peildata${w.wozobjectnummer?' · WOZ-objectnummer '+esc(w.wozobjectnummer):''}).</p>`
-    : `<div class="notice" style="margin:0 0 12px"><b>Niet automatisch beschikbaar.</b> Het WOZ-waardeloket biedt geen open API die vanuit de browser aanroepbaar is (Kadaster: openstellen als open data vergt een wetswijziging). Open het loket via de knop voor de vastgestelde waarden per peildatum.</div>`;
+    : '';
   const knoppen=`<div class="btns" style="margin:0 0 14px">${loket?`<a class="btn-woz" href="${esc(loket)}" target="_blank" rel="noopener">Open WOZ-waardeloket ↗</a>`:''}${bagv?`<a class="btn-woz" style="background:var(--primary);color:#fff" href="${esc(bagv)}" target="_blank" rel="noopener">Open BAG Viewer ↗</a>`:''}</div>`;
-  return status+knoppen+`<h3 style="margin-top:0">Ontwikkeling en verhouding</h3><div id="wo-${idx}">${wozUit(d)}</div>
+  const heeft=!!wozBereken(d);
+  return status+knoppen+(heeft?`<h3 style="margin-top:0">Ontwikkeling en verhouding</h3><div id="wo-${idx}">${wozUit(d)}</div>`:`<div id="wo-${idx}"></div>`)+`
     <div class="notice" style="margin:14px 0 0"><b>WOZ is een fiscale waarde, geen marktwaarde.</b> De WOZ-waarde wordt door de gemeente vastgesteld naar de waardepeildatum 1 januari van het jaar vóór het belastingjaar en loopt dus ruim een jaar achter op de markt. De indexering naar het laatste CBS-kwartaal is een rekenkundige benadering op regioniveau. Dit is geen taxatie of waardebepaling in de zin van NRVT/NWWI en geen onderbouwing voor financiering, bod of advies. Bron: WOZ-waardeloket (Kadaster/Waarderingskamer) en CBS.</div>`;
 }
 /* ============ rapport afdrukken ============ */
@@ -1486,7 +1495,274 @@ const Fund = (()=>{
       + sectie('H / Bronnen','Gebruikte databronnen','Status per bron','',bronnen)
       + `<p class="small" style="margin:-8px 0 26px">Indicatief model: bouwjaar (BAG), bodemtype (BRO), maaiveldhoogte (AHN4), grondwater (BRO-model) en RVO-aandachtsgebieden. Er is geen rekening gehouden met eerder funderingsherstel, uitvoeringskwaliteit of inspectie ter plaatse. Methode overgenomen uit Funderingscijfer.nl.</p>`;
   }
-  return {ophalen, samenstellen, bereken, uit, kpi};
+  return {ophalen, samenstellen, bereken, uit, kpi, bodemTypeUit};
+})();
+
+/* ============ klimaatcijfer (overgenomen uit Klimaatcijfer.nl, herschreven naar Woningdossier-stijl) ============ */
+const Klim = (()=>{
+  const haal = async url => { const r=await fetch(url,{signal:AbortSignal.timeout(9000)}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); };
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const DIMS=[
+    {id:'fundering',name:'Fundering',weight:0.30},{id:'overstroming',name:'Overstroming',weight:0.25},
+    {id:'hitte',name:'Hitte',weight:0.20},{id:'wateroverlast',name:'Wateroverlast',weight:0.15},{id:'droogte',name:'Droogte',weight:0.10}];
+  const DIMS_CTX=[{id:'energielabel',name:'Energielabel'},{id:'wateropslag',name:'Bergingspotentieel'}];
+  const KNMI={fundering:{d30:-0.4,d50:-1.1},overstroming:{d30:-0.5,d50:-1.3},hitte:{d30:-0.6,d50:-1.6},wateroverlast:{d30:-0.5,d50:-1.3},droogte:{d30:-0.5,d50:-1.4}};
+  const REGIO=[
+    [1000,1099,'Amsterdam Centrum/West','Amstel, Gooi en Vecht',3,4,4,2,6],[1100,1199,'Amsterdam Oost/Zuidoost','Amstel, Gooi en Vecht',4,4,4,3,6],
+    [1200,1299,'Hilversum / het Gooi','Amstel, Gooi en Vecht',7,7,5,5,5],[1300,1399,'Almere','Zuiderzeeland',5,5,5,5,5],
+    [1400,1499,'Amstelveen / Aalsmeer','Amstel, Gooi en Vecht',4,5,5,4,6],[1500,1599,'Zaanstreek','Hollands Noorderkwartier',4,4,6,5,6],
+    [1600,1699,'Hoorn / West-Friesland','Hollands Noorderkwartier',4,5,7,6,6],[1700,1799,'Alkmaar','Hollands Noorderkwartier',4,5,7,6,6],
+    [1800,1999,'Noord-Holland Noord','Hollands Noorderkwartier',4,5,7,7,6],[2000,2099,'Haarlem','Rijnland',4,5,5,4,6],
+    [2100,2299,'Haarlemmermeer / Hoofddorp','Rijnland',4,4,5,5,6],[2300,2499,'Leiden / Leiderdorp','Rijnland',4,4,5,4,6],
+    [2500,2599,'Den Haag','Delfland',4,5,5,3,6],[2600,2699,'Delft','Delfland',4,5,5,4,6],[2700,2799,'Zoetermeer','Delfland',5,5,5,4,6],
+    [2800,2899,'Gouda / Midden-Holland','Hollandse Delta',3,3,5,5,6],[2900,2999,'Capelle / Krimpen','Hollandse Delta',3,3,5,4,6],
+    [3000,3099,'Rotterdam Centrum','Hollandse Delta',3,3,4,3,6],[3100,3199,'Schiedam / Vlaardingen','Delfland',3,4,5,4,6],
+    [3200,3299,'Spijkenisse / Voorne','Hollandse Delta',3,3,5,5,6],[3300,3499,'Dordrecht / Alblasserwaard','Rivierenland',2,2,5,5,6],
+    [3500,3599,'Utrecht Stad','Stichtse Rijnlanden',5,5,5,3,6],[3600,3699,'Nieuwegein / IJsselstein','Stichtse Rijnlanden',4,5,6,5,6],
+    [3700,3799,'Zeist / Driebergen','Vallei en Veluwe',7,6,6,5,5],[3800,3859,'Amersfoort','Vallei en Veluwe',7,6,6,5,5],
+    [3860,3869,'Nijkerk / Nijkerkerveen','Vallei en Veluwe',7,6,6,6,5],[3870,3999,'Veenendaal / Rhenen','Vallei en Veluwe',6,5,6,5,5],
+    [4000,4099,'Bergen op Zoom','Brabantse Delta',4,4,6,6,5],[4100,4299,'West-Brabant','Brabantse Delta',4,4,6,6,5],
+    [4300,4599,'Zeeland (midden)','Scheldestromen',3,5,6,6,5],[5000,5099,'Tilburg','De Dommel',8,7,6,5,4],
+    [5100,5299,'Waalwijk / Heusden','Aa en Maas',5,4,6,6,4],[5300,5399,'Oss / Bernheze','Aa en Maas',5,5,6,6,4],
+    [5400,5499,'Uden / Gemert','Aa en Maas',8,8,6,6,4],[5500,5599,'Veldhoven / Waalre','De Dommel',8,8,5,5,4],
+    [5600,5699,'Eindhoven','De Dommel',8,7,5,4,4],[5700,5799,'Helmond','Aa en Maas',8,7,6,5,4],
+    [5800,5999,'Land van Cuijk / Maasland','Aa en Maas',5,4,6,6,5],[6000,6099,'Weert','Limburg',8,7,6,5,4],
+    [6100,6199,'Echt-Susteren / Roermond','Limburg',5,4,6,5,4],[6200,6299,'Maastricht','Limburg',5,4,5,4,5],
+    [6300,6499,'Heerlen / Zuid-Limburg','Limburg',9,8,6,5,5],[6500,6599,'Nijmegen','Rivierenland',6,5,5,4,5],
+    [6600,6699,'Rivierengebied / Buren','Rivierenland',3,2,6,6,5],[6700,6799,'Arnhem / Wageningen','Rijn en IJssel',6,5,6,5,5],
+    [6800,6899,'Arnhem Noord / Veluwe','Vallei en Veluwe',8,7,6,6,4],[6900,6999,'Zevenaar / Montferland','Rijn en IJssel',5,4,6,6,5],
+    [7000,7099,'Doetinchem / Achterhoek','Rijn en IJssel',8,7,6,6,5],[7100,7299,'Winterswijk / Groenlo','Rijn en IJssel',9,8,7,7,5],
+    [7300,7399,'Apeldoorn / Veluwe','Vallei en Veluwe',9,8,6,6,4],[7400,7499,'Deventer','Drents Overijsselse Delta',6,4,6,5,5],
+    [7500,7599,'Enschede','Vechtstromen',9,8,6,5,5],[7600,7699,'Almelo / Twente','Vechtstromen',8,7,6,6,5],
+    [7700,7799,'Emmen / Coevorden','Drents Overijsselse Delta',9,8,7,7,4],[7800,7999,'Drenthe (midden/noord)','Hunze en Aas',9,8,7,7,4],
+    [8000,8099,'Zwolle','Drents Overijsselse Delta',5,3,6,5,5],[8100,8199,'Raalte / Heino','Drents Overijsselse Delta',7,6,7,6,5],
+    [8200,8299,'Lelystad / Flevoland','Zuiderzeeland',5,5,5,6,5],[8800,8899,'Franeker / Harlingen','Wetterskip Fryslân',3,4,7,7,6],
+    [8900,8999,'Leeuwarden','Wetterskip Fryslân',4,5,7,6,6],[9700,9799,'Groningen Stad','Noorderzijlvest',4,5,7,6,6],
+    [9800,9899,'Groningen Noord / Eemsmond','Hunze en Aas',3,3,7,7,6]];
+  const PROV={'Noord-Holland':['Hollands Noorderkwartier',4,4,5,4,6],'Zuid-Holland':['Rijnland',3,3,5,4,6],'Utrecht':['Stichtse Rijnlanden',6,5,5,5,5],
+    'Gelderland':['Vallei en Veluwe',7,6,6,6,5],'Noord-Brabant':['Aa en Maas',7,7,6,5,4],'Limburg':['Limburg',7,6,6,5,5],'Overijssel':['Vechtstromen',8,6,6,6,5],
+    'Zeeland':['Scheldestromen',3,5,7,7,5],'Friesland':['Wetterskip Fryslân',3,4,7,7,6],'Fryslân':['Wetterskip Fryslân',3,4,7,7,6],'Groningen':['Noorderzijlvest',3,4,7,7,6],
+    'Drenthe':['Hunze en Aas',9,8,7,7,5],'Flevoland':['Zuiderzeeland',5,5,5,6,5]};
+  const WS={'Amstel, Gooi en Vecht':['https://www.agv.nl','0900-9394'],'Rijnland':['https://www.rijnland.net','071-3063063'],'Delfland':['https://www.hhdelfland.nl','015-2608108'],
+    'Hollandse Delta':['https://www.wshd.nl','088-9747000'],'Rivierenland':['https://www.wsrl.nl','0344-649090'],'Vallei en Veluwe':['https://www.vallei-veluwe.nl','055-5272911'],
+    'Rijn en IJssel':['https://www.wrij.nl','0314-369369'],'Drents Overijsselse Delta':['https://www.wdodelta.nl','038-4558888'],'Vechtstromen':['https://www.vechtstromen.nl','088-2203300'],
+    'Zuiderzeeland':['https://www.zuiderzeeland.nl','0320-274911'],'Hunze en Aas':['https://www.hunzeenaas.nl','050-3047911'],'Noorderzijlvest':['https://www.noorderzijlvest.nl','050-3048911'],
+    'Wetterskip Fryslân':['https://www.wetterskipfryslan.nl','058-2922222'],'Aa en Maas':['https://www.aaenmaas.nl','073-6158158'],'De Dommel':['https://www.dommel.nl','013-5353535'],
+    'Brabantse Delta':['https://www.brabantsedelta.nl','076-5644444'],'Limburg':['https://www.waterschaplimburg.nl','077-3891234'],'Hollands Noorderkwartier':['https://www.hhnk.nl','072-5828282'],
+    'Scheldestromen':['https://www.scheldestromen.nl','0800-0101'],'Stichtse Rijnlanden':['https://www.hdsr.nl','030-6345821']};
+  const GPLAN={amsterdam:['https://www.amsterdam.nl/klimaat','actief','Klimaatadaptatiestrategie Amsterdam 2030'],rotterdam:['https://www.rotterdam.nl/klimaat','actief','Rotterdam Climate Initiative'],
+    'den haag':['https://www.denhaag.nl/klimaat','actief','Haags Klimaatakkoord 2030'],utrecht:['https://www.utrecht.nl/klimaatplan','actief','Utrechtse Klimaataanpak 2040'],
+    eindhoven:['https://www.eindhoven.nl/klimaat','actief','Eindhoven Smart Climate City'],tilburg:['https://www.tilburg.nl/klimaat','actief','Tilburg Klimaatadaptatie 2025-2030'],
+    groningen:['https://gemeente.groningen.nl/klimaatadaptatie','actief','Groningen Klimaatbestendig 2040'],almere:['https://www.almere.nl/duurzaamheid','basis','Almere Klimaatagenda 2030'],
+    breda:['https://www.breda.nl/klimaatadaptatie','actief','Breda Klimaatplan 2040'],nijmegen:['https://www.nijmegen.nl/klimaat','actief','Nijmegen Fossielvrij en Klimaatbestendig'],
+    apeldoorn:['https://www.apeldoorn.nl/klimaatadaptatie','basis','Apeldoorn Klimaatactieplan'],haarlem:['https://www.haarlem.nl/duurzaamheid','actief','Haarlem Klimaatbestendig 2030'],
+    arnhem:['https://www.arnhem.nl/klimaatadaptatie','actief','Arnhem Klimaatadaptatiestrategie'],enschede:['https://www.enschede.nl/klimaatadaptatie','basis','Enschede Klimaatplan'],
+    amersfoort:['https://www.amersfoort.nl/klimaat','actief','Amersfoort Klimaatbestendig'],zoetermeer:['https://www.zoetermeer.nl/duurzaamheid','basis','Zoetermeer Klimaataanpak'],
+    zwolle:['https://www.zwolle.nl/klimaatadaptatie','actief','Zwolle Klimaatbestendig 2020'],maastricht:['https://www.maastricht.nl/klimaat','actief','Maastricht Klimaatadaptatie'],
+    dordrecht:['https://www.dordrecht.nl/klimaat','actief','Dordrecht Waterrobuust Centrum'],leiden:['https://www.leiden.nl/klimaatadaptatie','actief','Leiden Klimaatadaptatiestrategie'],
+    nijkerk:['https://www.nijkerk.eu/klimaat','basis','Nijkerk Duurzaam en Klimaatbestendig'],delft:['https://www.delft.nl/klimaat','actief','Delft Klimaatadaptatie Strategie'],
+    deventer:['https://www.deventer.nl/klimaatadaptatie','actief','Deventer Klimaatadaptief'],helmond:['https://www.helmond.nl/klimaat','basis','Helmond Klimaataanpak']};
+  const STEDEN=['amsterdam','rotterdam','den haag','utrecht','eindhoven','tilburg','groningen','almere','breda','nijmegen','apeldoorn','haarlem','arnhem','zaandam','enschede','haarlemmermeer','amersfoort','zoetermeer','zwolle','maastricht','dordrecht','leiden','delft','deventer','helmond','alkmaar'];
+  const stedelijk=g=>STEDEN.some(s=>(g||'').toLowerCase().includes(s));
+
+  function regioProfiel(pcNum,prov){
+    const r=REGIO.find(x=>pcNum>=x[0]&&pcNum<=x[1]);
+    if(r) return {naam:r[2],ws:r[3],hoogwater:r[4],overstroming:r[5],warmte:r[6],hittestress:r[7],droogte:r[8]};
+    const p=PROV[prov]; if(p) return {naam:prov,ws:p[0],hoogwater:p[1],overstroming:p[2],warmte:p[3],hittestress:p[4],droogte:p[5]};
+    return {naam:'Nederland (gemiddeld)',ws:null,hoogwater:5,overstroming:5,warmte:6,hittestress:6,droogte:5};
+  }
+
+  /* --- bronnen --- */
+  async function kea(lat,lon){
+    const out={}; const d=0.001, bbox=(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d);
+    const base='https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0';
+    const lagen=[['hittestress',['hitte_stress_2050','hittestress_2050','hittestress'],'Hittestress 2050'],['wateroverlast',['wateroverlast_2050','wateroverlast','waterdiepte_korte_bui'],'Wateroverlast'],['droogte',['droogte','droogtestress','laagste_grondwaterstand'],'Droogte']];
+    await Promise.allSettled(lagen.map(async([id,vars,label])=>{ for(const l of vars){ try{
+      const r=await haal(base+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS='+l+'&QUERY_LAYERS='+l+'&CRS=EPSG:4326&BBOX='+bbox+'&WIDTH=11&HEIGHT=11&I=5&J=5&INFO_FORMAT=application/json');
+      const p=r.features&&r.features[0]&&r.features[0].properties; if(p){ const v=Object.values(p)[0]; if(v!=null&&v!=='nodata'){ out[id]={waarde:v,label}; return; } } }catch(e){} } }));
+    return out;
+  }
+  async function epOnline(pc,hn){
+    const p=String(pc||'').replace(/\s/g,''), h=String(hn||'').replace(/\D/g,''); if(!p||!h) return null;
+    try{ const data=await haal('https://public.ep-online.nl/api/v3/PandEnergielabel/Adres?postcode='+p+'&huisnummer='+h);
+      const it=Array.isArray(data)?data[0]:data; if(!it) return null;
+      return {label:it.energieklasse||it.energielabel||null, geldigTot:it.geldigheid||it.registratiedatum||null, voorlopig:!!it.isVoorlopig}; }catch(e){ return null; }
+  }
+  async function overstroomik(pc,hn){
+    const p=String(pc||'').replace(/\s/g,''), h=String(hn||'').replace(/\D/g,''); if(!p||!h) return null;
+    try{ const d=await haal('https://www.overstroomik.nl/api/adres?adres='+p+h); if(!d) return null;
+      return {klein:d.klein||d.scenario_klein||null, midden:d.midden||d.scenario_midden||null, groot:d.groot||d.scenario_groot||null, extreem:d.extreem||d.scenario_extreem||null,
+        dijkring:d.dijkring||d.dijkringgebied||null, norm:d.norm||d.beschermingsnorm||null, max:d.waterdiepte||d.max_waterdiepte||null, link:'https://www.overstroomik.nl/?adres='+encodeURIComponent(p+' '+h)}; }catch(e){ return null; }
+  }
+  async function ophalen(adr){
+    const [k,ep,ov]=await Promise.all([kea(adr.lat,adr.lon).catch(()=>({})), epOnline(adr.postcode,adr.huisnummer), overstroomik(adr.postcode,adr.huisnummer)]);
+    return {kea:k, ep, ovik:ov, labelOverride:null};
+  }
+
+  /* --- energielabel --- */
+  const LMAP={'A++++':10,'A+++':10,'A++':9,'A+':9,'A':8,'B':7,'C':6,'D':5,'E':4,'F':3,'G':2};
+  function labelProxy(j){
+    if(!j) return {score:5,label:'Onbekend',desc:'Bouwjaar onbekend.',bron:'schatting'};
+    const r=j>=2021?[9,'A+++ / A++','BENG-norm, bijna energieneutraal.']:j>=2015?[8,'A / A+','EPC 0,4-norm, goed geïsoleerd.']:j>=2010?[7,'A / B','Voldoende isolatie.']:j>=2000?[6,'B / C','Redelijke isolatie.']:j>=1990?[5,'C / D','Matige isolatie, verduurzaming loont.']:j>=1975?[4,'D / E','Beperkte isolatie.']:j>=1960?[3,'E / F','Slechte isolatie.']:[2,'F / G','Vóór 1960, nauwelijks geïsoleerd.'];
+    return {score:r[0],label:r[1],desc:r[2]+' Schatting op basis van bouwjaar '+j+'.',bron:'schatting'};
+  }
+  function labelData(K,bj){
+    const auto=(K.ep&&K.ep.label)?{score:LMAP[String(K.ep.label).toUpperCase().replace(/\s/g,'')]||5,label:K.ep.label+(K.ep.voorlopig?' (voorlopig)':''),desc:'Geregistreerd energielabel '+K.ep.label+(K.ep.geldigTot?', geldig t/m '+K.ep.geldigTot:'')+'. Bron: EP-online (RVO).',bron:'EP-online'}:labelProxy(bj);
+    if(K.labelOverride){ const l=String(K.labelOverride).toUpperCase(); return {score:LMAP[l]||5,label:l,desc:'Handmatig ingevoerd energielabel '+l+', niet geverifieerd tegen EP-online. Automatisch bepaald was '+auto.label+' ('+auto.bron+').',bron:'handmatig',auto}; }
+    return auto;
+  }
+  const keaScore=v=>{ if(v==null) return null; const n=parseFloat(String(v).replace(',','.')); return (isNaN(n)||n<1||n>5)?null:clamp(Math.round(10-(n-1)*2),1,10); };
+  function normCorr(norm){ if(!norm) return null; const m=String(norm).replace(/\./g,'').match(/(\d{3,7})\s*$/); if(!m) return null; const n=parseInt(m[1]); if(isNaN(n)||n<100) return null;
+    const t='1:'+n.toLocaleString('nl-NL')+' per jaar'; return n>=10000?{e:1,t:'Hoge beschermingsnorm ('+t+')'}:n>=3000?{e:0,t:'Gemiddelde beschermingsnorm ('+t+')'}:{e:-1,t:'Relatief lage beschermingsnorm ('+t+')'}; }
+  const dim=(basis,bron,tekst)=>({basis,score:basis,bron,basisTekst:tekst,corr:[]});
+  function corr(D,label,effect,tekst){ D.corr.push({label,effect,tekst}); if(effect) D.score=clamp(D.score+effect,1,10); return D; }
+
+  /* --- berekening --- */
+  function bereken(d){
+    const K=d.klimaat; if(!K||!d.fundering) return null;
+    const adr=d.registers.adres||{}, F=d.fundering, fb=Fund.bereken(F), fs=fb.score;
+    const bj=fb.bj, pcNum=parseInt(String(adr.postcode||'').slice(0,4))||0;
+    const prof=regioProfiel(pcNum,adr.provincie), nap=F.nap, napG=F.napGeschat;
+    const bT=F.bodem?Fund.bodemTypeUit(F.bodem.code):'onbekend';
+    const D={};
+    D.fundering=dim(clamp(fs.cijfer,1,10),'Funderingscijfer (BAG · BRO · RVO · AHN4)','Overgenomen uit het funderingscijfer: bouwjaar, bodemtype, maaiveldhoogte, RVO-aandachtsgebied en grondwaterstand.');
+    D.overstroming=dim(Math.round((prof.hoogwater+prof.overstroming)/2),'Regioprofiel '+prof.naam,'Gemiddelde van hoogwater- en rivieroverstromingsrisico voor deze regio.');
+    if(nap!==null){ if(nap<-3) corr(D.overstroming,'Maaiveldhoogte',-1,(napG?'~':'')+num(nap,1)+' m NAP, diep onder zeeniveau'); else if(nap>10) corr(D.overstroming,'Maaiveldhoogte',1,'+'+num(nap,1)+' m NAP, ruim boven zeeniveau'); else corr(D.overstroming,'Maaiveldhoogte',0,(nap>=0?'+':'')+num(nap,1)+' m NAP, neutraal'); }
+    if(K.ovik){ const diep=parseFloat(K.ovik.max||K.ovik.midden||0);
+      if(diep>2) corr(D.overstroming,'Waterdiepte (overstroomik.nl)',-2,'Tot '+num(diep,1)+' m water bij een overstroming'); else if(diep>0.5) corr(D.overstroming,'Waterdiepte (overstroomik.nl)',-1,'Tot '+num(diep,1)+' m water bij een overstroming'); else if(diep>0) corr(D.overstroming,'Waterdiepte (overstroomik.nl)',0,'Beperkte waterdiepte ('+num(diep,1)+' m)');
+      const nc=normCorr(K.ovik.norm); if(nc) corr(D.overstroming,'Beschermingsnorm dijkring',nc.e,nc.t); D.overstroming.bron='overstroomik.nl + regioprofiel'; }
+    const kh=keaScore(K.kea.hittestress&&K.kea.hittestress.waarde);
+    if(kh!==null) D.hitte=dim(kh,'Klimaateffectatlas (locatiespecifiek)','Rasterwaarde hittestress voor deze locatie, geen regiogemiddelde.');
+    else { D.hitte=dim(Math.round((prof.warmte+prof.hittestress)/2),'Regioprofiel '+prof.naam,'Gemiddelde van regionale temperatuurstijging en stedelijk warmte-eilandeffect; geen locatiespecifieke rasterdata.'); if(stedelijk(adr.gemeente)) corr(D.hitte,'Verstedelijking',-1,'Dichtbebouwde gemeente: nachten koelen minder af'); }
+    const kw=keaScore(K.kea.wateroverlast&&K.kea.wateroverlast.waarde);
+    if(kw!==null) D.wateroverlast=dim(kw,'Klimaateffectatlas (locatiespecifiek)','Rasterwaarde waterdiepte bij een korte hevige bui voor deze locatie.');
+    else { D.wateroverlast=dim(7,'Afgeleid (geen rasterdata)','Neutrale basis met correcties voor verstedelijking en ligging.'); if(stedelijk(adr.gemeente)) corr(D.wateroverlast,'Verstedelijking',-1,'Veel verharding: hemelwater kan minder infiltreren'); if(nap!==null&&nap<-2) corr(D.wateroverlast,'Maaiveldhoogte',-1,'Laaggelegen perceel: water stroomt hier naartoe'); }
+    const kd=keaScore(K.kea.droogte&&K.kea.droogte.waarde);
+    if(kd!==null) D.droogte=dim(kd,'Klimaateffectatlas (locatiespecifiek)','Rasterwaarde droogte voor deze locatie.');
+    else { D.droogte=dim(prof.droogte,'Regioprofiel '+prof.naam,'Regionale droogtegevoeligheid op basis van bodem en waterhuishouding.'); if(bT==='zand') corr(D.droogte,'Bodemtype',-1,'Zandgrond houdt weinig water vast'); else if(bT==='veen'||bT==='klei') corr(D.droogte,'Bodemtype',0,'Klei/veen: minder droogtegevoelig, wel krimpgevoelig'); }
+    const lab=labelData(K,bj);
+    const wt=F.woningtype&&/appartement/i.test(F.woningtype.naam)?'app':'huis';
+    const wo=wt==='app'?4:(bj>=2010?7:bj>=1990?6:5);
+    const C={energielabel:dim(lab.score,lab.bron==='EP-online'?'EP-online':lab.bron==='handmatig'?'Handmatig ingevoerd':'Schatting o.b.v. bouwjaar',lab.desc),
+      wateropslag:dim(wo,'Afgeleid uit woningtype en bouwjaar','Ruwe indicatie van de ruimte voor waterberging op eigen perceel; een maatregel-indicatie, geen risicomaat.')};
+    // eindcijfer: gewogen gemiddelde, begrensd door zwakste schakel, halven, bandbreedte
+    let som=0,gew=0,laagste=10,laagsteId=null,plafond=10,plafondId=null;
+    DIMS.forEach(x=>{ const s=D[x.id].score; som+=s*x.weight; gew+=x.weight; if(s<laagste){laagste=s;laagsteId=x.id;} const sp=x.weight>=0.25?2:x.weight>=0.15?3:4; if(s+sp<plafond){plafond=s+sp;plafondId=x.id;} });
+    const gewogen=som/gew, begrensd=Math.min(gewogen,plafond), cijfer=Math.round(begrensd*2)/2;
+    const br={ahn:F.napBron, bro:F.bodemBron, gw:!!F.gw, kea:Object.keys(K.kea||{}).length>0, ovik:!!K.ovik, ep:!!(K.ep&&K.ep.label), rvo:!!(F.rvo&&F.rvo.gevonden)};
+    let sch=0; if(napG) sch++; if(!br.bro) sch++; if(!br.gw) sch++; if(!br.kea) sch++; if(!br.ovik) sch++;
+    const marge=Math.min(1.5,0.5+0.25*sch);
+    const eind={cijfer,gewogen:Math.round(gewogen*10)/10,begrensd:begrensd<gewogen-0.05,laagste,laagsteId,plafondId,plafondScore:plafondId?D[plafondId].score:null,onder:Math.max(1,Math.round((cijfer-marge)*2)/2),boven:Math.min(10,Math.round((cijfer+marge)*2)/2),marge,sch};
+    const scores={}; DIMS.forEach(x=>scores[x.id]=D[x.id].score);
+    const adv=aanbevelingen(scores,fb,F,lab);
+    return {D,C,scores,eind,prof,lab,adv,br,bj,fb,bT};
+  }
+  function aanbevelingen(s,fb,F,lab){
+    const a=[];
+    if(s.fundering<=5){ if(fb.gwO&&(fb.gwO.niveau==='hoog'||fb.gwO.niveau==='verhoogd')) a.push('De grondwaterstand zakt in de zomer tot dicht bij of onder de gebruikelijke diepte van houten paalkoppen (GLG '+Math.round(F.gw.glgCm)+' cm −mv). Laat een funderingsinspectie uitvoeren via een gecertificeerd bureau (kcaf.nl).'); else a.push('Laat een funderingsinspectie uitvoeren via een gecertificeerd bureau (kcaf.nl). Vraag bij de gemeente het bouwdossier op met de oorspronkelijke funderingstekening.'); }
+    if(F.rvo&&F.rvo.gevonden) a.push('Dit adres ligt in een RVO-aandachtsgebied funderingsproblematiek. Neem de fundering expliciet mee in een bouwkundige keuring bij aankoop.');
+    if(s.overstroming<=5) a.push('Bekijk op overstroomik.nl de waterdiepte en vluchtroutes voor dit adres. Overweeg waterbestendige aanpassingen (verhoogde stopcontacten, keerwanden) en controleer de dekking van de opstalverzekering.');
+    if(s.wateroverlast<=5) a.push('Beperk verharding in de tuin en zorg voor voldoende afvoercapaciteit; bij piekbuien scheelt een infiltratiekrat of regenwaterput direct wateroverlast.');
+    if(s.hitte<=5) a.push('Vergroen de directe omgeving en breng buitenzonwering aan: dat verlaagt de gevoelstemperatuur enkele graden. Ventileer in de vroege ochtend.');
+    if(s.droogte<=5) a.push('Houd bij langdurige droogte de grondwaterstand rond de woning in de gaten. Een regenwaterput (min. 1.500 liter) beperkt zowel tuinschade als bodemuitdroging.');
+    if(lab.score<=5) a.push('Verduurzaam via het Duurzaamheidsprofiel. Extra hypotheekruimte voor energiebesparende voorzieningen (EBV) is mogelijk; het maximum is een jaarlijks wijzigend normbedrag.');
+    if(a.length<4){ a.push('Bekijk klimaateffectatlas.nl voor alle klimaatrisico\'s op kaart voor de exacte locatie.'); a.push('Bespreek het klimaatcijfer met de hypotheekadviseur. Maatregelen zijn soms mee te financieren via een duurzame hypotheek of het Nationaal Warmtefonds.'); a.push('Informeer bij de gemeente naar subsidies voor klimaatadaptatie (duurzaamheidslening, ISDE).'); }
+    return a.slice(0,6);
+  }
+
+  /* --- weergave --- */
+  const KL=s=>s<=3?'var(--err)':s<=6?'var(--accent)':'var(--ok)';
+  const niv=s=>s<=3?'rood':s<=6?'geel':'groen';
+  const rl=s=>s<=3?'Hoog risico':s<=6?'Matig risico':'Laag risico';
+  const fmt=n=>num(Math.round(n*2)/2,1);
+  function kpi(d,idx){
+    const R=bereken(d); if(!R) return '';
+    return `<div class="kpi kpi-fund" id="kk-${idx}" data-gotab="klim" data-i="${idx}" title="Bekijk klimaatcijfer"><span class="lab">Klimaatcijfer</span><b style="color:${KL(R.eind.cijfer)}">${fmt(R.eind.cijfer)}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(rl(R.eind.cijfer))} · bandbreedte ${fmt(R.eind.onder)} – ${fmt(R.eind.boven)}</span></div>`;
+  }
+  function radar(scores){
+    const n=DIMS.length,cx=130,cy=118,r=80,ang=i=>(Math.PI*2*i/n)-Math.PI/2; let s='';
+    [2,4,6,8,10].forEach(v=>{ s+='<polygon points="'+DIMS.map((_,i)=>{const a=ang(i),p=v/10;return (cx+r*p*Math.cos(a)).toFixed(1)+','+(cy+r*p*Math.sin(a)).toFixed(1);}).join(' ')+'" fill="none" stroke="#DDE4EE" stroke-width="1"/>'; });
+    DIMS.forEach((x,i)=>{ const a=ang(i); s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+r*Math.cos(a)).toFixed(1)+'" y2="'+(cy+r*Math.sin(a)).toFixed(1)+'" stroke="#DDE4EE"/>';
+      const dist=r+22; s+='<text x="'+(cx+dist*Math.cos(a)).toFixed(1)+'" y="'+(cy+dist*Math.sin(a)).toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#003057">'+x.name+'</text>'; });
+    const pts=DIMS.map((x,i)=>{const a=ang(i),p=(scores[x.id]||5)/10;return (cx+r*p*Math.cos(a)).toFixed(1)+','+(cy+r*p*Math.sin(a)).toFixed(1);});
+    s+='<polygon points="'+pts.join(' ')+'" fill="#E5A138" fill-opacity=".25" stroke="#003057" stroke-width="2"/>'+pts.map(p=>'<circle cx="'+p.split(',')[0]+'" cy="'+p.split(',')[1]+'" r="4" fill="#003057" stroke="#fff" stroke-width="1.5"/>').join('');
+    return '<svg viewBox="0 0 260 236" style="width:100%;max-width:300px;display:block;margin:0 auto">'+s+'</svg>';
+  }
+  function rekentabel(D){
+    return `<div class="tabwrap"><table><tr><th>Factor</th><th class="num">Effect</th><th>Toelichting</th></tr>
+      <tr><td><b>Basis</b></td><td class="num"><span class="sig grijs">${D.basis}</span></td><td class="small">${esc(D.basisTekst)}</td></tr>
+      ${D.corr.map(c=>`<tr><td>${esc(c.label)}</td><td class="num"><span class="sig ${c.effect>0?'groen':c.effect<0?'rood':'grijs'}">${c.effect>0?'+':''}${c.effect}</span></td><td class="small">${esc(c.tekst)}</td></tr>`).join('')}
+      <tr class="tot"><td>Score</td><td class="num">${D.score} / 10</td><td class="small">Bron: ${esc(D.bron)}</td></tr></table></div>`;
+  }
+  function uit(d,idx){
+    const R=bereken(d); const K=d.klimaat||{};
+    if(!R) return `<div class="panel"><p class="small">Het klimaatcijfer kon voor dit adres niet worden berekend (funderingscijfer of klimaatbronnen ontbreken).</p></div>`;
+    const {D,C,scores,eind,prof,lab,adv,br,fb}=R, c=eind.cijfer, adr=d.registers.adres||{}, F=d.fundering;
+    const gem=adr.gemeente||prof.naam;
+    let sum=c>=7.5?'De woning in '+gem+' heeft een gunstig klimaatprofiel. Verduurzaming en klimaatadaptatie blijven aanbevolen.':c>=5?'De woning in '+gem+' heeft een gemengd klimaatprofiel. Enkele dimensies verdienen aandacht.':'De woning in '+gem+' heeft een risicovol klimaatprofiel. Meerdere klimaatrisico\'s komen samen; professioneel advies is aanbevolen.';
+    if(eind.begrensd){ const zw=DIMS.find(x=>x.id===(eind.plafondId||eind.laagsteId)); sum+=' Het gewogen gemiddelde is '+num(eind.gewogen,1)+', maar het cijfer is begrensd omdat één zwaarwegende dimensie er negatief uit springt: '+(zw?zw.name.toLowerCase():'')+' ('+(eind.plafondScore!=null?eind.plafondScore:eind.laagste)+'/10).'; }
+    const kop=`<div class="fc-top"><div class="fc-cijfer" style="background:${KL(c)}">${fmt(c)}<small>/ 10</small></div>
+      <div style="flex:1;min-width:220px"><span class="eyebrow">Klimaatcijfer · hoe hoger, hoe beter</span><p class="fc-titel">${esc(rl(c))} klimaatprofiel</p><p style="margin:4px 0 10px">${esc(sum)}</p>
+      <div class="oordeel" style="margin:0"><span class="pill ${niv(c)}"><i></i>Bandbreedte ${fmt(eind.onder)} – ${fmt(eind.boven)}</span><span class="pill grijs"><i></i>${eind.sch>0?eind.sch+' van de bronnen berust op een schatting':'alle kernbronnen live opgehaald'}</span></div></div></div>
+      <div class="fc-schaal" style="grid-template-columns:repeat(10,1fr)">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<span class="${n===Math.round(c)?'on':''}" style="${n===Math.round(c)?`background:${KL(c)};border-color:${KL(c)}`:''}">${n}</span>`).join('')}</div>`;
+    const dimKaart=(x,Dx,ctx)=>{ const s=Dx.score; let extra='';
+      if(x.id==='fundering') extra=`<p class="small">${esc(fb.ftype.naam)}. ${F.rvo&&F.rvo.gevonden?'Ligt in RVO-aandachtsgebied.':'Buiten RVO-aandachtsgebied.'} ${fb.gwO&&fb.gwO.niveau!=='onbekend'&&fb.gwO.niveau!=='nvt'?'Grondwater: '+esc(fb.gwO.kop.toLowerCase())+'.':''} Volledige opbouw: tabblad Funderingscijfer.</p>`;
+      else if(x.id==='energielabel') extra=`<p class="small">${esc(lab.desc)}</p>`;
+      else extra=`<p class="small">${esc(tekst(x.id,s,prof,adr))}</p>`;
+      return `<div class="dossier ${niv(s)}"><p style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${x.name}${ctx?'':' <span class="small">· weging '+Math.round(x.weight*100)+'%</span>'}${/Klimaateffectatlas/.test(Dx.bron)?' <span class="sig groen">locatiedata</span>':''}${lab.bron==='handmatig'&&x.id==='energielabel'?' <span class="sig geel">handmatig</span>':''}</b><span class="sig ${niv(s)}" style="font-size:14px">${s} / 10</span></p>${meterRow(rl(s),s*10)}${extra}${x.id!=='fundering'?`<details><summary class="small" style="cursor:pointer;color:var(--primary);font-weight:600">Hoe is deze score opgebouwd?</summary>${rekentabel(Dx)}</details>`:''}</div>`; };
+    const dimBlok=`<div class="grid2">${DIMS.map(x=>dimKaart(x,D[x.id],false)).join('')}</div>`;
+    const ctxBlok=`<p class="small" style="margin-top:0">Een energielabel is een woningeigenschap en bergingspotentieel een maatregel; beide zeggen niets over de blootstelling aan klimaatrisico's en tellen daarom niet mee.</p><div class="grid2">${DIMS_CTX.map(x=>dimKaart(x,C[x.id],true)).join('')}</div>
+      <div class="fc-corr" data-strat data-i="${idx}"><label for="kclbl-${idx}" style="margin:0">Energielabel klopt niet?</label><select id="kclbl-${idx}"><option value="">— Automatisch —</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${K.labelOverride===l?' selected':''}>${l}</option>`).join('')}</select><button type="button" data-klim-label="${idx}">Herbereken</button>${K.labelOverride?`<button type="button" class="link" data-klim-label-reset="${idx}">Automatisch label herstellen</button>`:''}</div>`;
+    const tijd=`<div class="tabwrap"><table><tr><th>Dimensie</th><th class="num">Nu</th><th class="num">2030</th><th class="num">2050</th></tr>${DIMS.map(x=>{const s0=scores[x.id],s30=clamp(Math.round((s0+KNMI[x.id].d30)*10)/10,1,10),s50=clamp(Math.round((s0+KNMI[x.id].d50)*10)/10,1,10);const cel=v=>`<td class="num"><b style="color:${KL(v)}">${num(v,1)}</b></td>`;return `<tr><td>${x.name}</td>${cel(s0)}${cel(s30)}${cel(s50)}</tr>`;}).join('')}</table></div><p class="small">Richting-indicatie op basis van de KNMI'23-klimaatscenario's (W+, peildatum oktober 2023), zonder aanvullende maatregelen. Geen voorspelling voor dit specifieke adres.</p>`;
+    const profielBlok=`<div class="grid2"><div>${radar(scores)}</div><div><h3 style="margin-top:0">Ontwikkeling 2030 / 2050</h3>${tijd}</div></div>`;
+    // overstroming detail
+    let ovBlok='';
+    if(K.ovik){ const mx=parseFloat(K.ovik.max||K.ovik.midden||0), f=v=>v?num(parseFloat(v),2)+' m':'–';
+      ovBlok=punt([mx>2?'rood':mx>0.5?'geel':'groen','Overstromingsscenario\'s (overstroomik.nl)','Dijkring '+(K.ovik.dijkring||'–')+' · norm '+(K.ovik.norm||'–')+'. Waterdiepte klein '+f(K.ovik.klein)+', midden '+f(K.ovik.midden)+', groot '+f(K.ovik.groot)+', extreem '+f(K.ovik.extreem)+'.'])+`<div class="btns"><a class="btn-woz" href="${esc(K.ovik.link)}" target="_blank" rel="noopener">Bekijk op overstroomik.nl ↗</a></div>`; }
+    else ovBlok=punt(['grijs','Geen overstromingsdata van overstroomik.nl','Overstroomik.nl heeft geen officiële publieke API; controleer de waterdiepte en vluchtroutes zelf.'])+`<div class="btns"><a class="btn-woz" href="https://www.overstroomik.nl/?adres=${encodeURIComponent(String(adr.postcode||'').replace(/\s/g,'')+' '+(adr.huisnummer||''))}" target="_blank" rel="noopener">Controleer op overstroomik.nl ↗</a></div>`;
+    const keaB=br.kea?`<h3>Klimaateffectatlas — locatiewaarden</h3><div class="grid2">${Object.values(K.kea).map(v=>stat(v.label,esc(String(v.waarde)))).join('')}</div><p class="small">Publieke WMS-lagen van klimaateffectatlas.nl (RIVM/PBL).</p>`:'<p class="small">Voor deze locatie kwamen geen rasterwaarden uit de Klimaateffectatlas terug; het regioprofiel is gebruikt.</p>';
+    // waterschap + gemeente
+    const wsn=prof.ws, ws=wsn&&WS[wsn];
+    const wsBlok=wsn?`${stat('Waterschap',esc(wsn))}${ws?stat('Telefoon',esc(ws[1])):''}<p class="small">Het waterschap beheert dijken, sluizen en waterwegen in deze regio en is het aanspreekpunt bij wateroverlast of peilvragen.</p><div class="btns">${ws?`<a class="btn-woz" href="${ws[0]}" target="_blank" rel="noopener">${esc(wsn)} ↗</a>`:''}<a class="btn-woz" style="background:var(--primary);color:#fff" href="https://www.waterschappen.nl" target="_blank" rel="noopener">waterschappen.nl ↗</a></div>`:`<p class="small">Waterschap niet bepaald voor dit postcodegebied.</p>`;
+    const gk=Object.keys(GPLAN).find(k=>(adr.gemeente||'').toLowerCase().includes(k)), gp=gk?GPLAN[gk]:null;
+    const gpBlok=gp?`${stat('Plan',esc(gp[2]))}${stat('Status',`<span class="sig ${gp[1]==='actief'?'groen':'geel'}">${gp[1]}</span>`)}<div class="btns"><a class="btn-woz" href="${gp[0]}" target="_blank" rel="noopener">Gemeentelijk plan ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://klimaatadaptatienederland.nl" target="_blank" rel="noopener">Klimaatadaptatie NL ↗</a></div>`
+      :`<p class="small">Geen gemeentelijk klimaatplan in de referentielijst voor ${esc(adr.gemeente||'deze gemeente')}. Zoek het via klimaatadaptatienederland.nl.</p><div class="btns"><a class="btn-woz" href="https://klimaatadaptatienederland.nl" target="_blank" rel="noopener">klimaatadaptatienederland.nl ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://klimaateffectatlas.nl" target="_blank" rel="noopener">klimaateffectatlas.nl ↗</a></div>`;
+    // financiering
+    const dp=duurzaamLink(adr)||'https://www.duurzaamheidsprofiel.nl/';
+    const fin=[];
+    if(lab.score<=7) fin.push(['geel','EBV: extra hypotheekruimte voor energiemaatregelen','Voor energiebesparende voorzieningen (isolatie, warmtepomp, HR++-glas, zonnepanelen) mag boven de reguliere leennorm extra worden geleend. Het maximum is een normbedrag dat jaarlijks wijzigt; laat de adviseur de actuele norm toepassen.',[['Duurzaamheidsprofiel',dp],['Nationaal Warmtefonds','https://www.warmtefonds.nl']]]);
+    if(scores.fundering<=5){ let t='Funderingsherstel is soms te financieren via een SVn-funderingsherstellening; looptijd, rente en beschikbaarheid verschillen per gemeente. RVO-richtprijs circa € 1.000 per m² begane grond.'; if(F.oppervlakte){ const bg=Math.round(F.oppervlakte*0.55); t+=' Bij ± '+num(bg)+' m² begane grond indicatief '+eur(bg*800)+' – '+eur(bg*1300)+'; zeer ruwe indicatie.'; } fin.push(['rood','Funderingsherstel: KCAF, SVn en RVO-richtprijs',t,[['KCAF','https://www.kcaf.nl'],['SVn','https://www.svn.nl'],['RVO funderingsproblematiek','https://www.rvo.nl/onderwerpen/funderingsproblematiek']]]); }
+    if(scores.wateroverlast<=6||scores.droogte<=5) fin.push(['geel','Waterberging: subsidies gemeente en ISDE','Gemeenten vergoeden soms een deel van de aanlegkosten voor regenwatertonnen, infiltratie en groene daken.',[['RVO ISDE','https://www.rvo.nl/isde'],['SVn','https://www.svn.nl']]]);
+    fin.push(['groen','Extra leenruimte bij gunstig energielabel','Bij aankoop van een energiezuinige woning kan afhankelijk van het label extra worden geleend. Bedragen en voorwaarden wijzigen jaarlijks; laat de adviseur de actuele normen toepassen.',[['Duurzaamheidsprofiel — dit adres',dp]]]);
+    const finBlok=fin.map(([n,t,x,ls])=>punt([n,t,x])+`<div class="btns" style="margin:-6px 0 14px">${ls.map(([l,u])=>`<a class="bl" style="font-size:13px;color:var(--primary);font-weight:600" href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join('')}</div>`).join('');
+    // bronnen
+    const bron=[['Funderingscijfer (BAG · AHN4 · BRO · RVO)','ok','Fundering '+fb.score.cijfer+'/10','#'],
+      ['Klimaateffectatlas (RIVM/PBL)',br.kea?'ok':'schat',br.kea?'Locatiedata':'Regioprofiel','https://www.klimaateffectatlas.nl'],
+      ['Overstroomik.nl (Rijkswaterstaat)',br.ovik?'ok':'schat',br.ovik?'Scenario\'s opgehaald':'Geen data','https://www.overstroomik.nl'],
+      ['EP-online energielabel (RVO)',lab.bron==='handmatig'?'info':br.ep?'ok':'schat',lab.bron==='handmatig'?'Handmatig ingevoerd':br.ep?'Geregistreerd label':'Schatting o.b.v. bouwjaar','https://www.ep-online.nl'],
+      ['KNMI\'23-klimaatscenario\'s','info','Richting 2030/2050','https://www.knmi.nl/klimaatscenarios'],
+      ['Model Klimaatcijfer (weging en begrenzing)','info','Bandbreedte '+fmt(eind.onder)+' – '+fmt(eind.boven),'https://klimaatadaptatienederland.nl']];
+    const bronnen=`<table>${bron.map(([n,s,v,u])=>`<tr><td class="k">${u==='#'?esc(n):`<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`}</td><td><span class="sig ${s==='ok'?'groen':s==='schat'?'geel':'grijs'}">${s==='ok'?'opgehaald':s==='schat'?'schatting / geen data':'info'}</span> ${esc(v)}</td></tr>`).join('')}</table>`;
+    return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het klimaatcijfer is algemene informatie uit openbare registers, geen advies over een financieel product. De weging van de dimensies (fundering 30%, overstroming 25%, hitte 20%, wateroverlast 15%, droogte 10%) is een expertinschatting en niet empirisch gekalibreerd aan schade- of hersteldata; daarom afronding op halven en een bandbreedte. Genoemde regelingen zijn generiek; toepasbaarheid hangt af van de persoonlijke situatie.</div>`
+      + `<div class="panel sec ${niv(c)}">${kop}</div>`
+      + sectie('A / Profiel','Klimaatprofiel en ontwikkeling','Vijf risicodimensies nu en volgens de KNMI\'23-scenario\'s','blauw',profielBlok)
+      + sectie('B / Risico\'s','Klimaatrisico\'s — bepalen het cijfer','Per dimensie de score, de bron en de herleidbare opbouw',niv(c),dimBlok)
+      + sectie('C / Context','Context — telt niet mee in het cijfer','Energielabel en bergingspotentieel','',ctxBlok)
+      + sectie('D / Overstroming','Overstroming en Klimaateffectatlas','Waterdiepte, dijkring en locatiewaarden','blauw',ovBlok+keaB)
+      + sectie('E / Waterschap en gemeente','Waterschap en gemeentelijk klimaatplan','Aanspreekpunten in de regio','paars',`<h3 style="margin-top:0">Waterschap</h3>${wsBlok}<h3>Gemeentelijk klimaatadaptatieplan</h3>${gpBlok}`)
+      + sectie('F / Financiering','Financieringsmogelijkheden','Generieke regelingen, geen toezegging','geel',finBlok)
+      + sectie('G / Aanbevelingen','Aanbevelingen','Wat je kunt controleren en doen',c<=4?'rood':'geel',lijst(adv.map(esc)))
+      + sectie('H / Bronnen','Gebruikte databronnen','Status per bron','',bronnen)
+      + `<p class="small" style="margin:-8px 0 26px">Indicatief model. Grondwater en bodem uit BRO-modellen; regioprofielen zijn postcode-gemiddelden. Geen vervanging voor bouwkundig onderzoek, funderingsinspectie of wateradvies. Methode overgenomen uit Klimaatcijfer.nl.</p>`;
+  }
+  function tekst(id,s,prof,adr){ const naam=prof.naam, g=adr.gemeente||naam, n=s<=3?'hoog':s<=6?'matig':'laag';
+    const T={overstroming:{hoog:'Hoog overstromingsrisico in '+naam+'. Het gebied ligt laag en leunt op waterkeringen; zeespiegelstijging en hogere rivierafvoeren vergroten het restrisico.',matig:'Matig overstromingsrisico in '+naam+'. Er is dijkbescherming, maar bij extreme omstandigheden blijft een restrisico bestaan.',laag:'Laag overstromingsrisico. '+naam+' ligt relatief hoog of buiten de overstroombare gebieden.'},
+      hitte:{hoog:'Hoge hittebelasting: '+g+' combineert een warm regioklimaat met dichte bebouwing. Nachten koelen slecht af.',matig:'Matige hittebelasting in '+g+'. Hitteperioden worden langer en frequenter, met beperkte nachtelijke afkoeling.',laag:'Beperkte hittebelasting. '+g+' heeft relatief veel groen of een gunstige ligging.'},
+      wateroverlast:{hoog:'Hoog risico op wateroverlast bij korte hevige buien. Controleer drempels, putten en de afvoer rond de woning.',matig:'Matig risico op wateroverlast bij piekbuien. Bij extreme neerslag kan tijdelijk water op straat of in de tuin blijven staan.',laag:'Beperkt risico op wateroverlast. Hemelwater kan hier naar verwachting voldoende weg.'},
+      droogte:{hoog:'Hoge droogtegevoeligheid in '+naam+'. Langdurige droogte laat de grondwaterstand dalen: ongunstig voor fundering, tuin en bodemzetting.',matig:'Matige droogtegevoeligheid. Droge zomers worden talrijker; grondwaterdaling is een groeiend aandachtspunt.',laag:'Beperkte droogtegevoeligheid. De waterhuishouding houdt de grondwaterstand hier relatief stabiel.'},
+      wateropslag:{hoog:'Weinig ruimte voor waterberging op eigen perceel (appartement of klein kavel). Kijk naar dak- of gemeenschappelijke oplossingen.',matig:'Enige ruimte voor waterberging: een regenwaterput of infiltratiekrat past hier.',laag:'Ruim voldoende ruimte voor waterberging (regenwaterput, wadi, groen dak).'}};
+    return (T[id]&&T[id][n])||'Score '+s+'/10.'; }
+  return {ophalen, bereken, uit, kpi};
 })();
 
 function duurzaamLink(adr){
@@ -1504,7 +1780,7 @@ function rapportAfdrukken(i,tabOverride){
   const d=dossiers[i]; if(!d) return;
   const tab=tabOverride||d.tab||'dossier';
   const src=(tab==='bied'||tab==='verkoop')?$('sw-'+i):$('dw-'+i); if(!src) return;
-  const titels={dossier:'Woningdossier',fund:'Funderingscijfer',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
+  const titels={dossier:'Woningdossier',fund:'Funderingscijfer',klim:'Klimaatcijfer',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
   // window.open() in plaats van window.print(): werkt ook als de tool in een iframe (Google Sites) staat.
   const win=window.open('','_blank');
   if(!win){ alert('Sta pop-ups toe voor deze pagina om het rapport af te drukken.'); return; }
@@ -1545,7 +1821,7 @@ function rapportAfdrukken(i,tabOverride){
   @media print{.noprint{display:none!important}}
 </style></head><body><main>
   <div class="noprint"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button class="sec-btn" onclick="window.close()">Sluiten</button></div>
-  <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>Opgesteld ${esc(datum)}</p></div>
+  <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>PandWise · opgesteld ${esc(datum)}</p></div>
   ${c.innerHTML}
   <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.</div>
 </main>
@@ -1762,7 +2038,11 @@ document.querySelector('main').addEventListener('click',e=>{
   if(fb||fr){ const i=+(fb||fr).dataset[fb?'fundBj':'fundBjReset'], d=dossiers[i]; if(!d||!d.fundering) return;
     if(fb){ const v=parseInt($('fcbj-'+i).value,10); if(!(v>=1500&&v<=2030)){ $('fcbj-'+i).focus(); alert('Vul een geldig bouwjaar in (1500–2030).'); return; } d.fundering.bouwjaarOverride=v; }
     else d.fundering.bouwjaarOverride=null;
-    const w=$('dw-'+i); w.querySelector('[data-pane="fund"]').innerHTML=Fund.uit(d,i); const k=$('fk-'+i); if(k) k.outerHTML=Fund.kpi(d,i); return; }
+    const w=$('dw-'+i); w.querySelector('[data-pane="fund"]').innerHTML=Fund.uit(d,i); const k=$('fk-'+i); if(k) k.outerHTML=Fund.kpi(d,i); const kp=w.querySelector('[data-pane="klim"]'); if(kp) kp.innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); return; }
+  const kl=e.target.closest('[data-klim-label]'), kr=e.target.closest('[data-klim-label-reset]');
+  if(kl||kr){ const i=+(kl||kr).dataset[kl?'klimLabel':'klimLabelReset'], d=dossiers[i]; if(!d||!d.klimaat) return;
+    d.klimaat.labelOverride= kl ? ($('kclbl-'+i).value||null) : null;
+    const w=$('dw-'+i); w.querySelector('[data-pane="klim"]').innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); return; }
   const wr=e.target.closest('[data-woz-reset]');
   if(wr){ const i=+wr.dataset.wozReset, d=dossiers[i]; if(d&&d.woz){ d.woz.handmatig={}; const sec=$('woz-'+i); if(sec) sec.outerHTML=sectie('04 / WOZ','WOZ-waarde over de jaren','Vastgestelde WOZ-waarden per peildatum, ontwikkeling en verhouding tot vraagprijs en buurt','geel',wozBlok(d,i),`woz-${i}`); } return; }
   const gt=e.target.closest('[data-gotab]');
