@@ -211,7 +211,6 @@
       <h1>PandWise</h1>
       <p>Jouw complete woningdossier en woningwaarderapport</p>
     </div>
-    <div class="badgerow"><span>BAG · Kadaster</span><span>BRK · Kadaster</span><span>CBS Wijken &amp; Buurten</span><span>Geen account, geen opslag</span></div>
   </div>
 </header>
 <main>
@@ -230,7 +229,6 @@
       <button class="sec-btn" id="btnNieuw" type="button">Nieuwe berekening</button>
     </div>
 
-    <div class="bron" id="bronnen"></div>
     <div class="msg" id="msg"></div>
   </div>
 
@@ -266,7 +264,6 @@
 
   <div id="strat"></div>
 
-  <p class="small">Alle bevragingen lopen rechtstreeks vanuit deze pagina naar de open PDOK-services (BAG, BRK Kadastrale Kaart, CBS Wijken en Buurten, Locatieserver, luchtfoto). Geen account, geen tussenserver, geen opslag. Woningdata uit woningadvertentie komt alleen binnen als je die zelf invult. Dit dossier is een feitencheck en geen taxatie of waardebepaling in de zin van NRVT of NWWI.</p>
 </main>
 
 <script>
@@ -287,7 +284,7 @@ const cbsVal = v => (v==null||v<=-99990)?null:v;
 
 /* ============ bronstatus ============ */
 const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', woz:'WOZ-waardeloket', fund:'Funderingscijfer', klim:'Klimaatcijfer'};
-function bronReset(){ $('bronnen').innerHTML = Object.entries(BRONNEN).map(([k,v])=>`<span id="b-${k}">${v}</span>`).join(''); }
+function bronReset(){ const el=$('bronnen'); if(!el) return; el.innerHTML = Object.entries(BRONNEN).map(([k,v])=>`<span id="b-${k}">${v}</span>`).join(''); }
 function bronStatus(k,cls,extra){ const el=$('b-'+k); if(el){ el.className=cls; el.textContent=BRONNEN[k]+(extra?' · '+extra:''); } }
 
 /* ============ API-laag ============ */
@@ -1743,7 +1740,7 @@ const Klim = (()=>{
       ['KNMI\'23-klimaatscenario\'s','info','Richting 2030/2050','https://www.knmi.nl/klimaatscenarios'],
       ['Model Klimaatcijfer (weging en begrenzing)','info','Bandbreedte '+fmt(eind.onder)+' – '+fmt(eind.boven),'https://klimaatadaptatienederland.nl']];
     const bronnen=`<table>${bron.map(([n,s,v,u])=>`<tr><td class="k">${u==='#'?esc(n):`<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`}</td><td><span class="sig ${s==='ok'?'groen':s==='schat'?'geel':'grijs'}">${s==='ok'?'opgehaald':s==='schat'?'schatting / geen data':'info'}</span> ${esc(v)}</td></tr>`).join('')}</table>`;
-    return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het klimaatcijfer is algemene informatie uit openbare registers, geen advies over een financieel product. De weging van de dimensies (fundering 30%, overstroming 25%, hitte 20%, wateroverlast 15%, droogte 10%) is een expertinschatting en niet empirisch gekalibreerd aan schade- of hersteldata; daarom afronding op halven en een bandbreedte. Genoemde regelingen zijn generiek; toepasbaarheid hangt af van de persoonlijke situatie.</div>`
+    return ''
       + `<div class="panel sec ${niv(c)}">${kop}</div>`
       + sectie('A / Profiel','Klimaatprofiel en ontwikkeling','Vijf risicodimensies nu en volgens de KNMI\'23-scenario\'s','blauw',profielBlok)
       + sectie('B / Risico\'s','Klimaatrisico\'s — bepalen het cijfer','Per dimensie de score, de bron en de herleidbare opbouw',niv(c),dimBlok)
@@ -1753,7 +1750,7 @@ const Klim = (()=>{
       + sectie('F / Financiering','Financieringsmogelijkheden','Generieke regelingen, geen toezegging','geel',finBlok)
       + sectie('G / Aanbevelingen','Aanbevelingen','Wat je kunt controleren en doen',c<=4?'rood':'geel',lijst(adv.map(esc)))
       + sectie('H / Bronnen','Gebruikte databronnen','Status per bron','',bronnen)
-      + `<p class="small" style="margin:-8px 0 26px">Indicatief model. Grondwater en bodem uit BRO-modellen; regioprofielen zijn postcode-gemiddelden. Geen vervanging voor bouwkundig onderzoek, funderingsinspectie of wateradvies. Methode overgenomen uit Klimaatcijfer.nl.</p>`;
+      + `<p class="small" style="margin:-8px 0 26px">Indicatief model. Grondwater en bodem uit BRO-modellen; regioprofielen zijn postcode-gemiddelden. Weging is een expertinschatting, niet gekalibreerd aan schadedata; vandaar afronding op halven en een bandbreedte. Geen advies in de zin van de Wft en geen vervanging voor bouwkundig onderzoek, funderingsinspectie of wateradvies. Methode overgenomen uit Klimaatcijfer.nl.</p>`;
   }
   function tekst(id,s,prof,adr){ const naam=prof.naam, g=adr.gemeente||naam, n=s<=3?'hoog':s<=6?'matig':'laag';
     const T={overstroming:{hoog:'Hoog overstromingsrisico in '+naam+'. Het gebied ligt laag en leunt op waterkeringen; zeespiegelstijging en hogere rivierafvoeren vergroten het restrisico.',matig:'Matig overstromingsrisico in '+naam+'. Er is dijkbescherming, maar bij extreme omstandigheden blijft een restrisico bestaan.',laag:'Laag overstromingsrisico. '+naam+' ligt relatief hoog of buiten de overstroombare gebieden.'},
