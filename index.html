@@ -39,6 +39,7 @@
   .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .row5{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
   @media(max-width:900px){.row,.row3,.row5{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.row,.row3,.row5{grid-template-columns:1fr}.opties-panel .btns{flex-direction:column}}
   @media(max-width:560px){.row,.row3,.row5{grid-template-columns:1fr}}
   label{display:block;font-weight:600;font-size:13px;color:var(--primary);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   input[type=text],textarea{width:100%;font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
@@ -600,6 +601,7 @@ async function bouwDossier(input){
     try{ const o=await bagOmgeving(pt); if(o){ d.registers.omgeving=o; bronStatus('omg','ok',o.pctVoor1970+'% vóór 1970'); } else bronStatus('omg','fail',''); }
     catch(e){ d.fouten.push('BAG omgeving: '+e.message); bronStatus('omg','fail','fout'); }
   })();
+  const pMed=(async()=>{try{d.registers.mediaan=await cbsMediaanGemeente(d.registers.adres&&d.registers.adres.gemeentecode,d.advertentie&&d.advertentie.soort);}catch(e){d.registers.mediaan=null;}})();
   const pIdx = (async()=>{
     bronStatus('idx','busy');
     try{ const ix=await cbsPrijsindex(adr.gemeentecode); if(ix){ d._index=ix; bronStatus('idx','ok',ix.niveau+' · '+kwartaalTekst(ix.laatste.p)); } else bronStatus('idx','fail','niet beschikbaar'); }
@@ -623,7 +625,7 @@ async function bouwDossier(input){
     try{ d.streetview=await streetviewCamera(pt); }catch(e){ d.streetview=null; }
     if(!d.streetview) d.streetview={lat:pt.lat, lon:pt.lon, heading:null};
   })();
-  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz,pKlim]);
+  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz,pKlim,pMed]);
   if(d._fundRaw){
     try{ d.fundering=Fund.samenstellen(d._fundRaw,d); const sc=Fund.bereken(d.fundering).score; bronStatus('fund','ok',sc.cijfer+'/10 · '+sc.titel); }
     catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
@@ -648,6 +650,19 @@ async function bouwDossier(input){
   return d;
 }
 
+async function cbsMediaanGemeente(gemeentecode, woningtype) {
+  if(!gemeentecode) return null;
+  const gm='GM'+String(gemeentecode).replace(/^GM/i,'').padStart(4,'0');
+  const typeMap={rijtjeshuis:'Tussenwoning','2 onder 1 kap':'HoekwoningOf2Onder1Kap',appartement:'Appartement',vrijstaand:'VrijstaandeWoning'};
+  const typeFilter=(woningtype&&typeMap[String(woningtype).toLowerCase()])||'TotaleTabel';
+  try{
+    const rows=await cbsOData('85773NED',`startswith(RegioS,'${gm}') and TypeFilter eq '${typeFilter}'`,'RegioS,Perioden,MediaanVerkoopprijs_2,AantalVerkochtWoningen_3');
+    const geldig=rows.filter(r=>r.MediaanVerkoopprijs_2!=null&&r.MediaanVerkoopprijs_2>0).sort((a,b)=>String(b.Perioden).localeCompare(String(a.Perioden)));
+    if(!geldig.length&&typeFilter!=='TotaleTabel') return cbsMediaanGemeente(gemeentecode,null);
+    if(!geldig.length) return null;
+    const rec=geldig[0]; return{mediaan:rec.MediaanVerkoopprijs_2*1000,kwartaal:String(rec.Perioden).trim().replace(/KW0?/,'KW'),aantal:rec.AantalVerkochtWoningen_3||null,typeFilter};
+  }catch(e){return null;}
+}
 /* ============ afwijkingsanalyse ============ */
 function analyse(d){
   const a=d.advertentie, r=d.registers, S=d.signalen;
@@ -808,7 +823,8 @@ function render(d, idx){
   }
   const geld = ((a.vraagprijs||a.bod)&&vbo.oppervlakte)?`<h3>Wat dit betekent voor de prijs</h3>
     <table>
-      ${a.vraagprijs?`<tr><td class="k">Vraagprijs</td><td>${eur(a.vraagprijs)}</td></tr>`:''}
+      ${a.vraagprijs?`<tr><td class="k">Vraagprijs${(a.status||a.prijsdatum)?` <span class="small">(${[a.status,a.prijsdatum].filter(Boolean).join(', ')})</span>`:''}</td><td>${eur(a.vraagprijs)}</td></tr>`:''}
+      ${(()=>{const m=d.registers&&d.registers.mediaan;if(!m||!a.vraagprijs)return '';const pct=Math.round((a.vraagprijs-m.mediaan)/m.mediaan*100);return `<tr><td class="k">Mediaan gemeente <span class="small">${esc(m.kwartaal)}${m.typeFilter&&m.typeFilter!=='TotaleTabel'?' · '+esc(m.typeFilter):''}</span></td><td>${eur(m.mediaan)} <span class="small" style="color:${pct>15?'var(--err)':pct>5?'var(--accent)':'var(--ok)'}">${pct>0?'+':''}${pct}%</span></td></tr>`;})()}
       ${an.bod?`<tr><td class="k">Al geboden / voorgenomen bod</td><td>${eur(an.bod.bod)}${an.bod.verschil!=null?` <span class="small">— ${an.bod.verschil>=0?'+ ':'− '}${eur(Math.abs(an.bod.verschil))} (${pct(an.bod.verschilPct)}) t.o.v. de vraagprijs</span>`:''}</td></tr>`:''}
       ${an.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak (vraagprijs)</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>`:''}
       ${an.prijsPerM2Bag?`<tr><td class="k">Prijs per m² op BAG-oppervlakte (vraagprijs)</td><td>${eur(an.prijsPerM2Bag)}</td></tr>`:''}
@@ -880,7 +896,7 @@ function render(d, idx){
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -1558,18 +1574,19 @@ const Klim = (()=>{
     'Wetterskip Fryslân':['https://www.wetterskipfryslan.nl','058-2922222'],'Aa en Maas':['https://www.aaenmaas.nl','073-6158158'],'De Dommel':['https://www.dommel.nl','013-5353535'],
     'Brabantse Delta':['https://www.brabantsedelta.nl','076-5644444'],'Limburg':['https://www.waterschaplimburg.nl','077-3891234'],'Hollands Noorderkwartier':['https://www.hhnk.nl','072-5828282'],
     'Scheldestromen':['https://www.scheldestromen.nl','0800-0101'],'Stichtse Rijnlanden':['https://www.hdsr.nl','030-6345821']};
-  const GPLAN={amsterdam:['https://www.amsterdam.nl/klimaat','actief','Klimaatadaptatiestrategie Amsterdam 2030'],rotterdam:['https://www.rotterdam.nl/klimaat','actief','Rotterdam Climate Initiative'],
-    'den haag':['https://www.denhaag.nl/klimaat','actief','Haags Klimaatakkoord 2030'],utrecht:['https://www.utrecht.nl/klimaatplan','actief','Utrechtse Klimaataanpak 2040'],
-    eindhoven:['https://www.eindhoven.nl/klimaat','actief','Eindhoven Smart Climate City'],tilburg:['https://www.tilburg.nl/klimaat','actief','Tilburg Klimaatadaptatie 2025-2030'],
-    groningen:['https://gemeente.groningen.nl/klimaatadaptatie','actief','Groningen Klimaatbestendig 2040'],almere:['https://www.almere.nl/duurzaamheid','basis','Almere Klimaatagenda 2030'],
-    breda:['https://www.breda.nl/klimaatadaptatie','actief','Breda Klimaatplan 2040'],nijmegen:['https://www.nijmegen.nl/klimaat','actief','Nijmegen Fossielvrij en Klimaatbestendig'],
-    apeldoorn:['https://www.apeldoorn.nl/klimaatadaptatie','basis','Apeldoorn Klimaatactieplan'],haarlem:['https://www.haarlem.nl/duurzaamheid','actief','Haarlem Klimaatbestendig 2030'],
-    arnhem:['https://www.arnhem.nl/klimaatadaptatie','actief','Arnhem Klimaatadaptatiestrategie'],enschede:['https://www.enschede.nl/klimaatadaptatie','basis','Enschede Klimaatplan'],
-    amersfoort:['https://www.amersfoort.nl/klimaat','actief','Amersfoort Klimaatbestendig'],zoetermeer:['https://www.zoetermeer.nl/duurzaamheid','basis','Zoetermeer Klimaataanpak'],
-    zwolle:['https://www.zwolle.nl/klimaatadaptatie','actief','Zwolle Klimaatbestendig 2020'],maastricht:['https://www.maastricht.nl/klimaat','actief','Maastricht Klimaatadaptatie'],
-    dordrecht:['https://www.dordrecht.nl/klimaat','actief','Dordrecht Waterrobuust Centrum'],leiden:['https://www.leiden.nl/klimaatadaptatie','actief','Leiden Klimaatadaptatiestrategie'],
-    nijkerk:['https://www.nijkerk.eu/klimaat','basis','Nijkerk Duurzaam en Klimaatbestendig'],delft:['https://www.delft.nl/klimaat','actief','Delft Klimaatadaptatie Strategie'],
-    deventer:['https://www.deventer.nl/klimaatadaptatie','actief','Deventer Klimaatadaptief'],helmond:['https://www.helmond.nl/klimaat','basis','Helmond Klimaataanpak']};
+  const GPLAN={
+    amsterdam:['actief','Klimaatadaptatiestrategie Amsterdam 2030'],rotterdam:['actief','Rotterdam Climate Initiative'],
+    'den haag':['actief','Haags Klimaatakkoord 2030'],utrecht:['actief','Utrechtse Klimaataanpak 2040'],
+    eindhoven:['actief','Eindhoven Smart Climate City'],tilburg:['actief','Tilburg Klimaatadaptatie 2025-2030'],
+    groningen:['actief','Groningen Klimaatbestendig 2040'],almere:['basis','Almere Klimaatagenda 2030'],
+    breda:['actief','Breda Klimaatplan 2040'],nijmegen:['actief','Nijmegen Fossielvrij en Klimaatbestendig'],
+    apeldoorn:['basis','Apeldoorn Klimaatactieplan'],haarlem:['actief','Haarlem Klimaatbestendig 2030'],
+    arnhem:['actief','Arnhem Klimaatadaptatiestrategie'],enschede:['basis','Enschede Klimaatplan'],
+    amersfoort:['actief','Amersfoort Klimaatbestendig'],zoetermeer:['basis','Zoetermeer Klimaataanpak'],
+    zwolle:['actief','Zwolle Klimaatbestendig 2020'],maastricht:['actief','Maastricht Klimaatadaptatie'],
+    dordrecht:['actief','Dordrecht Waterrobuust Centrum'],leiden:['actief','Leiden Klimaatadaptatiestrategie'],
+    nijkerk:['basis','Nijkerk Duurzaam en Klimaatbestendig'],delft:['actief','Delft Klimaatadaptatie Strategie'],
+    deventer:['actief','Deventer Klimaatadaptief'],helmond:['basis','Helmond Klimaataanpak']};
   const STEDEN=['amsterdam','rotterdam','den haag','utrecht','eindhoven','tilburg','groningen','almere','breda','nijmegen','apeldoorn','haarlem','arnhem','zaandam','enschede','haarlemmermeer','amersfoort','zoetermeer','zwolle','maastricht','dordrecht','leiden','delft','deventer','helmond','alkmaar'];
   const stedelijk=g=>STEDEN.some(s=>(g||'').toLowerCase().includes(s));
 
@@ -1728,12 +1745,13 @@ const Klim = (()=>{
     if(K.ovik){ const mx=parseFloat(K.ovik.max||K.ovik.midden||0), f=v=>v?num(parseFloat(v),2)+' m':'–';
       ovBlok=punt([mx>2?'rood':mx>0.5?'geel':'groen','Overstromingsscenario\'s (overstroomik.nl)','Dijkring '+(K.ovik.dijkring||'–')+' · norm '+(K.ovik.norm||'–')+'. Waterdiepte klein '+f(K.ovik.klein)+', midden '+f(K.ovik.midden)+', groot '+f(K.ovik.groot)+', extreem '+f(K.ovik.extreem)+'.'])+`<div class="btns"><a class="btn-woz" href="${esc(K.ovik.link)}" target="_blank" rel="noopener">Bekijk op overstroomik.nl ↗</a></div>`; }
     else ovBlok=punt(['grijs','Geen overstromingsdata van overstroomik.nl','Overstroomik.nl heeft geen officiële publieke API; controleer de waterdiepte en vluchtroutes zelf.'])+`<div class="btns"><a class="btn-woz" href="https://www.overstroomik.nl/?adres=${encodeURIComponent(String(adr.postcode||'').replace(/\s/g,'')+' '+(adr.huisnummer||''))}" target="_blank" rel="noopener">Controleer op overstroomik.nl ↗</a></div>`;
-    const keaB=br.kea?`<h3>Klimaateffectatlas — locatiewaarden</h3><div class="grid2">${Object.values(K.kea).map(v=>stat(v.label,esc(String(v.waarde)))).join('')}</div><p class="small">Publieke WMS-lagen van klimaateffectatlas.nl (RIVM/PBL).</p>`:'<p class="small">Voor deze locatie kwamen geen rasterwaarden uit de Klimaateffectatlas terug; het regioprofiel is gebruikt.</p>';
+    const keaB=br.kea?`<h3>Klimaateffectatlas — locatiewaarden <span class="sig groen" style="font-size:11px;vertical-align:middle">live</span></h3><div class="grid2">${Object.values(K.kea).map(v=>stat(v.label,esc(String(v.waarde)))).join('')}</div><p class="small">Publieke WMS-lagen van klimaateffectatlas.nl (RIVM/PBL), laagnamen op basis van PDOK sept 2026. Als een laag geen waarde retourneert, wordt het regioprofiel gebruikt (<span class="sig geel">regioprofiel</span>).</p>`:'<p class="small"><span class="sig geel">regioprofiel</span> Geen rasterwaarden ontvangen; postcodegebied-gemiddelde gebruikt. Controleer laagnamen via <a href=\'https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities\' target=\'_blank\' rel=\'noopener\'>PDOK WMS Capabilities ↗</a>.</p>';
     // waterschap + gemeente
     const wsn=prof.ws, ws=wsn&&WS[wsn];
     const wsBlok=wsn?`${stat('Waterschap',esc(wsn))}${ws?stat('Telefoon',esc(ws[1])):''}<p class="small">Het waterschap beheert dijken, sluizen en waterwegen in deze regio en is het aanspreekpunt bij wateroverlast of peilvragen.</p><div class="btns">${ws?`<a class="btn-woz" href="${ws[0]}" target="_blank" rel="noopener">${esc(wsn)} ↗</a>`:''}<a class="btn-woz" style="background:var(--primary);color:#fff" href="https://www.waterschappen.nl" target="_blank" rel="noopener">waterschappen.nl ↗</a></div>`:`<p class="small">Waterschap niet bepaald voor dit postcodegebied.</p>`;
     const gk=Object.keys(GPLAN).find(k=>(adr.gemeente||'').toLowerCase().includes(k)), gp=gk?GPLAN[gk]:null;
-    const gpBlok=gp?`${stat('Plan',esc(gp[2]))}${stat('Status',`<span class="sig ${gp[1]==='actief'?'groen':'geel'}">${gp[1]}</span>`)}<div class="btns"><a class="btn-woz" href="${gp[0]}" target="_blank" rel="noopener">Gemeentelijk plan ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://klimaatadaptatienederland.nl" target="_blank" rel="noopener">Klimaatadaptatie NL ↗</a></div>`
+    const gem2=adr.gemeente||'deze gemeente', zoekUrl2='https://klimaatadaptatienederland.nl/zoeken/?q='+encodeURIComponent(gem2);
+    const gpBlok=gp?`${stat('Plan',esc(gp[1]))}${stat('Status',`<span class="sig ${gp[0]==='actief'?'groen':'geel'}">${gp[0]}</span>`)}<div class="btns"><a class="btn-woz" href="${zoekUrl2}" target="_blank" rel="noopener">Gemeentelijk plan ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://klimaatadaptatienederland.nl" target="_blank" rel="noopener">Klimaatadaptatie NL ↗</a></div>`
       :`<p class="small">Geen gemeentelijk klimaatplan in de referentielijst voor ${esc(adr.gemeente||'deze gemeente')}. Zoek het via klimaatadaptatienederland.nl.</p><div class="btns"><a class="btn-woz" href="https://klimaatadaptatienederland.nl" target="_blank" rel="noopener">klimaatadaptatienederland.nl ↗</a><a class="btn-woz" style="background:var(--primary);color:#fff" href="https://klimaateffectatlas.nl" target="_blank" rel="noopener">klimaateffectatlas.nl ↗</a></div>`;
     // financiering
     const dp=duurzaamLink(adr)||'https://www.duurzaamheidsprofiel.nl/';
@@ -1829,7 +1847,7 @@ function rapportAfdrukken(i,tabOverride){
   @media print{.noprint{display:none!important}}
 </style></head><body><main>
   <div class="noprint"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button class="sec-btn" onclick="window.close()">Sluiten</button></div>
-  <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>PandWise · opgesteld ${esc(datum)}</p></div>
+  <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>PandWise · opgesteld ${esc(datum)} · model ${MODEL_VERSIE}</p></div>
   ${c.innerHTML}
   <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.</div>
 </main>
@@ -2070,6 +2088,10 @@ async function run(input, btn){
 
 document.querySelector('main').addEventListener('click',e=>{
   const pr=e.target.closest('[data-print]'); if(pr){ rapportAfdrukken(+pr.dataset.print,pr.dataset.tab||null); return; }
+  const dl=e.target.closest('[data-deel]');
+  if(dl){ const d=dossiers[+dl.dataset.deel]; if(!d) return; const a=d.registers&&d.registers.adres||{}; const adv=d.advertentie||{};
+    const link=maakDeelLink(a.weergavenaam||d.adres,adv.vraagprijs,adv.status,adv.prijsdatum); const abs=new URL(link,location.href).href;
+    if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(abs).then(()=>toonMsg('Link gekopieerd.')).catch(()=>prompt('Kopieer:',abs)); else prompt('Kopieer:',abs); return; }
   const hx=e.target.closest('[data-indexherstel]');
   if(hx){ const i=+hx.dataset.indexherstel, d=dossiers[i], mi=d.registers.marktindex; if(mi){ d.indic.factor=mi.factor; d.indic.handmatig=false;
     const w=$('dw-'+i), inp=w.querySelector('[data-calc="indic.factor"]'); if(inp) inp.value=num(mi.factor,3);
@@ -2125,8 +2147,12 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-// Deeplink: #q=Molenweg 34 Amstelveen
-try{ const h=new URLSearchParams(location.hash.slice(1)); const q=h.get('q'); if(q){ $('q').value=q; $('q').oninput(); $('btnGo').click(); } }catch(e){}
+const MODEL_VERSIE = '2.0.0'; const MODEL_DATUM = '2026-09-28';
+function maakDeelLink(adres, vraagprijs, status, datum) {
+  const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
+  return location.pathname+'#'+p.toString(); }
+function laadDeelLink() { try { const p=new URLSearchParams(location.hash.slice(1)); const q=p.get('q'); if(!q) return; $('q').value=q; $('q').oninput(); if(p.get('vp')) $('oVraagprijs').value=(+p.get('vp')).toLocaleString('nl-NL'); if(p.get('st')) $('oStatus').value=p.get('st'); if(p.get('dt')) $('oPrijsdatum').value=p.get('dt'); $('btnGo').click(); } catch(e){} }
+laadDeelLink();
 })();
 </script>
 </body>
