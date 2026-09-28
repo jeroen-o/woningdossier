@@ -252,6 +252,12 @@
         <div><label for="oBouwjaar">Bouwjaar</label><input type="text" id="oBouwjaar" inputmode="numeric"></div>
       </div>
       <div class="row" style="margin-top:12px">
+        <div><label for="oStatus">Status advertentie</label><select id="oStatus"><option value="">— Onbekend —</option><option value="te koop">Te koop</option><option value="onder bod">Onder bod</option><option value="verkocht ovb">Verkocht onder voorbehoud</option><option value="verkocht">Verkocht</option><option value="ingetrokken">Ingetrokken</option></select></div>
+        <div><label for="oPrijsdatum">Datum van de prijs (aangeboden sinds / verkocht op)</label><input type="text" id="oPrijsdatum" placeholder="bijv. 12-09-2026"></div>
+      </div>
+      <div style="margin-top:12px"><label for="oPlak">Funda-tekst plakken (optioneel)</label><textarea id="oPlak" rows="3" placeholder="Selecteer op de Funda-pagina de kenmerken (Overdracht, Bouw, Oppervlakten, Energie), kopieer en plak hier. De velden hierboven worden automatisch gevuld."></textarea>
+        <div class="btns" style="margin-top:8px"><button type="button" class="sec-btn" id="btnPlak">Velden vullen uit tekst</button><span class="small" id="plakMsg"></span></div></div>
+      <div class="row" style="margin-top:12px">
         <div><label for="oStaatBinnen">Staat binnen</label><select id="oStaatBinnen" data-staat="binnen"></select><p class="hint" id="hStaatBinnen"></p></div>
         <div><label for="oStaatBuiten">Staat buiten</label><select id="oStaatBuiten" data-staat="buiten"></select><p class="hint" id="hStaatBuiten"></p></div>
       </div>
@@ -601,7 +607,7 @@ async function bouwDossier(input){
   })();
   const pKlim = (async()=>{
     bronStatus('klim','busy');
-    try{ d.klimaat=await Klim.ophalen(d.registers.adres); }catch(e){ d.klimaat={kea:{},ep:null,ovik:null,labelOverride:null}; d.fouten.push('Klimaatcijfer: '+e.message); }
+    try{ d.klimaat=await Klim.ophalen(d.registers.adres); if(d.advertentie&&d.advertentie.energielabelAdv&&!(d.klimaat.ep&&d.klimaat.ep.label)) d.klimaat.labelOverride=d.advertentie.energielabelAdv; }catch(e){ d.klimaat={kea:{},ep:null,ovik:null,labelOverride:null}; d.fouten.push('Klimaatcijfer: '+e.message); }
   })();
   const pFund = (async()=>{
     bronStatus('fund','busy');
@@ -859,7 +865,7 @@ function render(d, idx){
       <div><span class="eyebrow">PandWise · Woningdossier</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
       <p class="sub">${esc([adr.buurt,adr.gemeente,adr.provincie].filter(Boolean).join(' · '))}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">advertentie</a>`:''}</p>
       ${oordeel}</div>
-      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
+      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${(a.status||a.prijsdatum)?`<small>${a.status?esc({'te koop':'Te koop','onder bod':'Onder bod','verkocht ovb':'Verkocht onder voorbehoud','verkocht':'Verkocht','ingetrokken':'Ingetrokken'}[a.status]||a.status):'Prijs'}${a.prijsdatum?' · '+(a.status==='verkocht'||a.status==='verkocht ovb'?'verkocht op ':'aangeboden sinds ')+esc(a.prijsdatum):''} · bron: advertentie</small>`:''}${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
     </div>
     <div class="kpis">
       <div class="kpi"><span class="lab">Oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em> gebruiksoppervlakte${a.wonen?' · advertentie '+m2(a.wonen+(a.overigInpandig||0)):''}</span></div>
@@ -882,7 +888,7 @@ function render(d, idx){
     + sectie('01 / Signalen','Signalen voor het dossier','Wat afwijkt, wat aandacht vraagt en wat in orde is',kleurSec,sig)
     + (d.heeftAdvertentie?sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld):'')
     + (indicBlok?sectie('03 / Indicatie','Indicatie op basis van buurt en staat','Gemiddelde WOZ per m² in de buurt, doorgerekend naar dit object, met bandbreedte naar staat','geel',indicBlok):'')
-    + sectie('04 / WOZ','WOZ-waarde over de jaren','Vastgestelde WOZ-waarden per peildatum, ontwikkeling en verhouding tot vraagprijs en buurt','geel',wozBlok(d,idx),`woz-${idx}`)
+    + sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,idx),`woz-${idx}`)
     + sectie('05 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('06 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
     + `${d.fouten.length?`<p class="small" style="margin:-8px 0 26px">Niet opgehaald: ${esc(d.fouten.join(' · '))}.</p>`:''}</div>`
@@ -1181,8 +1187,13 @@ function wozBlok(d,idx){
     ? `<p class="small">Reeks automatisch opgehaald uit het WOZ-waardeloket (${w.reeks.length} peildata${w.wozobjectnummer?' · WOZ-objectnummer '+esc(w.wozobjectnummer):''}).</p>`
     : '';
   const knoppen=`<div class="btns" style="margin:0 0 14px">${loket?`<a class="btn-woz" href="${esc(loket)}" target="_blank" rel="noopener">Open WOZ-waardeloket ↗</a>`:''}${bagv?`<a class="btn-woz" style="background:var(--primary);color:#fff" href="${esc(bagv)}" target="_blank" rel="noopener">Open BAG Viewer ↗</a>`:''}</div>`;
+  const zoek=[adr.straat,adr.huis_nlt||adr.huisnummer,adr.woonplaats].filter(Boolean).join(' ');
+  const markt=zoek?`<h3 style="margin-top:0">Marktstatus — te koop of verkocht?</h3><p class="small">Funda heeft geen open API en blokkeert automatische bevraging; werkelijke koopsommen zitten alleen in de betaalde Kadaster-koopsominformatie. De knoppen openen een zoekopdracht waarin de titel van het Funda-resultaat de status toont (te koop, verkocht, te huur). Vul een gevonden vraagprijs zelf in bij de woningdata onder het dossier.</p><div class="btns" style="margin:0 0 18px">
+    <a class="btn-woz" href="https://duckduckgo.com/?q=${encodeURIComponent('site:funda.nl '+zoek)}" target="_blank" rel="noopener">Zoek op Funda (te koop / verkocht) ↗</a>
+    <a class="btn-woz" href="https://www.funda.nl/zoeken/koop?selected_area=${encodeURIComponent('["'+String(adr.woonplaats||'').toLowerCase().replace(/\s+/g,'-')+'"]')}" target="_blank" rel="noopener">Funda-aanbod ${esc(adr.woonplaats||'')} ↗</a>
+    <a class="btn-woz" style="background:var(--primary);color:#fff" href="https://www.kadaster.nl/producten/woning/koopsominformatie" target="_blank" rel="noopener">Kadaster koopsominformatie (betaald) ↗</a></div>`:'';
   const heeft=!!wozBereken(d);
-  return status+knoppen+(heeft?`<h3 style="margin-top:0">Ontwikkeling en verhouding</h3><div id="wo-${idx}">${wozUit(d)}</div>`:`<div id="wo-${idx}"></div>`)+`
+  return markt+status+knoppen+(heeft?`<h3 style="margin-top:0">Ontwikkeling en verhouding</h3><div id="wo-${idx}">${wozUit(d)}</div>`:`<div id="wo-${idx}"></div>`)+`
     <div class="notice" style="margin:14px 0 0"><b>WOZ is een fiscale waarde, geen marktwaarde.</b> De WOZ-waarde wordt door de gemeente vastgesteld naar de waardepeildatum 1 januari van het jaar vóór het belastingjaar en loopt dus ruim een jaar achter op de markt. De indexering naar het laatste CBS-kwartaal is een rekenkundige benadering op regioniveau. Dit is geen taxatie of waardebepaling in de zin van NRVT/NWWI en geen onderbouwing voor financiering, bod of advies. Bron: WOZ-waardeloket (Kadaster/Waarderingskamer) en CBS.</div>`;
 }
 /* ============ rapport afdrukken ============ */
@@ -1975,11 +1986,13 @@ $('btnUpdate').onclick=()=>{
   const oud=d.advertentie||{};
   d.advertentie=advertentieUitOpties({adres:oud.adres, url:oud.url, fundaId:oud.fundaId, soort:oud.soort, eigendom:oud.eigendom});
   d.signalen=[]; d.analyse={}; d.strat=null; d.indic=null;
+  if(d.klimaat&&d.advertentie.energielabelAdv&&!(d.klimaat.ep&&d.klimaat.ep.label)) d.klimaat.labelOverride=d.advertentie.energielabelAdv;
   analyse(d); renderResult();
   const m=$('msg'); m.className='msg ok'; m.textContent='Dossier bijgewerkt met de ingevulde woningdata.';
   const el=$('dossier-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
 };
 $('btnNieuw').onclick=()=>{
+  $('oStatus').value=''; $('oPrijsdatum').value=''; $('oPlak').value=''; delete $('oPlak').dataset.label; $('plakMsg').textContent='';
   dossiers.length=0;
   $('result').innerHTML=''; $('strat').innerHTML='';
   $('q').value='';
@@ -1995,8 +2008,38 @@ $('btnNieuw').onclick=()=>{
 $('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||4, staatBuiten:+$('oStaatBuiten').value||4, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value) }, extra||{});
+  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||4, staatBuiten:+$('oStaatBuiten').value||4, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null }, extra||{});
 }
+/* Funda-tekst parser: haalt vraagprijs, status, datums en kenmerken uit gekopieerde kenmerkentekst */
+const MAAND={januari:1,februari:2,maart:3,april:4,mei:5,juni:6,juli:7,augustus:8,september:9,oktober:10,november:11,december:12,jan:1,feb:2,mrt:3,apr:4,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12};
+function nlDatum(s){ if(!s) return null; const m=String(s).match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/i); if(m&&MAAND[m[2].toLowerCase()]) return `${String(m[1]).padStart(2,'0')}-${String(MAAND[m[2].toLowerCase()]).padStart(2,'0')}-${m[3]}`; const n=String(s).match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/); return n?`${n[1].padStart(2,'0')}-${n[2].padStart(2,'0')}-${n[3]}`:null; }
+function parseFundaTekst(t){
+  const T=String(t||'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ');
+  const geld=re=>{ const m=T.match(re); return m?nlNum(m[1]):null; };
+  const r={};
+  r.vraagprijs=geld(/(?:Laatste vraagprijs|Vraagprijs|Koopsom|Prijs)\s*:?\s*€\s*([\d.]+)/i);
+  r.vonKk=/v\.o\.n\./i.test(T)?'v.o.n.':/k\.k\./i.test(T)?'k.k.':null;
+  r.status=/Verkocht onder voorbehoud/i.test(T)?'verkocht ovb':/\bVerkocht\b/i.test(T)?'verkocht':/Onder bod/i.test(T)?'onder bod':/Ingetrokken/i.test(T)?'ingetrokken':/Beschikbaar|Te koop/i.test(T)?'te koop':null;
+  const sinds=T.match(/Aangeboden sinds\s*:?\s*([^\n]+)/i); r.aangebodenSinds=sinds?nlDatum(sinds[1])||sinds[1].trim().slice(0,30):null;
+  const verk=T.match(/(?:Verkoopdatum|Verkocht op)\s*:?\s*([^\n]+)/i); r.verkoopdatum=verk?nlDatum(verk[1])||verk[1].trim().slice(0,30):null;
+  const m2=lbl=>{ const m=T.match(new RegExp(lbl+'\\s*:?\\s*([\\d.]+)\\s*m','i')); return m?nlNum(m[1]):null; };
+  r.wonen=m2('Wonen'); r.overig=m2('Overige inpandige ruimte'); r.perceel=m2('Perceel');
+  const bj=T.match(/Bouwjaar\s*:?\s*(\d{4})/i); r.bouwjaar=bj?+bj[1]:null;
+  const el=T.match(/Energielabel\s*:?\s*([A-G](?:\+{1,4})?)\b/i); r.energielabel=el?el[1].toUpperCase():null;
+  return r;
+}
+$('btnPlak').onclick=()=>{
+  const r=parseFundaTekst($('oPlak').value), m=$('plakMsg'), gevuld=[];
+  if(r.vraagprijs){ $('oVraagprijs').value=r.vraagprijs.toLocaleString('nl-NL'); gevuld.push('vraagprijs'); }
+  if(r.wonen){ $('oWonen').value=r.wonen; gevuld.push('wonen'); }
+  if(r.overig){ $('oOverig').value=r.overig; gevuld.push('overig'); }
+  if(r.perceel){ $('oPerceel').value=r.perceel; gevuld.push('perceel'); }
+  if(r.bouwjaar){ $('oBouwjaar').value=r.bouwjaar; gevuld.push('bouwjaar'); }
+  if(r.status){ $('oStatus').value=r.status; gevuld.push('status'); }
+  const dat=r.verkoopdatum||r.aangebodenSinds; if(dat){ $('oPrijsdatum').value=dat; gevuld.push('datum'); }
+  if(r.energielabel){ $('oPlak').dataset.label=r.energielabel; gevuld.push('energielabel '+r.energielabel); } else delete $('oPlak').dataset.label;
+  m.textContent=gevuld.length?'Gevuld: '+gevuld.join(', ')+'. Controleer en klik op Dossier bijwerken.':'Niets herkend. Plak de kenmerkentekst van de Funda-pagina (o.a. Vraagprijs, Status, Aangeboden sinds, Wonen, Bouwjaar).';
+};
 $('btnGo').onclick=()=>{
   const v=$('q').value.trim(); const m=$('msg');
   if(!v){ m.className='msg err'; m.textContent='Vul een adres of Funda-link in.'; return; }
@@ -2041,7 +2084,7 @@ document.querySelector('main').addEventListener('click',e=>{
     d.klimaat.labelOverride= kl ? ($('kclbl-'+i).value||null) : null;
     const w=$('dw-'+i); w.querySelector('[data-pane="klim"]').innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); return; }
   const wr=e.target.closest('[data-woz-reset]');
-  if(wr){ const i=+wr.dataset.wozReset, d=dossiers[i]; if(d&&d.woz){ d.woz.handmatig={}; const sec=$('woz-'+i); if(sec) sec.outerHTML=sectie('04 / WOZ','WOZ-waarde over de jaren','Vastgestelde WOZ-waarden per peildatum, ontwikkeling en verhouding tot vraagprijs en buurt','geel',wozBlok(d,i),`woz-${i}`); } return; }
+  if(wr){ const i=+wr.dataset.wozReset, d=dossiers[i]; if(d&&d.woz){ d.woz.handmatig={}; const sec=$('woz-'+i); if(sec) sec.outerHTML=sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,i),`woz-${i}`); } return; }
   const gt=e.target.closest('[data-gotab]');
   const b=gt||e.target.closest('.dtabs button[data-tab]'); if(!b) return;
   const i=+(gt?gt.dataset.i:b.closest('.dtabs').dataset.i), t=gt?gt.dataset.gotab:b.dataset.tab; dossiers[i].tab=t;
