@@ -262,6 +262,12 @@
         <div><label for="oStaatBinnen">Staat binnen</label><select id="oStaatBinnen" data-staat="binnen"></select><p class="hint" id="hStaatBinnen"></p></div>
         <div><label for="oStaatBuiten">Staat buiten</label><select id="oStaatBuiten" data-staat="buiten"></select><p class="hint" id="hStaatBuiten"></p></div>
       </div>
+      <div class="row" style="margin-top:12px">
+        <div><label for="oAdviseur">Adviseur (voor het adviseursrapport)</label><input type="text" id="oAdviseur" autocomplete="off"></div>
+        <div><label for="oKantoor">Kantoor</label><input type="text" id="oKantoor" autocomplete="off"></div>
+        <div><label for="oKlant">Klant</label><input type="text" id="oKlant" autocomplete="off"></div>
+      </div>
+      <div style="margin-top:12px"><label for="oNotitie">Toelichting adviseur (optioneel)</label><textarea id="oNotitie" rows="2"></textarea></div>
       <div class="btns actie">
         <button id="btnUpdate" type="button">Dossier bijwerken</button>
       </div>
@@ -270,6 +276,7 @@
 
 
   <div id="strat"></div>
+  <div id="vergelijk"></div>
 
 </main>
 
@@ -601,6 +608,7 @@ async function bouwDossier(input){
     try{ const o=await bagOmgeving(pt); if(o){ d.registers.omgeving=o; bronStatus('omg','ok',o.pctVoor1970+'% vóór 1970'); } else bronStatus('omg','fail',''); }
     catch(e){ d.fouten.push('BAG omgeving: '+e.message); bronStatus('omg','fail','fout'); }
   })();
+  const pGeluid=(async()=>{ try{ d.registers.geluid=await rivmGeluid(adr.lat,adr.lon); }catch(e){ d.registers.geluid=null; d.fouten.push('RIVM geluid: '+e.message); } })();
   const pMed=(async()=>{try{d.registers.mediaan=await cbsMediaanGemeente(d.registers.adres&&d.registers.adres.gemeentecode,d.advertentie&&d.advertentie.soort);}catch(e){d.registers.mediaan=null;}})();
   const pIdx = (async()=>{
     bronStatus('idx','busy');
@@ -625,7 +633,7 @@ async function bouwDossier(input){
     try{ d.streetview=await streetviewCamera(pt); }catch(e){ d.streetview=null; }
     if(!d.streetview) d.streetview={lat:pt.lat, lon:pt.lon, heading:null};
   })();
-  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz,pKlim,pMed]);
+  await Promise.all([pVbo,pBrk,pCbs,pOmg,pSv,pIdx,pFund,pWoz,pKlim,pMed,pGeluid]);
   if(d._fundRaw){
     try{ d.fundering=Fund.samenstellen(d._fundRaw,d); const sc=Fund.bereken(d.fundering).score; bronStatus('fund','ok',sc.cijfer+'/10 · '+sc.titel); }
     catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
@@ -650,6 +658,39 @@ async function bouwDossier(input){
   return d;
 }
 
+/* RIVM geluidskaart (Lden, alle bronnen, 10 m raster): modelwaarde op het adrespunt */
+async function rivmGeluid(lat,lon){
+  const L='rivm_Geluid_lden_allebronnen_actueel', dd=0.0005;
+  const url='https://data.rivm.nl/geo/alo/wms?service=WMS&version=1.3.0&request=GetFeatureInfo&layers='+L+'&query_layers='+L+'&styles=&crs=EPSG:4326&bbox='+(lat-dd)+','+(lon-dd)+','+(lat+dd)+','+(lon+dd)+'&width=101&height=101&i=50&j=50&info_format=application/json';
+  const r=await fetch(url,{signal:AbortSignal.timeout(9000)}); if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json(), v=j.features&&j.features[0]&&j.features[0].properties&&j.features[0].properties.GRAY_INDEX;
+  return (v!=null&&isFinite(v)&&v>0)?{db:Math.round(v)}:null;
+}
+/* Trefwoordcontrole op geplakte advertentietekst: signaleert, oordeelt niet */
+const AD_TREFWOORDEN=[
+  [/verzakking|zakking|paalrot|funderingsherstel|funderingsprobleem/i,'rood','Funderingsproblematiek genoemd','De advertentietekst noemt funderingsproblemen of herstel. Vraag het funderingsrapport, de herstelstatus en eventuele subsidie of garantie op.'],
+  [/erfpacht|canon/i,'geel','Erfpacht of canon genoemd','Controleer looptijd, canon, afkoop en voorwaarden voor verlenging in de erfpachtakte.'],
+  [/asbest/i,'geel','Asbest genoemd','Vraag een asbestinventarisatie op. Sanering of een asbestclausule in de koopakte kan kosten en risico verleggen.'],
+  [/\bvve\b|vereniging van eigenaren|servicekosten/i,'geel','VvE of servicekosten genoemd','Vraag de VvE-stukken op: reservefonds, meerjarenonderhoudsplan, jaarrekening en maandelijkse bijdrage.'],
+  [/casco|rauwbouw/i,'geel','Casco of rauwbouw genoemd','Afbouwkosten en opleveringsniveau zijn vaak niet in de vraagprijs verwerkt. Vraag naar een gespecificeerde afbouwomschrijving.'],
+  [/opknapper|klus(?:woning|je|huis)|renovatie|moderniseren|gedateerd|achterstallig onderhoud|aan(?: een)? opknapbeurt/i,'geel','Renovatie of achterstallig onderhoud genoemd','Laat de verbouwings- en onderhoudskosten door een bouwkundige inschatten voordat je een bod doet.'],
+  [/vocht|lekkage|schimmel|scheur(?:en|vorming)?\b|houtworm|houtrot/i,'geel','Vocht, lekkage of scheurvorming genoemd','Vraag naar oorzaak en herstel, en laat dit bij de bouwkundige keuring expliciet meenemen.'],
+  [/loden (?:leiding|waterleiding|water)/i,'geel','Loden leidingen genoemd','Loden waterleidingen horen vervangen te worden. Reken met de vervangingskosten.'],
+  [/rijksmonument|gemeentelijk monument|beschermd (?:stads|dorps)gezicht/i,'geel','Monument of beschermd gezicht genoemd','Verbouwen en verduurzamen kan vergunningplichtig zijn. Hypotheek- en verzekeringsvoorwaarden kunnen afwijken.'],
+  [/verhuurd|huurder|huurovereenkomst|bewoond(?! door de eigenaar)/i,'geel','Verhuur of bewoning door derden genoemd','Controleer of de woning leeg wordt opgeleverd en of een huurovereenkomst blijft doorlopen.'],
+  [/ouderdomsclausule|asbestclausule|niet-zelfbewoningsclausule|zelfbewoningsplicht/i,'geel','Bijzondere clausule genoemd','Laat de concept-koopakte bekijken door een makelaar of notaris voordat je tekent.']
+];
+function adTekstSignalen(tekst){
+  const T=String(tekst||'').replace(/\s+/g,' ');
+  if(T.length<20) return [];
+  const uit=[];
+  AD_TREFWOORDEN.forEach(([re,niv,titel,uitleg])=>{
+    const m=T.match(re); if(!m) return;
+    const i=m.index, frag=T.slice(Math.max(0,i-45),Math.min(T.length,i+m[0].length+45)).trim();
+    uit.push({niveau:niv,titel:'Advertentietekst: '+titel,tekst:'Gevonden in de tekst: "…'+frag+'…". '+uitleg+' Dit is een trefwoordcontrole, geen beoordeling van de woning.'});
+  });
+  return uit;
+}
 async function cbsMediaanGemeente(gemeentecode, woningtype) {
   if(!gemeentecode) return null;
   const gm='GM'+String(gemeentecode).replace(/^GM/i,'').padStart(4,'0');
@@ -717,6 +758,13 @@ function analyse(d){
   if(gd && !/woonfunctie/i.test(gd)) S.push({niveau:'rood', titel:'Gebruiksdoel is geen woonfunctie', tekst:`De BAG registreert "${gd}". Geldverstrekkers financieren een object met een afwijkend gebruiksdoel doorgaans niet als reguliere woning; check dit vóór het uitbrengen van een bod.`});
   const st = r.verblijfsobject && r.verblijfsobject.status;
   if(st && !/in gebruik/i.test(st)) S.push({niveau:'geel', titel:'Afwijkende BAG-status', tekst:`Status verblijfsobject: "${st}". Bij nieuwbouw of verbouwing is dit normaal, in andere gevallen vraagt het uitleg.`});
+  const gl = r.geluid && r.geluid.db;
+  if(gl!=null){
+    if(gl>=65) S.push({niveau:'rood', titel:'Hoge geluidsbelasting ('+gl+' dB Lden)', tekst:'De RIVM-geluidskaart (alle bronnen, modelwaarde op het adrespunt) geeft '+gl+' dB Lden. Dat is een hoge belasting. Ga ter plaatse luisteren op verschillende tijden en vraag naar geluidwering en gevelisolatie.'});
+    else if(gl>=55) S.push({niveau:'geel', titel:'Verhoogde geluidsbelasting ('+gl+' dB Lden)', tekst:'De RIVM-geluidskaart (alle bronnen, modelwaarde op het adrespunt) geeft '+gl+' dB Lden. Ga ter plaatse luisteren, ook in de spits en in de avond.'});
+    else S.push({niveau:'groen', titel:'Lage geluidsbelasting ('+gl+' dB Lden)', tekst:'De RIVM-geluidskaart (alle bronnen, modelwaarde op het adrespunt) geeft '+gl+' dB Lden. Een modelwaarde, geen meting; lokale bronnen zoals horeca of buren staan er niet in.'});
+  }
+  if(a.tekst) adTekstSignalen(a.tekst).forEach(x=>S.push(x));
   const av = r.pand && r.pand.aantal_verblijfsobjecten;
   if(av && av>1) S.push({niveau:'geel', titel:'Pand bevat meerdere verblijfsobjecten', tekst:`Het pand telt ${av} verblijfsobjecten. Controleer of sprake is van splitsing, een VvE of een appartementsrecht in plaats van volle eigendom.`});
   if(r.perceel && /erfpacht/i.test(a.eigendom||'')) S.push({niveau:'geel', titel:'Erfpacht volgens de advertentie', tekst:`Eigendomssituatie in de advertentie: "${a.eigendom}". Controleer canon, looptijd en afkoop in het kadastrale uittreksel; dit weegt mee in de financiering.`});
@@ -872,6 +920,16 @@ function render(d, idx){
       <p class="small" style="margin-top:10px" id="ix-${idx}">${indexUitleg(d,idx)}</p>
       <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; perceel, woningtype en energielabel tellen niet mee in de berekening (de gemeentemediaan is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; advertentie-m² volgen NEN 2580.</div>
     </div>` : '';
+  /* --- verduurzamen --- */
+  const lblK=(d.klimaat&&((d.klimaat.ep&&d.klimaat.ep.label)||d.klimaat.labelOverride))||a.energielabel||null;
+  const lblL=lblK?String(lblK).toUpperCase().replace(/[^A-G+]/g,'').charAt(0):'';
+  const duurzaamBlok=`${lblK?punt([/[EFG]/.test(lblL)?'geel':/[CD]/.test(lblL)?'geel':'groen','Energielabel '+lblK,/[EFG]/.test(lblL)?'Een laag label betekent meestal substantiële investeringen (isolatie, warmte, ventilatie). Neem die kosten mee in de afweging van het bod.':/[CD]/.test(lblL)?'Redelijk label: er is vaak nog winst te halen met isolatie of een warmtepomp.':'Gunstig label: weinig directe verduurzamingsopgave.']):punt(['grijs','Energielabel onbekend','Er is geen geregistreerd label gevonden. Vraag naar het label of laat het opnemen.'])}
+    ${lijst([
+      '<a href="https://www.rvo.nl/subsidies-financiering/isde" target="_blank" rel="noopener">ISDE-subsidie (RVO)</a>: subsidie voor onder meer isolatie, warmtepompen en zonneboilers; voorwaarden en bedragen wijzigen regelmatig.',
+      '<a href="https://www.warmtefonds.nl" target="_blank" rel="noopener">Nationaal Warmtefonds</a>: financiering voor verduurzamen, ook met een lage rente voor bepaalde doelgroepen.',
+      'Energiebesparende voorzieningen (EBV): bij de hypotheek is extra leenruimte mogelijk voor verduurzaming. Het maximum wijzigt jaarlijks; laat dit door een hypotheekadviseur berekenen.'
+    ])}
+    <p class="small">Algemene informatie, geen advies. Subsidiebedragen en leenruimte zijn bewust niet opgenomen omdat ze jaarlijks wijzigen.</p>`;
   /* --- hero --- */
   const tab=d.tab||'dossier';
   const sv=d.streetview;
@@ -891,12 +949,13 @@ function render(d, idx){
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
+      ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-print="${idx}" data-tab="advies" title="Volledig adviseursrapport met voorblad en samenvatting">Adviseursrapport</button><button class="printbtn" data-vergelijk="${idx}" title="Voeg dit adres toe aan de vergelijking (maximaal 3)">+ Vergelijk</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -907,6 +966,7 @@ function render(d, idx){
     + sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,idx),`woz-${idx}`)
     + sectie('05 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('06 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
+    + sectie('07 / Verduurzamen','Energielabel en verduurzamingsmogelijkheden','Algemene verwijzingen, geen advies','groen',duurzaamBlok)
     + `${d.fouten.length?`<p class="small" style="margin:-8px 0 26px">Niet opgehaald: ${esc(d.fouten.join(' · '))}.</p>`:''}</div>`
     + `<div data-pane="fund"${tab!=='fund'?' hidden':''}>${Fund.uit(d,idx)}</div>`
     + `<div data-pane="klim"${tab!=='klim'?' hidden':''}>${Klim.uit(d,idx)}</div>`
@@ -1802,11 +1862,100 @@ function duurzaamKnop(d){
   return `<div class="panel woz-knop duurzaam-knop"><div><h2 style="margin:0">Duurzaamheidsprofiel van deze woning</h2><p class="small" style="margin:4px 0 0">Bekijk verduurzamingsmogelijkheden, besparing en extra leenruimte voor energiebesparende maatregelen op duurzaamheidsprofiel.nl.</p></div>
     <a class="btn-woz" href="${esc(url)}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a></div>`;
 }
+function samenvatting(d){
+  const r=d.registers||{}, adr=r.adres||{}, a=d.advertentie||{}, an=d.analyse||{}, pand=r.pand||{}, vbo=r.verblijfsobject||{}, b=r.buurt;
+  let fb=null, kb=null, ib=null;
+  try{ fb=d.fundering?Fund.bereken(d.fundering):null; }catch(e){}
+  try{ kb=Klim.bereken(d); }catch(e){}
+  try{ ib=indicBereken(d); }catch(e){}
+  const sig=d.signalen||[];
+  const wt=d.fundering&&d.fundering.woningtype?d.fundering.woningtype.naam:null;
+  return { adres:adr.weergavenaam||a.adres||'', vraagprijs:a.vraagprijs||null, prijsM2:an.prijsPerM2Bag||null, bagM2:vbo.oppervlakte||null,
+    bouwjaar:(fb&&fb.bj)||pand.bouwjaar||null, woningtype:wt, label:kb&&kb.lab?kb.lab.label:null, wozBuurt:b&&b.wozGem||null,
+    fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
+    geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
+    rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
+    rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
+}
+function adviesVoorblad(d){
+  const v=k=>(($(k)||{}).value||'').trim(), sm=samenvatting(d);
+  const datum=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  const fmt=n=>n==null?'–':(Math.round(n*2)/2).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const kv=(k,x)=>`<tr><td class="k">${k}</td><td>${x==null||x===''?'–':x}</td></tr>`;
+  return `<div class="panel sec blauw"><div class="kop"><div><span class="num-eye">Voorblad</span><h2>Adviseursrapport woningcheck</h2><p class="sub">${esc(sm.adres)}</p></div></div>
+    <div class="tabwrap"><table>
+      ${kv('Klant',esc(v('oKlant')))}${kv('Adviseur',esc(v('oAdviseur')))}${kv('Kantoor',esc(v('oKantoor')))}${kv('Datum',esc(datum))}
+    </table></div>
+    <h3>Samenvatting</h3>
+    <div class="tabwrap"><table>
+      ${kv('Bouwjaar / woningtype',esc([sm.bouwjaar,sm.woningtype].filter(Boolean).join(' · ')))}
+      ${kv('Vraagprijs',sm.vraagprijs?eur(sm.vraagprijs)+(sm.prijsM2?` (${eur(sm.prijsM2)} per m² BAG)`:''):null)}
+      ${kv('Indicatie naar staat (geen taxatie)',sm.indic?eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''):null)}
+      ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
+      ${kv('Klimaatcijfer',sm.klimaat!=null?fmt(sm.klimaat)+' / 10 (bandbreedte '+fmt(sm.klimaatBand[0])+' tot '+fmt(sm.klimaatBand[1])+')':null)}
+      ${kv('Energielabel',esc(sm.label))}
+      ${kv('Geluidsbelasting (Lden)',sm.geluid!=null?sm.geluid+' dB (RIVM-model)':null)}
+      ${kv('Signalen',sm.rood+' signaal'+(sm.rood===1?'':'en')+', '+sm.geel+' aandachtspunt'+(sm.geel===1?'':'en')+', '+sm.groen+' in orde')}
+    </table></div>
+    ${v('oNotitie')?`<h3>Toelichting adviseur</h3><p style="white-space:pre-wrap">${esc(v('oNotitie'))}</p>`:''}
+  </div>`;
+}
+
+/* ============ vergelijking van maximaal 3 adressen (alleen in het geheugen) ============ */
+const vergelijkLijst=[];
+function toonMsg(t){ const m=$('msg'); if(!m) return; m.className='msg ok'; m.textContent=t; }
+function vergelijkHtml(){
+  if(!vergelijkLijst.length) return '';
+  const L=vergelijkLijst, fmt=n=>n==null?'–':(Math.round(n*2)/2).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const rij=(k,f)=>`<tr><td class="k">${k}</td>${L.map(x=>`<td class="num">${f(x)}</td>`).join('')}</tr>`;
+  return `<div class="panel"><div class="strat-head"><h2>Vergelijking</h2><button class="printbtn" data-vergelijkprint="1">Vergelijking afdrukken</button></div>
+    <p class="small">Voeg tot drie adressen toe via "+ Vergelijk" bij een dossier. De lijst staat alleen in dit venster en verdwijnt bij vernieuwen.</p>
+    <div class="tabwrap"><table>
+    <tr><th></th>${L.map((x,i)=>`<th class="num">${esc(x.adres.split(',')[0]||'Adres')}<br><button class="link" data-vergelijkweg="${i}">verwijderen</button></th>`).join('')}</tr>
+    ${rij('Adres',x=>esc(x.adres))}
+    ${rij('Woningtype',x=>esc(x.woningtype||'–'))}
+    ${rij('Bouwjaar',x=>x.bouwjaar??'–')}
+    ${rij('Oppervlakte (BAG)',x=>x.bagM2?m2(x.bagM2):'–')}
+    ${rij('Vraagprijs',x=>x.vraagprijs?eur(x.vraagprijs):'–')}
+    ${rij('Per m² BAG',x=>x.prijsM2?eur(x.prijsM2):'–')}
+    ${rij('Gemiddelde WOZ buurt',x=>x.wozBuurt?eur(x.wozBuurt):'–')}
+    ${rij('Indicatie naar staat',x=>x.indic?eur(x.indic[0])+' tot '+eur(x.indic[1]):'–')}
+    ${rij('Funderingscijfer (hoger is beter)',x=>x.fund!=null?x.fund+' / 8':'–')}
+    ${rij('Klimaatcijfer (hoger is beter)',x=>x.klimaat!=null?fmt(x.klimaat)+' / 10':'–')}
+    ${rij('Energielabel',x=>esc(x.label||'–'))}
+    ${rij('Geluid (Lden)',x=>x.geluid!=null?x.geluid+' dB':'–')}
+    ${rij('Signalen',x=>`${x.rood} rood · ${x.geel} geel · ${x.groen} groen`)}
+    </table></div>
+    <p class="small">Indicatief. Geen taxatie, waardebepaling of advies. Kleine verschillen in cijfers zijn geen betrouwbaar onderscheid tussen woningen.</p></div>`;
+}
+function renderVergelijk(){ const el=$('vergelijk'); if(el) el.innerHTML=vergelijkHtml(); }
+function vergelijkAfdrukken(){
+  if(!vergelijkLijst.length) return;
+  const win=window.open('','_blank'); if(!win){ alert('Sta pop-ups toe voor deze pagina om het rapport af te drukken.'); return; }
+  const c=document.createElement('div'); c.innerHTML=vergelijkHtml(); c.querySelectorAll('.printbtn,.link,.strat-head .printbtn').forEach(x=>x.remove());
+  const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
+  const datum=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><title>Vergelijking woningen</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>${css}
+  @page{size:A4 landscape;margin:14mm 12mm} html,body{background:#fff} body{font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main{max-width:1100px;padding:18px 20px} .panel{box-shadow:none} tr{break-inside:avoid}
+  .rap-kop{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--accent);padding-bottom:10px;margin-bottom:16px}
+  .rap-kop h1{font-family:var(--head);color:var(--primary);font-size:22px;margin:0} .rap-kop p{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .noprint{margin:0 0 14px;display:flex;gap:8px} @media print{.noprint{display:none!important}}
+</style></head><body><main>
+  <div class="noprint"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button class="sec-btn" onclick="window.close()">Sluiten</button></div>
+  <div class="rap-kop"><div><h1>Vergelijking woningen</h1><p>${vergelijkLijst.length} adres${vergelijkLijst.length>1?'sen':''}</p></div><p>PandWise · opgesteld ${esc(datum)} · model ${MODEL_VERSIE}</p></div>
+  ${c.innerHTML}
+</main><script>setTimeout(function(){window.focus();window.print();},400);<\/script></body></html>`);
+  win.document.close();
+}
 function rapportAfdrukken(i,tabOverride){
   const d=dossiers[i]; if(!d) return;
   const tab=tabOverride||d.tab||'dossier';
   const src=(tab==='bied'||tab==='verkoop')?$('sw-'+i):$('dw-'+i); if(!src) return;
-  const titels={dossier:'Woningdossier',fund:'Funderingscijfer',klim:'Klimaatcijfer',bied:'Biedstrategie',verkoop:'Verkoopstrategie'};
+  const titels={dossier:'Woningdossier',fund:'Funderingscijfer',klim:'Klimaatcijfer',bied:'Biedstrategie',verkoop:'Verkoopstrategie',advies:'Adviseursrapport'};
   // window.open() in plaats van window.print(): werkt ook als de tool in een iframe (Google Sites) staat.
   const win=window.open('','_blank');
   if(!win){ alert('Sta pop-ups toe voor deze pagina om het rapport af te drukken.'); return; }
@@ -1816,7 +1965,8 @@ function rapportAfdrukken(i,tabOverride){
   kloonVelden.forEach((el,k)=>{ const o=srcVelden[k]; const v=o.tagName==='SELECT'?(o.options[o.selectedIndex]||{}).text:o.value;
     const div=document.createElement('div'); div.className='printval'; div.textContent=v||'–'; el.replaceWith(div); });
   c.querySelectorAll('.gevel,.dtabs,.strat-head .printbtn,.gevel-link,.woz-knop,.fc-corr,script').forEach(x=>x.remove());
-  c.querySelectorAll('[data-pane]').forEach(p=>{ if(p.dataset.pane!==tab) p.remove(); else p.removeAttribute('hidden'); });
+  const houd=tab==='advies'?['dossier','fund','klim']:[tab];
+  c.querySelectorAll('[data-pane]').forEach(p=>{ if(!houd.includes(p.dataset.pane)) p.remove(); else p.removeAttribute('hidden'); });
   c.querySelectorAll('details').forEach(x=>x.setAttribute('open',''));
   c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
@@ -1848,8 +1998,9 @@ function rapportAfdrukken(i,tabOverride){
 </style></head><body><main>
   <div class="noprint"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button class="sec-btn" onclick="window.close()">Sluiten</button></div>
   <div class="rap-kop"><div><h1>${esc(titels[tab])}</h1><p>${esc(adres)}</p></div><p>PandWise · opgesteld ${esc(datum)} · model ${MODEL_VERSIE}</p></div>
+  ${tab==='advies'?adviesVoorblad(d):''}
   ${c.innerHTML}
-  <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.</div>
+  <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.${tab==='advies'?' Scores en bandbreedtes berusten deels op expertaannames en zijn niet gekalibreerd; gebruik ze niet als enige onderbouwing van een bod, een financiering of een taxatie. Geluidswaarden zijn RIVM-modelwaarden en geen metingen.':''}</div>
 </main>
 <script>
   (function(){ var imgs=[].slice.call(document.images), n=imgs.length, klaar=false;
@@ -2049,7 +2200,7 @@ $('btnNieuw').onclick=()=>{
 $('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||4, staatBuiten:+$('oStaatBuiten').value||4, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null }, extra||{});
+  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||4, staatBuiten:+$('oStaatBuiten').value||4, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000) }, extra||{});
 }
 /* Funda-tekst parser: haalt vraagprijs, status, datums en kenmerken uit gekopieerde kenmerkentekst */
 const MAAND={januari:1,februari:2,maart:3,april:4,mei:5,juni:6,juli:7,augustus:8,september:9,oktober:10,november:11,december:12,jan:1,feb:2,mrt:3,apr:4,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12};
@@ -2110,6 +2261,16 @@ async function run(input, btn){
 }
 
 document.querySelector('main').addEventListener('click',e=>{
+  const vg=e.target.closest('[data-vergelijk]');
+  if(vg){ const d=dossiers[+vg.dataset.vergelijk]; if(!d) return; const sm=samenvatting(d);
+    const bestaand=vergelijkLijst.findIndex(x=>x.adres===sm.adres);
+    if(bestaand>=0) vergelijkLijst[bestaand]=sm;
+    else if(vergelijkLijst.length>=3){ toonMsg('Maximaal 3 adressen. Verwijder eerst een adres uit de vergelijking.'); return; }
+    else vergelijkLijst.push(sm);
+    renderVergelijk(); toonMsg('Toegevoegd aan de vergelijking ('+vergelijkLijst.length+' van 3).');
+    const el=$('vergelijk'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  const vw=e.target.closest('[data-vergelijkweg]'); if(vw){ vergelijkLijst.splice(+vw.dataset.vergelijkweg,1); renderVergelijk(); return; }
+  if(e.target.closest('[data-vergelijkprint]')){ vergelijkAfdrukken(); return; }
   const pr=e.target.closest('[data-print]'); if(pr){ rapportAfdrukken(+pr.dataset.print,pr.dataset.tab||null); return; }
   const dl=e.target.closest('[data-deel]');
   if(dl){ const d=dossiers[+dl.dataset.deel]; if(!d) return; const a=d.registers&&d.registers.adres||{}; const adv=d.advertentie||{};
@@ -2170,7 +2331,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.1.0'; const MODEL_DATUM = '2026-11-04';
+const MODEL_VERSIE = '2.2.0'; const MODEL_DATUM = '2026-11-08';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
