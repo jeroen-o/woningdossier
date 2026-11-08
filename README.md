@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.6.0 · november 2026**  
+> **Model 2.7.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,9 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Drie waarden naar staat (2.7.0)
+De indicatie toont naast de eigen invoer drie scenario's met de staat binnen en buiten gelijk: **slecht**, **redelijk** en **goed**, elk met bandbreedte en midden. De scenario's staan in de KPI bovenaan en als rijen in de berekeningstabel (op BAG-oppervlakte en op advertentie-m²).
 
 ### Rapportopmaak (2.6.0)
 - Voorblad op één pagina met luchtfoto (PDOK), adviseur, kantoor, klant en optioneel logo (png of jpg, alleen in het geheugen).

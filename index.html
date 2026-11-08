@@ -103,6 +103,12 @@
   .btn-woz{display:inline-block;background:var(--accent);color:var(--primary);font-weight:700;font-size:16px;padding:14px 24px;border-radius:8px;text-decoration:none;box-shadow:0 3px 10px rgba(229,161,56,.4)}
   .btn-woz:hover{background:#D9912A}
   @media(max-width:560px){.btn-woz{width:100%;text-align:center}}
+  .ind3{display:grid;grid-template-columns:1fr;gap:6px;margin:6px 0 4px}
+  .ind3>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+  .ind3>div.mid{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .ind3 i{font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);min-width:64px}
+  .ind3 b{font-size:15px;color:var(--primary);white-space:nowrap}
+  .ind3 span{font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
   .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:span 2}
   .kpi b.band{font-size:21px}
   @media(max-width:560px){.kpi-ind{grid-column:auto}}
@@ -679,12 +685,15 @@ async function bag3d(pandId){
   const j=await r.json(), lijst=[];
   (function zoek(o,diep){ if(!o||typeof o!=='object'||diep>6) return; if(o.attributes&&typeof o.attributes==='object') lijst.push(o.attributes); if(o.properties&&typeof o.properties==='object') lijst.push(o.properties); Object.values(o).forEach(v=>zoek(v,diep+1)); })(j,0);
   const A=Object.assign({},...lijst.reverse());
-  const dak=A.b3_h_dak_50p!=null?A.b3_h_dak_50p:A.b3_h_dak_max, mv=A.b3_h_maaiveld;
-  const hoogte=(dak!=null&&mv!=null&&dak>mv)?Math.round((dak-mv)*10)/10:null;
+  const mv=A.b3_h_maaiveld, dak50=A.b3_h_dak_50p!=null?A.b3_h_dak_50p:A.b3_h_dak_max;
+  const schuin=/slanted/i.test(String(A.b3_dak_type||''));
+  const top=(schuin&&A.b3_h_nok!=null)?A.b3_h_nok:dak50;
+  const hoogte=(top!=null&&mv!=null&&top>mv)?Math.round((top-mv)*10)/10:null;
+  const dakMediaan=(dak50!=null&&mv!=null&&dak50>mv)?Math.round((dak50-mv)*10)/10:null;
   const echt=A.b3_bouwlagen!=null&&A.b3_bouwlagen>0;
-  const lagen=echt?Math.round(A.b3_bouwlagen):(hoogte?Math.max(1,Math.round(hoogte/2.8)):null);
+  const lagen=echt?Math.round(A.b3_bouwlagen):(dakMediaan?Math.max(1,Math.round(dakMediaan/2.8)):null);
   if(!lagen&&!hoogte) return null;
-  return {hoogte, lagen, bron:echt?'3D BAG (bouwlagen)':'3D BAG (hoogte gedeeld door 2,8 m)'};
+  return {hoogte, dakMediaan, schuin, lagen, bron:echt?'3D BAG (bouwlagen)':'3D BAG (hoogte gedeeld door 2,8 m)'};
 }
 /* Trefwoordcontrole op geplakte advertentietekst: signaleert, oordeelt niet */
 const AD_TREFWOORDEN=[
@@ -987,7 +996,7 @@ function render(d, idx){
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
-      ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · hoogte ca. '+num(r.gebouw.hoogte,1)+' m':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
+      ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · '+(r.gebouw.schuin?'tot nok ca. ':'hoogte ca. ')+num(r.gebouw.hoogte,1)+' m':''}${r.gebouw.schuin&&r.gebouw.lagen<=4?' · schuin dak, zolder kan meetellen':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
@@ -1954,7 +1963,7 @@ function samenvatting(d){
     fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
     geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
-    gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' (ca. '+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG)':' (3D BAG)'):null), verdieping:a.verdieping||null,
+    gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' ('+(r.gebouw.schuin?'tot nok ca. ':'ca. ')+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG'+(r.gebouw.schuin&&r.gebouw.lagen<=4?', schuin dak: zolder kan meetellen':'')+')':' (3D BAG)'):null), verdieping:a.verdieping||null,
     rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
 }
 function uitgangspuntenHtml(){
@@ -2202,10 +2211,20 @@ function indexUitleg(d,idx){
   return `Marktfactor = CBS prijsindex bestaande koopwoningen (2020=100), ${esc(mi.niveau)}: ${num(mi.indexPeil,1)} op ${esc(mi.peildatum)} (${esc(mi.peilUitleg)}, de WOZ-peildatum van de buurtcijfers) → ${num(mi.indexNu,1)} in ${esc(mi.periodeNu)} = ${num(mi.factor,3)}. Het laatste kwartaal kan voorlopig zijn.`
     + (st.handmatig ? ` <b>Handmatig aangepast.</b> <button class="link" data-indexherstel="${idx}">CBS-index herstellen</button>` : '');
 }
+/* Drie scenario's naar staat: binnen en buiten beide slecht (1), redelijk (3) of goed (4) */
+const INDIC_SCEN=[[1,1,'Slecht'],[3,3,'Redelijk'],[4,4,'Goed']];
+function indicScenarios(d){
+  const st=indicInit(d), bewaard=[st.binnen,st.buiten];
+  try{ return INDIC_SCEN.map(([bi,bu,label])=>{ st.binnen=bi; st.buiten=bu; const x=indicBereken(d); return {label, hoofd:x&&x.hoofd, bag:x&&x.bag, adv:x&&x.adv}; }); }
+  finally{ st.binnen=bewaard[0]; st.buiten=bewaard[1]; }
+}
 function indicKpi(d){
   const x=indicBereken(d); if(!x||!x.hoofd) return '';
   const h=x.hoofd;
-  return `<span class="lab">Indicatie naar staat</span><b class="band">${eur(h.laag)} – ${eur(h.hoog)}</b><span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · midden ${eur(h.midden)} · binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
+  const sc=indicScenarios(d).filter(z=>z.hoofd);
+  return `<span class="lab">Indicatie naar staat (binnen en buiten gelijk)</span>
+    <div class="ind3">${sc.map(z=>`<div${z.label==='Redelijk'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
+    <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
 }
 function indicUit(d){
   const x=indicBereken(d); if(!x) return '<p class="small">Niet te berekenen: WOZ-gemiddelde of woningoppervlakte van de buurt ontbreekt.</p>';
@@ -2227,6 +2246,7 @@ function indicUit(d){
     <tr><td class="k">F. Correctie staat (binnen ${x.binnen} · buiten ${x.buiten})</td><td class="num" colspan="2">${pctS(x.marge.lo)} tot ${pctS(x.marge.hi)}</td></tr>
     <tr><td class="k">G. Modelonzekerheid, aan beide kanten van de bandbreedte</td>${c.map(k=>`<td class="num">${k?'± '+num(k.onz,0)+'%':'–'}</td>`).join('')}</tr>
     <tr><td class="k">Betrouwbaarheid indicatie (consistentie van de gegevens, niet gekalibreerd)</td><td class="num" colspan="2">${x.betrouwbaarheid.label} (${num(x.betrouwbaarheid.score,1)} van 5)</td></tr>
+    ${indicScenarios(d).map(z=>`<tr><td class="k">Scenario ${z.label.toLowerCase()} (binnen en buiten ${z.label.toLowerCase()})</td>${c.map((k,i)=>{ const q=i===0?z.bag:z.adv; return `<td class="num">${q?eur(q.laag)+' – '+eur(q.hoog)+'<br><span class="small">midden '+eur(q.midden)+'</span>':'–'}</td>`; }).join('')}</tr>`).join('')}
     ${row('Bandbreedte laag',k=>eur(k.laag))}
     ${row('Midden',k=>eur(k.midden),'tot')}
     ${row('Bandbreedte hoog',k=>eur(k.hoog))}
@@ -2543,7 +2563,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.6.0'; const MODEL_DATUM = '2026-11-08';
+const MODEL_VERSIE = '2.7.0'; const MODEL_DATUM = '2026-11-09';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
