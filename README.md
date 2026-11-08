@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.3.0 · november 2026**  
+> **Model 2.4.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,13 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Plak-oplossingen (2.4.0)
+Voor gegevens zonder open bron plakt de gebruiker zelf tekst van een openbare pagina; PandWise leest die uit en bewaart niets buiten het geheugen.
+- **WOZ-tabel** uit het WOZ-waardeloket: peildatum en waarde worden als handmatige WOZ-waarden overgenomen (de WOZ-loket-API is vanuit de browser geblokkeerd door CORS).
+- **Verkoophistorie** (Funda of andere bron): datum, status en prijs; toont of de woning de afgelopen 5 jaar te koop heeft gestaan, hoe vaak, of een aanbod is ingetrokken en het prijsverloop.
+- **Aanbod in de buurt** (zoekresultaten): adres, vraagprijs en m² naar een tabel met prijs per m², mediaan en vergelijking met de indicatie voor het pand. Vraagprijzen zijn geen transactieprijzen.
+- De plakvelden komen niet in het afgedrukte rapport. Historie, WOZ en adressen zijn gegevens van bewoners: gebruik ze alleen voor het doel van de klant.
 
 ### Waarde-indicatie (2.3.0)
 - **Controlegetal per woningtype:** verwachte gemiddelde prijs van dit woningtype in de gemeente (CBS 85791NED landelijk per type, geschaald met het regioniveau uit CBS 83625NED). Het telt niet mee in de berekening. Eerder verwees de code naar een tabel (85773NED) zonder gemeente- of typekolommen, waardoor het controlegetal nooit werd getoond; dat is hersteld.
