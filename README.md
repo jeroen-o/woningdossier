@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.5.0 · november 2026**  
+> **Model 2.6.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Rapportopmaak (2.6.0)
+- Voorblad op één pagina met luchtfoto (PDOK), adviseur, kantoor, klant en optioneel logo (png of jpg, alleen in het geheugen).
+- **Kort rapport:** voorblad, samenvatting, signalen en indicatie (circa 5 pagina's); het volledige adviseursrapport bevat daarnaast alle secties, fundering en klimaat.
+- Uitgangspunten en beperkingen staan aan het eind. Kop en voet met paginanummer. Lege waarden worden weggelaten.
+- Het energielabel in de samenvatting wordt alleen als feit getoond bij EP-online of handmatige invoer; anders als "onbekend; schatting uit bouwjaar".
 
 ### Gebouw en verdieping (2.5.0)
 - **Bouwlagen en gebouwhoogte** uit de 3D BAG (TU Delft, CORS open); zonder `b3_bouwlagen` wordt de hoogte gedeeld door 2,8 m. Voor het testpand: 8 bouwlagen.
