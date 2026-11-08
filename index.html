@@ -685,12 +685,15 @@ async function bag3d(pandId){
   const j=await r.json(), lijst=[];
   (function zoek(o,diep){ if(!o||typeof o!=='object'||diep>6) return; if(o.attributes&&typeof o.attributes==='object') lijst.push(o.attributes); if(o.properties&&typeof o.properties==='object') lijst.push(o.properties); Object.values(o).forEach(v=>zoek(v,diep+1)); })(j,0);
   const A=Object.assign({},...lijst.reverse());
-  const dak=A.b3_h_dak_50p!=null?A.b3_h_dak_50p:A.b3_h_dak_max, mv=A.b3_h_maaiveld;
-  const hoogte=(dak!=null&&mv!=null&&dak>mv)?Math.round((dak-mv)*10)/10:null;
+  const mv=A.b3_h_maaiveld, dak50=A.b3_h_dak_50p!=null?A.b3_h_dak_50p:A.b3_h_dak_max;
+  const schuin=/slanted/i.test(String(A.b3_dak_type||''));
+  const top=(schuin&&A.b3_h_nok!=null)?A.b3_h_nok:dak50;
+  const hoogte=(top!=null&&mv!=null&&top>mv)?Math.round((top-mv)*10)/10:null;
+  const dakMediaan=(dak50!=null&&mv!=null&&dak50>mv)?Math.round((dak50-mv)*10)/10:null;
   const echt=A.b3_bouwlagen!=null&&A.b3_bouwlagen>0;
-  const lagen=echt?Math.round(A.b3_bouwlagen):(hoogte?Math.max(1,Math.round(hoogte/2.8)):null);
+  const lagen=echt?Math.round(A.b3_bouwlagen):(dakMediaan?Math.max(1,Math.round(dakMediaan/2.8)):null);
   if(!lagen&&!hoogte) return null;
-  return {hoogte, lagen, bron:echt?'3D BAG (bouwlagen)':'3D BAG (hoogte gedeeld door 2,8 m)'};
+  return {hoogte, dakMediaan, schuin, lagen, bron:echt?'3D BAG (bouwlagen)':'3D BAG (hoogte gedeeld door 2,8 m)'};
 }
 /* Trefwoordcontrole op geplakte advertentietekst: signaleert, oordeelt niet */
 const AD_TREFWOORDEN=[
@@ -993,7 +996,7 @@ function render(d, idx){
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
-      ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · hoogte ca. '+num(r.gebouw.hoogte,1)+' m':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
+      ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · '+(r.gebouw.schuin?'tot nok ca. ':'hoogte ca. ')+num(r.gebouw.hoogte,1)+' m':''}${r.gebouw.schuin&&r.gebouw.lagen<=4?' · schuin dak, zolder kan meetellen':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
@@ -1960,7 +1963,7 @@ function samenvatting(d){
     fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
     geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
-    gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' (ca. '+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG)':' (3D BAG)'):null), verdieping:a.verdieping||null,
+    gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' ('+(r.gebouw.schuin?'tot nok ca. ':'ca. ')+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG'+(r.gebouw.schuin&&r.gebouw.lagen<=4?', schuin dak: zolder kan meetellen':'')+')':' (3D BAG)'):null), verdieping:a.verdieping||null,
     rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
 }
 function uitgangspuntenHtml(){
