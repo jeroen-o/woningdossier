@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.1.0 · november 2026**  
+> **Model 2.2.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -42,6 +42,13 @@ Het hoofdtabblad met zeven secties:
 | 05 / Object | Kadastrale aanduiding, perceeloppervlak en BAG-registratie |
 | 06 / Buurt | CBS-buurtcijfers (bevolking, woningen, WOZ, energie, criminaliteit) en bouwjaren omgeving |
 | Kaart | Luchtfoto en kadastrale kaart van de locatie |
+
+### Adviseursrapport, vergelijking en advertentietekst
+- **Adviseursrapport:** knop bij elk dossier. Voorblad met adviseur, kantoor en klant (in te vullen onder de woningdata), samenvatting met de kerncijfers, daarna dossier, funderingscijfer en klimaatcijfer. Print via `window.open()`, dus ook bruikbaar in een iframe.
+- **Vergelijking:** met "+ Vergelijk" voeg je tot drie adressen toe en zie je ze naast elkaar. De lijst staat alleen in het geheugen; er wordt niets opgeslagen.
+- **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
+- **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
+- **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
 
 ### Funderingscijfer
 Score 2–8 op basis van bouwjaar, bodemtype (BRO), maaiveldhoogte (AHN4), RVO-aandachtsgebied en grondwaterstand (BRO WDM). Toont funderingstype, RVO-status, grondwaterbeordeling, buurtvergelijking en herleidbare rekentabel. Bouwjaarcorrectie mogelijk.
@@ -85,6 +92,7 @@ Alle bronnen zijn publiek en vrij toegankelijk (geen API-sleutel vereist).
 | RVO Funderingsviewer | Indicatieve aandachtsgebieden funderingsproblematiek | service.pdok.nl |
 | EP-online (RVO) | Geregistreerd energielabel | public.ep-online.nl |
 | WOZ-waardeloket (Kadaster) | WOZ-waarden per peildatum (geen open API, knoppen openen het loket) | wozwaardeloket.nl |
+| RIVM geluidskaart (Lden alle bronnen) | Geluidsbelasting op het adrespunt (modelwaarde, 10 m raster) | data.rivm.nl |
 | Klimaateffectatlas (RIVM/PBL) | Locatiespecifieke rasterwaarden hitte, wateroverlast, droogte | service.pdok.nl |
 | Overstroomik.nl (Rijkswaterstaat) | Overstromingsscenario's per adres | overstroomik.nl |
 | KNMI'23-klimaatscenario's | Richting 2030/2050 (W+-scenario, peildatum oktober 2023) | knmi.nl |
