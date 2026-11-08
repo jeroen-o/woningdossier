@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.4.0 · november 2026**  
+> **Model 2.5.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Gebouw en verdieping (2.5.0)
+- **Bouwlagen en gebouwhoogte** uit de 3D BAG (TU Delft, CORS open); zonder `b3_bouwlagen` wordt de hoogte gedeeld door 2,8 m. Voor het testpand: 8 bouwlagen.
+- **Woningtype-fallback:** bij 3 of meer verblijfsobjecten in het pand wordt "Appartement / meergezinspand" gebruikt als het type niet uit de pandgeometrie komt.
+- **Verdieping en type** (bijv. galerijflat) is een vrij veld voor het rapport. Galerij of portiek is niet uit open data af te leiden.
+- Gebouwspecifieke fundering (FunderMaps) is niet openbaar bereikbaar en niet opgenomen.
 
 ### Plak-oplossingen (2.4.0)
 Voor gegevens zonder open bron plakt de gebruiker zelf tekst van een openbare pagina; PandWise leest die uit en bewaart niets buiten het geheugen.

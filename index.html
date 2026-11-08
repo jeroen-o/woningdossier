@@ -265,6 +265,7 @@
       <div class="row" style="margin-top:12px">
         <div><label for="oAdviseur">Adviseur (voor het adviseursrapport)</label><input type="text" id="oAdviseur" autocomplete="off"></div>
         <div><label for="oKantoor">Kantoor</label><input type="text" id="oKantoor" autocomplete="off"></div>
+        <div><label for="oVerdieping">Verdieping en type (bijv. 1e verdieping, galerijflat)</label><input type="text" id="oVerdieping" autocomplete="off"></div>
         <div><label for="oKlant">Klant</label><input type="text" id="oKlant" autocomplete="off"></div>
       </div>
       <div style="margin-top:12px"><label for="oNotitie">Toelichting adviseur (optioneel)</label><textarea id="oNotitie" rows="2"></textarea></div>
@@ -638,6 +639,8 @@ async function bouwDossier(input){
     catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
     delete d._fundRaw;
   } else bronStatus('fund','fail','niet beschikbaar');
+  if(d.fundering&&!d.fundering.woningtype){ const nv=d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten; if(nv>=3) d.fundering.woningtype={naam:'Appartement / meergezinspand', uitleg:'Het pand bevat '+nv+' verblijfsobjecten volgens de BAG.', buren:null, vbo:nv}; }
+  try{ d.registers.gebouw=await bag3d(d.registers.pand&&d.registers.pand.identificatie); }catch(e){ d.registers.gebouw=null; }
   d.registers.mediaan=await cbsTypeVerwachting(d.registers.adres&&d.registers.adres.gemeentecode, (d.fundering&&d.fundering.woningtype&&d.fundering.woningtype.naam)||((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3?'Appartement':null));
   try{ const kr=d.fundering?Klim.bereken(d):null; if(kr) bronStatus('klim','ok',num(kr.eind.cijfer,1)+'/10'); else bronStatus('klim','fail','niet beschikbaar'); }catch(e){ bronStatus('klim','fail','fout'); }
   if(d._index){
@@ -665,6 +668,22 @@ async function rivmGeluid(lat,lon){
   const r=await fetch(url,{signal:AbortSignal.timeout(9000)}); if(!r.ok) throw new Error('HTTP '+r.status);
   const j=await r.json(), v=j.features&&j.features[0]&&j.features[0].properties&&j.features[0].properties.GRAY_INDEX;
   return (v!=null&&isFinite(v)&&v>0)?{db:Math.round(v)}:null;
+}
+/* 3D BAG (TU Delft): gebouwhoogte en bouwlagen van het pand. Geen CORS-probleem; kan tijdelijk onbereikbaar zijn. */
+async function bag3d(pandId){
+  if(!pandId) return null;
+  const id=String(pandId).replace(/^NL\.IMBAG\.Pand\./,'');
+  const r=await fetch('https://api.3dbag.nl/collections/pand/items/NL.IMBAG.Pand.'+id,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(7000)});
+  if(!r.ok) return null;
+  const j=await r.json(), lijst=[];
+  (function zoek(o,diep){ if(!o||typeof o!=='object'||diep>6) return; if(o.attributes&&typeof o.attributes==='object') lijst.push(o.attributes); if(o.properties&&typeof o.properties==='object') lijst.push(o.properties); Object.values(o).forEach(v=>zoek(v,diep+1)); })(j,0);
+  const A=Object.assign({},...lijst.reverse());
+  const dak=A.b3_h_dak_50p!=null?A.b3_h_dak_50p:A.b3_h_dak_max, mv=A.b3_h_maaiveld;
+  const hoogte=(dak!=null&&mv!=null&&dak>mv)?Math.round((dak-mv)*10)/10:null;
+  const echt=A.b3_bouwlagen!=null&&A.b3_bouwlagen>0;
+  const lagen=echt?Math.round(A.b3_bouwlagen):(hoogte?Math.max(1,Math.round(hoogte/2.8)):null);
+  if(!lagen&&!hoogte) return null;
+  return {hoogte, lagen, bron:echt?'3D BAG (bouwlagen)':'3D BAG (hoogte gedeeld door 2,8 m)'};
 }
 /* Trefwoordcontrole op geplakte advertentietekst: signaleert, oordeelt niet */
 const AD_TREFWOORDEN=[
@@ -967,6 +986,7 @@ function render(d, idx){
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
+      ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · hoogte ca. '+num(r.gebouw.hoogte,1)+' m':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
@@ -1931,6 +1951,7 @@ function samenvatting(d){
     fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
     geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
+    gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' (ca. '+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG)':' (3D BAG)'):null), verdieping:a.verdieping||null,
     rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
 }
 function uitgangspuntenHtml(){
@@ -1956,6 +1977,7 @@ function adviesVoorblad(d){
     <h3>Samenvatting</h3>
     <div class="tabwrap"><table>
       ${kv('Bouwjaar / woningtype',esc([sm.bouwjaar,sm.woningtype].filter(Boolean).join(' · ')))}
+      ${kv('Gebouw en verdieping',esc([sm.gebouw,sm.verdieping&&sm.verdieping+' (opgegeven)'].filter(Boolean).join(' · ')))}
       ${kv('Vraagprijs',sm.vraagprijs?eur(sm.vraagprijs)+(sm.prijsM2?` (${eur(sm.prijsM2)} per m² BAG)`:''):null)}
       ${kv('Indicatie naar staat (geen taxatie)',sm.indic?eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''):null)}
       ${kv('Betrouwbaarheid indicatie',esc(sm.betrouwbaarheid))}
@@ -2284,7 +2306,7 @@ $('btnNieuw').onclick=()=>{
 $('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||3, staatBuiten:+$('oStaatBuiten').value||3, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000) }, extra||{});
+  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||3, staatBuiten:+$('oStaatBuiten').value||3, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000), verdieping:($('oVerdieping').value||'').trim().slice(0,60)||null }, extra||{});
 }
 /* ============ plak-oplossingen: WOZ-tabel, verkoophistorie en aanbod in de buurt ============
    De gebruiker kopieert zelf tekst van een openbare pagina; de tool leest die uit en bewaart niets buiten het geheugen. */
@@ -2508,7 +2530,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.4.0'; const MODEL_DATUM = '2026-11-08';
+const MODEL_VERSIE = '2.5.0'; const MODEL_DATUM = '2026-11-08';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
