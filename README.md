@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.2.0 · november 2026**  
+> **Model 2.3.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -50,6 +50,13 @@ Het hoofdtabblad met zeven secties:
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
 
+### Waarde-indicatie (2.3.0)
+- **Controlegetal per woningtype:** verwachte gemiddelde prijs van dit woningtype in de gemeente (CBS 85791NED landelijk per type, geschaald met het regioniveau uit CBS 83625NED). Het telt niet mee in de berekening. Eerder verwees de code naar een tabel (85773NED) zonder gemeente- of typekolommen, waardoor het controlegetal nooit werd getoond; dat is hersteld.
+- **Betrouwbaarheid indicatie** (1 tot 5): beoordeelt de consistentie van de gebruikte gegevens (CBS-index aanwezig, woningtype bekend, BAG en advertentie in lijn, oppervlak en midden niet extreem). Het is geen nauwkeurigheidsclaim en niet gekalibreerd.
+- **Neutrale standaard voor de staat** (3 = bewoonbaar en normaal onderhouden). De eerdere standaard (4) gaf +5% opwaartse bias.
+- **Uitgangspunten en beperkingen** in het adviseursrapport.
+- Benchmark: één Calcasa-taxatie (galerijflat Oosterbeek, 95 m²) tegenover de indicatie: taxatie € 424.000, midden € 456.000 (+7,5%), band € 410.000 tot € 500.000. Eén meting is geen validatie.
+
 ### Funderingscijfer
 Score 2–8 op basis van bouwjaar, bodemtype (BRO), maaiveldhoogte (AHN4), RVO-aandachtsgebied en grondwaterstand (BRO WDM). Toont funderingstype, RVO-status, grondwaterbeordeling, buurtvergelijking en herleidbare rekentabel. Bouwjaarcorrectie mogelijk.
 
@@ -92,6 +99,7 @@ Alle bronnen zijn publiek en vrij toegankelijk (geen API-sleutel vereist).
 | RVO Funderingsviewer | Indicatieve aandachtsgebieden funderingsproblematiek | service.pdok.nl |
 | EP-online (RVO) | Geregistreerd energielabel | public.ep-online.nl |
 | WOZ-waardeloket (Kadaster) | WOZ-waarden per peildatum (geen open API, knoppen openen het loket) | wozwaardeloket.nl |
+| CBS 85791NED en 83625NED | Gemiddelde verkoopprijs per woningtype (landelijk) en per gemeente, voor het controlegetal | opendata.cbs.nl |
 | RIVM geluidskaart (Lden alle bronnen) | Geluidsbelasting op het adrespunt (modelwaarde, 10 m raster) | data.rivm.nl |
 | Klimaateffectatlas (RIVM/PBL) | Locatiespecifieke rasterwaarden hitte, wateroverlast, droogte | service.pdok.nl |
 | Overstroomik.nl (Rijkswaterstaat) | Overstromingsscenario's per adres | overstroomik.nl |
