@@ -108,6 +108,7 @@
   .ind3>div.mid{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
   .ind3 i{font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);min-width:64px}
   .ind3 b{font-size:15px;color:var(--primary);white-space:nowrap}
+  .ind-aanname{display:block;font-style:italic;margin:2px 0 4px}
   .ind3 span{font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
   .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:span 2}
   .kpi b.band{font-size:21px}
@@ -2224,6 +2225,7 @@ function indicKpi(d){
   const sc=indicScenarios(d).filter(z=>z.hoofd);
   return `<span class="lab">Indicatie naar staat (binnen en buiten gelijk)</span>
     <div class="ind3">${sc.map(z=>`<div${z.label==='Goed'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
+    <span class="src ind-aanname">Aanname: woningen worden vaak in goede staat verkocht. Niet gebaseerd op data. Kies zelf de staat die bij deze woning past.</span>
     <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
 }
 function indicUit(d){
