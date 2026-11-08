@@ -2223,7 +2223,7 @@ function indicKpi(d){
   const h=x.hoofd;
   const sc=indicScenarios(d).filter(z=>z.hoofd);
   return `<span class="lab">Indicatie naar staat (binnen en buiten gelijk)</span>
-    <div class="ind3">${sc.map(z=>`<div${z.label==='Redelijk'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
+    <div class="ind3">${sc.map(z=>`<div${z.label==='Goed'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
     <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
 }
 function indicUit(d){
