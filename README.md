@@ -50,6 +50,9 @@ Het hoofdtabblad met zeven secties:
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
 
+### Delen op LinkedIn en WhatsApp
+`index.html` bevat Open Graph- en Twitter-meta (titel, beschrijving en `og-image.jpg`, 1200 × 630, circa 80 kB) voor een nette voorvertoning. De afbeelding staat los in de repo omdat crawlers geen inline afbeelding lezen. Scrapers negeren het deel na `#`, dus een gedeelde link met `#q=…` toont dezelfde voorvertoning. Platforms cachen de voorvertoning: ververs LinkedIn via de Post Inspector; WhatsApp ververst vanzelf of na het toevoegen van een nieuwe queryparameter (`?v=2`).
+
 ### Drie waarden naar staat (2.7.0)
 De indicatie toont naast de eigen invoer drie scenario's met de staat binnen en buiten gelijk: **slecht**, **redelijk** en **goed**, elk met bandbreedte en midden. De scenario's staan in de KPI bovenaan en als rijen in de berekeningstabel (op BAG-oppervlakte en op advertentie-m²).
 
