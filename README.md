@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.7.0 · november 2026**  
+> **Model 2.8.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Bronnen, checklist, insluiten (2.8.0)
+- **Bronnen en status (sectie 09):** per dossier een lijst van 16 bronnen met "opgehaald", "schatting" of "niet beschikbaar" en een link naar de bron. Dit is de stand op het moment van opvragen.
+- **Checklist voor de bezichtiging (sectie 08):** algemene punten, aangepast aan bouwjaar, woningtype, erfpacht en geluid. Staat ook in het kort rapport en het adviseursrapport.
+- **Insluiten:** onderaan de pagina staat een iframe-code. Parameters in de query string: `embed=1` (verbergt de kop), `q=adres` en `auto=1` (start direct), `adviseur`, `kantoor` en `logo` (https-link). Een API en white label met eigen domein zijn er nog niet.
+- **Waarom gratis / Over PandWise:** onderaan de pagina. Bedrijfsgegevens staan in de constante `BEDRIJF` bovenin het script; lege velden worden niet getoond.
 
 ### Delen op LinkedIn en WhatsApp
 `index.html` bevat Open Graph- en Twitter-meta (titel, beschrijving en `og-image.jpg`, 1200 × 630, circa 80 kB) voor een nette voorvertoning. De afbeelding staat los in de repo omdat crawlers geen inline afbeelding lezen. Scrapers negeren het deel na `#`, dus een gedeelde link met `#q=…` toont dezelfde voorvertoning. Platforms cachen de voorvertoning: ververs LinkedIn via de Post Inspector; WhatsApp ververst vanzelf of na het toevoegen van een nieuwe queryparameter (`?v=2`).

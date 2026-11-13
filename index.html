@@ -217,6 +217,16 @@
   ul.check{list-style:none;padding:0;margin:0}
   ul.check li{position:relative;padding:7px 0 7px 26px;border-bottom:1px solid var(--line);font-size:14px}
   ul.check li::before{content:'';position:absolute;left:2px;top:10px;width:14px;height:14px;border:2px solid var(--primary-2);border-radius:4px}
+  ul.vink{list-style:none;padding:0;margin:0}
+  ul.vink li{position:relative;padding:7px 0 7px 28px;border-bottom:1px solid var(--line);font-size:14px}
+  ul.vink li::before{content:'';position:absolute;left:2px;top:9px;width:14px;height:14px;border:2px solid var(--primary-2);border-radius:4px}
+  .bronrij{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .bronrij a{font-weight:600}
+  .bronrij .sig{flex:none}
+  .over-pw{margin:26px 0 8px;font-size:13px;color:var(--muted)}
+  .over-pw h3{font-size:14px;color:var(--primary);margin:10px 0 4px}
+  .insluit pre{white-space:pre-wrap;word-break:break-all;background:#F3F6F9;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;margin:6px 0}
+  body.embed header,body.embed .noembed{display:none!important}
   ol.stappen{margin:0;padding-left:22px}
   ol.stappen li{padding:6px 0;font-size:14px}
   [hidden]{display:none!important}
@@ -305,6 +315,21 @@
 
   <div id="strat"></div>
   <div id="vergelijk"></div>
+
+  <section class="panel insluit noembed" id="insluiten">
+    <h2 style="margin-top:0">Insluiten op je eigen site</h2>
+    <p class="small">Zet PandWise op je website of in Google Sites. Kopieer de code hieronder. Alles draait in de browser van de bezoeker; er wordt niets opgeslagen.</p>
+    <pre id="embedCode"></pre>
+    <div class="btns"><button type="button" class="sec-btn" id="btnEmbedKopie">Code kopiëren</button></div>
+    <p class="small" style="margin:10px 0 0">Parameters achter <code>?</code>, gescheiden door <code>&amp;</code>: <code>embed=1</code> verbergt de kop; <code>q=adres</code> vult een adres in; <code>auto=1</code> start direct; <code>adviseur</code>, <code>kantoor</code> en <code>logo</code> (https-link naar een afbeelding) vullen het adviseursrapport voor. Een API en white label met eigen domein zijn nog niet beschikbaar.</p>
+  </section>
+
+  <section class="over-pw noembed" id="overPandwise">
+    <h3>Waarom gratis?</h3>
+    <p>PandWise is gratis te gebruiken, zonder account en zonder cookies. De tool draait in je browser, haalt openbare gegevens op bij de bron en slaat niets op. Het is een feitencheck en geen taxatie, waardebepaling of financieel advies.</p>
+    <h3>Over PandWise</h3>
+    <p id="bedrijfsregel"></p>
+  </section>
 
 </main>
 
@@ -987,6 +1012,48 @@ function render(d, idx){
       <p class="small" style="margin-top:10px" id="ix-${idx}">${indexUitleg(d,idx)}</p>
       <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; perceel, woningtype en energielabel tellen niet mee in de berekening (de verwachte gemiddelde prijs per woningtype uit CBS is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; advertentie-m² volgen NEN 2580.</div>
     </div>` : '';
+  /* --- bronnen en status (stand op het moment van opvragen) --- */
+  const kl=d.klimaat||{}, fu=d.fundering||{}, st=(ok,schat)=>ok?'ok':(schat?'schat':'nee');
+  const bronLijst=[
+    ['PDOK Locatieserver','ok','Adres en coördinaten','https://api.pdok.nl'],
+    ['BAG verblijfsobject en pand (Kadaster)',st(!!r.verblijfsobject&&!!r.pand),'Oppervlakte, bouwjaar, gebruiksdoel','https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag'],
+    ['BRK kadastrale kaart (Kadaster)',st(!!r.perceel),'Perceel en kadastrale aanduiding','https://www.kadaster.nl/zakelijk/registraties/basisregistraties/brk'],
+    ['CBS Wijken en Buurten',st(!!b),'Buurtcijfers, WOZ-gemiddelde','https://www.cbs.nl/nl-nl/dossier/nederland-regionaal/wijk-en-buurtstatistieken'],
+    ['CBS prijsindex bestaande koopwoningen',st(!!r.marktindex),'Marktfactor van WOZ-peildatum naar nu','https://opendata.cbs.nl'],
+    ['CBS gemiddelde prijs per woningtype en gemeente',st(!!r.mediaan),'Controlegetal bij de indicatie','https://opendata.cbs.nl'],
+    ['WOZ-waardeloket',(d.woz&&d.woz.bron==='register')?'ok':((d.woz&&d.woz.handmatig&&Object.keys(d.woz.handmatig).length)?'schat':'nee'),(d.woz&&d.woz.bron==='register')?'Automatisch opgehaald':'Niet automatisch beschikbaar vanuit de browser; vul in of plak de tabel','https://www.wozwaardeloket.nl'],
+    ['RIVM geluidskaart',st(!!r.geluid),'Geluidsbelasting Lden, modelwaarde','https://www.rivm.nl'],
+    ['3D BAG (TU Delft)',st(!!r.gebouw),'Bouwlagen en gebouwhoogte','https://3dbag.nl'],
+    ['BRO bodemkaart',st(!!fu.bodemBron,!!fu.bodem),fu.bodemBron?'Bodemtype ter plaatse':'Regionale schatting','https://www.broloket.nl'],
+    ['AHN4 maaiveldhoogte',st(!!fu.napBron,fu.nap!=null),fu.napBron?'Hoogte ter plaatse':'Regionale schatting','https://www.ahn.nl'],
+    ['BRO grondwaterspiegeldiepte',st(!!(fu.gw&&fu.gw.gevonden)),'Model, vaak niet beschikbaar in bebouwd gebied','https://www.broloket.nl'],
+    ['RVO funderingsviewer',st(!!(fu.rvo)),'Indicatief aandachtsgebied (postcodeniveau)','https://www.rvo.nl'],
+    ['Klimaateffectatlas',st(!!(kl.kea&&Object.keys(kl.kea).length),true),(kl.kea&&Object.keys(kl.kea).length)?'Locatiespecifiek':'Regioprofiel (schatting)','https://www.klimaateffectatlas.nl'],
+    ['Overstroomik.nl (Rijkswaterstaat)',st(!!kl.ovik,true),kl.ovik?'Waterdiepte en norm':'Regioprofiel (schatting)','https://www.overstroomik.nl'],
+    ['EP-online (RVO)',st(!!(kl.ep&&kl.ep.label),true),(kl.ep&&kl.ep.label)?'Geregistreerd label':'Geen label opgehaald; schatting uit bouwjaar','https://www.ep-online.nl']
+  ];
+  const nOk=bronLijst.filter(x=>x[1]==='ok').length;
+  const bronBlok=`<p class="small" style="margin-top:0"><b>${nOk} van ${bronLijst.length}</b> bronnen leverden bij deze opvraag een eigen waarde. De rest is een schatting of niet beschikbaar; dat is hieronder te zien en weegt mee in de bandbreedte.</p>
+    ${bronLijst.map(([n,sv,u,url])=>`<div class="bronrij"><span class="sig ${sv==='ok'?'groen':sv==='schat'?'geel':'grijs'}">${sv==='ok'?'opgehaald':sv==='schat'?'schatting':'niet beschikbaar'}</span><span><a href="${esc(url)}" target="_blank" rel="noopener">${esc(n)}</a> · <span class="small">${esc(u)}</span></span></div>`).join('')}
+    <p class="small" style="margin-bottom:0">Stand op het moment van opvragen (${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}). Alle bronnen zijn openbaar; PandWise combineert ze zonder tussenserver.</p>`;
+  /* --- checklist bezichtiging --- */
+  const wtn=(fu.woningtype&&fu.woningtype.naam)||'', bjc=(fu.bouwjaarOverride||fu.bagBouwjaar||(r.pand&&r.pand.bouwjaar))||null;
+  const appC=/appartement|meergezins/i.test(wtn)||((r.pand&&r.pand.aantal_verblijfsobjecten)>=3);
+  const vinkItems=[
+    'Laat de verkoper of makelaar het energielabel, de isolatie en de installaties toelichten (cv-ketel, ventilatie, zonnepanelen).',
+    'Controleer vochtplekken, schimmel, lekkage en scheuren (plafonds, hoeken, kelder of kruipruimte, dak).',
+    'Open en sluit ramen en deuren; klemmende deuren of scheve kozijnen kunnen op zetting wijzen.',
+    'Vraag naar verbouwingen: vergunningen, constructieberekeningen en wie het werk deed.',
+    'Controleer de oppervlakte: wonen, overige inpandige ruimte en buitenruimte (meetinstructie NEN 2580).',
+    'Ga op verschillende tijden langs (spits, avond, weekend) en luister naar geluid van weg, spoor, buren of horeca.',
+    ...(bjc&&bjc<1970?['Vraag naar funderingsonderzoek of -herstel; een bouwkundige keuring is bij dit bouwjaar verdedigbaar. Let op asbest.']:[]),
+    ...(appC?['Vraag de VvE-stukken: reservefonds, meerjarenonderhoudsplan, jaarrekening, maandelijkse bijdrage en lopende of geplande kosten.']:[]),
+    ...(/erfpacht/i.test((d.advertentie||{}).eigendom||'')?['Erfpacht: controleer canon, looptijd, afkoop en voorwaarden in de akte.']:[]),
+    ...((r.geluid&&r.geluid.db>=55)?['De geluidsbelasting is verhoogd ('+r.geluid.db+' dB Lden): beoordeel geluidwering en slaapkamerligging.']:[]),
+    'Controleer de buurt: parkeren, voorzieningen, bouwplannen en de staat van de openbare ruimte.',
+    'Vraag de verkoopgeschiedenis en reden van verkoop; controleer ontbindende voorwaarden en de koopakte met een makelaar of notaris.'
+  ];
+  const checkBlok=`<ul class="vink">${vinkItems.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul><p class="small" style="margin-bottom:0">Algemene checklist, aangepast aan bouwjaar, woningtype en signalen in dit dossier. Geen bouwkundig of juridisch advies.</p>`;
   /* --- verduurzamen --- */
   const lblK=(d.klimaat&&((d.klimaat.ep&&d.klimaat.ep.label)||d.klimaat.labelOverride))||a.energielabel||null;
   const lblL=lblK?String(lblK).toUpperCase().replace(/[^A-G+]/g,'').charAt(0):'';
@@ -1023,7 +1090,7 @@ function render(d, idx){
       ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-print="${idx}" data-tab="advies" title="Volledig adviseursrapport met voorblad en samenvatting">Adviseursrapport</button><button class="printbtn" data-print="${idx}" data-tab="adviesKort" title="Kort rapport: voorblad, samenvatting, signalen en indicatie">Kort rapport</button><button class="printbtn" data-vergelijk="${idx}" title="Voeg dit adres toe aan de vergelijking (maximaal 3)">+ Vergelijk</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-print="${idx}" data-tab="advies" title="Volledig adviseursrapport met voorblad en samenvatting">Adviseursrapport</button><button class="printbtn" data-print="${idx}" data-tab="adviesKort" title="Kort rapport: voorblad, samenvatting, signalen, indicatie en checklist">Kort rapport</button><button class="printbtn" data-vergelijk="${idx}" title="Voeg dit adres toe aan de vergelijking (maximaal 3)">+ Vergelijk</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -1036,6 +1103,8 @@ function render(d, idx){
     + sectie('05 / Object','Perceel en pand','Ligging, kadastrale aanduiding en BAG-registratie','',registersBlok)
     + sectie('06 / Buurt','Buurt en omgeving','CBS-buurtcijfers en bouwjaren van omliggende panden','paars',buurtBlok)
     + sectie('07 / Verduurzamen','Energielabel en verduurzamingsmogelijkheden','Algemene verwijzingen, geen advies','groen',duurzaamBlok)
+    + sectie('08 / Checklist','Checklist voor de bezichtiging','Aangepast aan dit dossier','blauw',checkBlok)
+    + sectie('09 / Bronnen','Bronnen en status','Wat is opgehaald en wat is geschat','',bronBlok)
     + `${d.fouten.length?`<p class="small" style="margin:-8px 0 26px">Niet opgehaald: ${esc(d.fouten.join(' · '))}.</p>`:''}</div>`
     + `<div data-pane="fund"${tab!=='fund'?' hidden':''}>${Fund.uit(d,idx)}</div>`
     + `<div data-pane="klim"${tab!=='klim'?' hidden':''}>${Klim.uit(d,idx)}</div>`
@@ -2003,7 +2072,7 @@ function adviesVoorblad(d){
   const fmt=n=>n==null?'–':(Math.round(n*2)/2).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1});
   const kv=(k,x)=>(x==null||x===''||x==='null')?'':`<tr><td class="k">${k}</td><td>${x}</td></tr>`;
   let foto=''; try{ const a=d.registers.adres; if(a&&a.lon){ const bb=kaartBbox(d,900,600); const bx=[bb.minLat,bb.minLon,bb.maxLat,bb.maxLon].map(x=>x.toFixed(7)).join(','); foto=`<img class="voorblad-foto" alt="Luchtfoto" src="${LUCHT}?service=WMS&version=1.3.0&request=GetMap&layers=Actueel_orthoHR&styles=&crs=EPSG:4326&bbox=${bx}&width=900&height=600&format=image/jpeg"><p class="small" style="margin:2px 0 12px">Luchtfoto: PDOK. De kadastrale kaart staat in het dossier.</p>`; } }catch(e){}
-  return `<div class="panel sec blauw voorblad"><div class="kop"><div><span class="num-eye">Voorblad</span><h2>Adviseursrapport woningcheck</h2><p class="sub">${esc(sm.adres)}</p></div>${adviesLogo?`<img class="voorblad-logo" alt="Logo" src="${adviesLogo}">`:''}</div>${foto}
+  return `<div class="panel sec blauw voorblad"><div class="kop"><div><span class="num-eye">Voorblad</span><h2>Adviseursrapport woningcheck</h2><p class="sub">${esc(sm.adres)}</p></div>${adviesLogo?`<img class="voorblad-logo" alt="Logo" src="${esc(adviesLogo)}">`:''}</div>${foto}
     <div class="tabwrap"><table>
       ${kv('Klant',esc(v('oKlant')))}${kv('Adviseur',esc(v('oAdviseur')))}${kv('Kantoor',esc(v('oKantoor')))}${kv('Datum',esc(datum))}
     </table></div>
@@ -2087,11 +2156,11 @@ function rapportAfdrukken(i,tabOverride){
   const srcVelden=[...src.querySelectorAll('input,select')], kloonVelden=[...c.querySelectorAll('input,select')];
   kloonVelden.forEach((el,k)=>{ const o=srcVelden[k]; const v=o.tagName==='SELECT'?(o.options[o.selectedIndex]||{}).text:o.value;
     const div=document.createElement('div'); div.className='printval'; div.textContent=v||'–'; el.replaceWith(div); });
-  c.querySelectorAll('.gevel,.dtabs,.strat-head .printbtn,.gevel-link,.woz-knop,.fc-corr,.plak-in,script').forEach(x=>x.remove());
+  c.querySelectorAll('.gevel,.dtabs,.strat-head .printbtn,.gevel-link,.woz-knop,.fc-corr,.plak-in,.noembed,script').forEach(x=>x.remove());
   const advies=tab==='advies'||tab==='adviesKort';
   const houd=tab==='advies'?['dossier','fund','klim']:tab==='adviesKort'?['dossier']:[tab];
   c.querySelectorAll('[data-pane]').forEach(p=>{ if(!houd.includes(p.dataset.pane)) p.remove(); else p.removeAttribute('hidden'); });
-  if(tab==='adviesKort') c.querySelectorAll('[data-pane="dossier"] > .panel.sec').forEach(pn=>{ const n=((pn.querySelector('.num-eye')||{}).textContent||'').trim(); if(!/^0[13]\b/.test(n)) pn.remove(); });
+  if(tab==='adviesKort') c.querySelectorAll('[data-pane="dossier"] > .panel.sec').forEach(pn=>{ const n=((pn.querySelector('.num-eye')||{}).textContent||'').trim(); if(!/^0[138]\b/.test(n)) pn.remove(); });
   c.querySelectorAll('details').forEach(x=>x.setAttribute('open',''));
   c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
@@ -2122,6 +2191,7 @@ function rapportAfdrukken(i,tabOverride){
   .voorblad-foto{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin:10px 0 2px;display:block}
   .voorblad-logo{max-height:44px;max-width:180px;object-fit:contain;margin-left:auto}
   ul.check{list-style:disc;padding-left:20px} ul.check li{padding:3px 0;border-bottom:none} ul.check li::before{display:none}
+  ul.vink li{padding:3px 0 3px 26px}
   @page{@bottom-left{content:"PandWise · model ${MODEL_VERSIE}";font-size:9px;color:#6b7785} @bottom-right{content:"Pagina " counter(page) " van " counter(pages);font-size:9px;color:#6b7785}}
   .rap-voet{margin-top:16px;padding-top:10px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
   .noprint{margin:0 0 14px;display:flex;gap:8px}
@@ -2584,10 +2654,23 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.7.0'; const MODEL_DATUM = '2026-11-09';
+const MODEL_VERSIE = '2.8.0'; const MODEL_DATUM = '2026-11-12';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
+const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet getoond
+(function(){ const d=[BEDRIJF.naam,BEDRIJF.kvk&&'KvK '+BEDRIJF.kvk,BEDRIJF.contact].filter(Boolean); const el=$('bedrijfsregel'); if(el) el.textContent=d.length?d.join(' · '):'PandWise is een onafhankelijke feitencheck op openbare gegevens. Bronnen en rekenmethode staan per dossier onder "Bronnen en status" en in de rekentabellen.'; })();
+(function(){ const c=$('embedCode'); if(!c) return; const url=location.origin&&location.origin!=='null'?location.origin+location.pathname:'https://pandwise.nl/';
+  c.textContent='<iframe src="'+url+'?embed=1" title="PandWise woningcheck" style="width:100%;height:900px;border:0" loading="lazy"></iframe>';
+  const b=$('btnEmbedKopie'); if(b) b.onclick=()=>{ if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(c.textContent).then(()=>toonMsg('Code gekopieerd.')).catch(()=>prompt('Kopieer:',c.textContent)); else prompt('Kopieer:',c.textContent); }; })();
+/* embed- en voorvulparameters in de query string (de hash blijft voor deellinks) */
+(function(){ try{ const p=new URLSearchParams(location.search);
+  if(p.get('embed')==='1') document.body.classList.add('embed');
+  if(p.get('adviseur')&&$('oAdviseur')) $('oAdviseur').value=p.get('adviseur').slice(0,80);
+  if(p.get('kantoor')&&$('oKantoor')) $('oKantoor').value=p.get('kantoor').slice(0,80);
+  const lg=p.get('logo'); if(lg&&/^https:\/\//i.test(lg)&&lg.length<400) adviesLogo=lg;
+  const q=p.get('q'); if(q&&!location.hash.includes('q=')){ $('q').value=q.slice(0,200); $('q').oninput(); if(p.get('auto')==='1') $('btnGo').click(); }
+ }catch(e){} })();
 function laadDeelLink() { try { const p=new URLSearchParams(location.hash.slice(1)); const q=p.get('q'); if(!q) return; $('q').value=q; $('q').oninput(); if(p.get('vp')) $('oVraagprijs').value=(+p.get('vp')).toLocaleString('nl-NL'); if(p.get('st')) $('oStatus').value=p.get('st'); if(p.get('dt')) $('oPrijsdatum').value=p.get('dt'); $('btnGo').click(); } catch(e){} }
 laadDeelLink();
 })();
