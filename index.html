@@ -301,6 +301,7 @@
       <div class="row" style="margin-top:12px">
         <div><label for="oAdviseur">Adviseur (voor het adviseursrapport)</label><input type="text" id="oAdviseur" autocomplete="off"></div>
         <div><label for="oKantoor">Kantoor</label><input type="text" id="oKantoor" autocomplete="off"></div>
+        <div><label for="oType">Woningtype (overschrijft de herkenning)</label><select id="oType"><option value="">— Automatisch —</option><option value="Appartement">Appartement</option><option value="Tussenwoning">Tussenwoning</option><option value="Hoekwoning">Hoekwoning</option><option value="2-onder-1-kapwoning">2-onder-1-kapwoning</option><option value="Vrijstaande woning">Vrijstaande woning</option></select></div>
         <div><label for="oVerdieping">Verdieping en type (bijv. 1e verdieping, galerijflat)</label><input type="text" id="oVerdieping" autocomplete="off"></div>
         <div><label for="oLogo">Logo (png of jpg, blijft in het geheugen)</label><input type="file" id="oLogo" accept="image/png,image/jpeg"></div>
         <div><label for="oKlant">Klant</label><input type="text" id="oKlant" autocomplete="off"></div>
@@ -691,7 +692,7 @@ async function bouwDossier(input){
     catch(e){ d.fouten.push('Funderingscijfer: '+e.message); bronStatus('fund','fail','fout'); }
     delete d._fundRaw;
   } else bronStatus('fund','fail','niet beschikbaar');
-  if(d.fundering&&!d.fundering.woningtype){ const nv=d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten; if(nv>=3) d.fundering.woningtype={naam:'Appartement / meergezinspand', uitleg:'Het pand bevat '+nv+' verblijfsobjecten volgens de BAG.', buren:null, vbo:nv}; }
+  zetWoningtype(d,true);
   try{ d.registers.gebouw=await bag3d(d.registers.pand&&d.registers.pand.identificatie); }catch(e){ d.registers.gebouw=null; }
   d.registers.mediaan=await cbsTypeVerwachting(d.registers.adres&&d.registers.adres.gemeentecode, (d.fundering&&d.fundering.woningtype&&d.fundering.woningtype.naam)||((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3?'Appartement':null));
   try{ const kr=d.fundering?Klim.bereken(d):null; if(kr) bronStatus('klim','ok',num(kr.eind.cijfer,1)+'/10'); else bronStatus('klim','fail','niet beschikbaar'); }catch(e){ bronStatus('klim','fail','fout'); }
@@ -768,12 +769,21 @@ function adTekstSignalen(tekst){
 /* Verwachte gemiddelde verkoopprijs van dit woningtype in de gemeente:
    landelijk gemiddelde per type (CBS 85791NED, laatste kwartaal) x regioniveau (gemeentegemiddelde / landelijk gemiddelde, CBS 83625NED, laatste jaar).
    Controlegetal, geen onderdeel van de berekening: het regioniveau is een gemiddelde over alle woningtypen. */
+/* Woningtype: automatische herkenning, met voorrang voor een opgegeven type; terugval op het aantal verblijfsobjecten (BAG) */
+function zetWoningtype(d,eerste){
+  const F=d.fundering; if(!F) return;
+  if(eerste) d._typeAuto=F.woningtype||null;
+  const th=d.advertentie&&d.advertentie.typeHandmatig, nv=d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten;
+  if(th){ F.woningtype={naam:th, uitleg:'Opgegeven door de gebruiker; de automatische herkenning uit de pandgeometrie is overschreven.', buren:null, vbo:nv||null, handmatig:true}; return; }
+  F.woningtype=d._typeAuto||(nv>=3?{naam:'Appartement / meergezinspand', uitleg:'Het pand bevat '+nv+' verblijfsobjecten volgens de BAG.', buren:null, vbo:nv}:null);
+}
 const CBS_TYPE={app:['ZW25810','Appartement'],vrij:['ZW10320','Vrijstaande woning'],tussen:['ZW25805','Tussenwoning'],hoek:['ZW25806','Hoekwoning'],twee:['ZW10300','2-onder-1-kapwoning']};
 function cbsTypeVanNaam(naam){
   const n=String(naam||'').toLowerCase();
   if(/appartement|meergezins/.test(n)) return CBS_TYPE.app;
   if(/vrijstaand/.test(n)) return CBS_TYPE.vrij;
-  if(/hoek|twee-onder/.test(n)) return CBS_TYPE.hoek;
+  if(/2-onder|twee-onder/.test(n)) return CBS_TYPE.twee;
+  if(/hoek/.test(n)) return CBS_TYPE.hoek;
   if(/tussen/.test(n)) return CBS_TYPE.tussen;
   return null;
 }
@@ -1454,7 +1464,7 @@ const Fund = (()=>{
 
   async function buurtPanden(lat,lon){
     const d=0.0009; // ca. 100 m
-    const data=await haal('https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json&srsName=EPSG:4326&count=60&bbox='+(lon-d)+','+(lat-d)+','+(lon+d)+','+(lat+d)+',EPSG:4326');
+    const data=await haal('https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json&srsName=EPSG:4326&count=250&bbox='+(lat-d)+','+(lon-d)+','+(lat+d)+','+(lon+d)+',EPSG:4326');
     return (data.features||[]).map(f=>({id:f.properties&&f.properties.identificatie?String(f.properties.identificatie):null,
       bouwjaar:parseInt(f.properties&&f.properties.bouwjaar),
       vbo:(f.properties&&f.properties.aantal_verblijfsobjecten!=null&&f.properties.aantal_verblijfsobjecten!=='')?parseInt(f.properties.aantal_verblijfsobjecten):null,
@@ -1645,10 +1655,16 @@ const Fund = (()=>{
 
   const KLEUR={2:'#A81C1C',3:'#C03A1A',4:'#D4860F',5:'#B07C00',6:'#7A9A2A',7:'#3A7A3A',8:'#1B6B3A'};
   const niv=c=>c>=7?'groen':c>=5?'geel':'rood';
+  function altBouwjaar(d){
+    const F=d.fundering, a=d.advertentie||{}; if(!F||F.bouwjaarOverride||!a.bouwjaar||!F.bagBouwjaar) return null;
+    if(Math.abs(a.bouwjaar-F.bagBouwjaar)<50) return null;
+    const sc=bereken(Object.assign({},F,{bouwjaarOverride:a.bouwjaar})).score;
+    return {bj:a.bouwjaar, bagBj:F.bagBouwjaar, cijfer:sc.cijfer, label:sc.label, titel:sc.titel};
+  }
   function kpi(d,idx){
     const F=d.fundering; if(!F) return '';
-    const {score}=bereken(F);
-    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}</span></div>`;
+    const {score}=bereken(F); const alt=altBouwjaar(d);
+    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}</span>${alt?`<span class="src" style="color:var(--warn);font-weight:600">bij bouwjaar ${alt.bj} (advertentie): ${alt.cijfer} / 10</span>`:''}</div>`;
   }
   function uit(d,idx){
     const F=d.fundering;
@@ -1673,7 +1689,7 @@ const Fund = (()=>{
       <div class="kpi"><span class="lab">Maaiveld</span><b class="small">${napStr}</b><span class="src"><em>AHN4</em>${F.napGeschat?' · schatting':''}</span></div>
       <div class="kpi"><span class="lab">RVO-aandachtsgebied</span><b class="small">${F.rvo&&F.rvo.gevonden?'Ja':'Nee'}</b><span class="src"><em>RVO</em> funderingsviewer</span></div>
       <div class="kpi"><span class="lab">Grondwater zomer</span><b class="small">${F.gw&&F.gw.glgCm!==null?Math.round(F.gw.glgCm)+' cm −mv':'–'}</b><span class="src"><em>BRO</em> GLG-model</span></div>
-      ${F.woningtype?`<div class="kpi"><span class="lab">Woningtype</span><b class="small">${esc(F.woningtype.naam)}</b><span class="src"><em>BAG</em> indicatie uit pandgeometrie</span></div>`:''}
+      ${F.woningtype?`<div class="kpi"><span class="lab">Woningtype</span><b class="small">${esc(F.woningtype.naam)}</b><span class="src">${F.woningtype.handmatig?'opgegeven door de gebruiker':'<em>BAG</em> indicatie uit pandgeometrie'}</span></div>`:''}
     </div>`;
 
     const typeBlok=punt(['grijs',ftype.naam,ftype.uitleg])
@@ -1743,6 +1759,7 @@ const Fund = (()=>{
     const bronnen=`<table>${br.map(([n,s,v,u])=>`<tr><td class="k"><a href="${u}" target="_blank" rel="noopener">${esc(n)}</a></td><td><span class="sig ${s==='ok'?'groen':s==='schat'?'geel':'grijs'}">${s==='ok'?'opgehaald':s==='schat'?'schatting / geen data':'info'}</span> ${esc(v)}</td></tr>`).join('')}</table>`;
 
     return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het funderingscijfer is algemene informatie uit openbare registers, geen advies over een financieel product en geen officieel funderingsrapport. Gebruik je dit in een adviesgesprek, leg dan vast dat het een indicatie uit publieke bronnen is en dat funderingsonderzoek nodig is voordat er financiële conclusies aan worden verbonden.</div>`
+      + (altBouwjaar(d)?(()=>{ const al=altBouwjaar(d); return `<div class="panel sec geel">${punt(['geel','Bouwjaar wijkt sterk af: twee funderingscijfers','De BAG noemt '+al.bagBj+', de advertentie '+al.bj+' (verschil '+Math.abs(al.bj-al.bagBj)+' jaar). Met het BAG-bouwjaar is het cijfer '+c+' / 10; met het bouwjaar uit de advertentie '+al.cijfer+' / 10 (verwacht label '+al.label+'; '+al.titel.toLowerCase()+'). Welk jaar geldt, hangt af van herbouw of herstel. Vraag het bouwdossier en eventueel funderingsonderzoek op. Wil je het andere jaar doorrekenen, vul het hieronder in bij «Bouwjaar klopt niet?».'])}</div>`; })():'')
       + `<div class="panel sec ${niv(c)}">${kop}</div>`
       + sectie('A / Woning en ondergrond','Woning en ondergrond','Bouwjaar, bodem, hoogte, grondwater en ligging','blauw',kpis)
       + sectie('B / Funderingstype','Verwacht funderingstype','Afgeleid uit bouwjaar en bodemtype','',typeBlok)
@@ -1754,7 +1771,7 @@ const Fund = (()=>{
       + sectie('H / Bronnen','Gebruikte databronnen','Status per bron','',bronnen)
       + `<p class="small" style="margin:-8px 0 26px">Indicatief model: bouwjaar (BAG), bodemtype (BRO), maaiveldhoogte (AHN4), grondwater (BRO-model) en RVO-aandachtsgebieden. Er is geen rekening gehouden met eerder funderingsherstel, uitvoeringskwaliteit of inspectie ter plaatse. Methode overgenomen uit Funderingscijfer.nl.</p>`;
   }
-  return {ophalen, samenstellen, bereken, uit, kpi, bodemTypeUit};
+  return {ophalen, samenstellen, bereken, uit, kpi, bodemTypeUit, altBouwjaar};
 })();
 
 /* ============ klimaatcijfer (overgenomen uit Klimaatcijfer.nl, herschreven naar Woningdossier-stijl) ============ */
@@ -2050,7 +2067,7 @@ function samenvatting(d){
   return { adres:adr.weergavenaam||a.adres||'', vraagprijs:a.vraagprijs||null, prijsM2:an.prijsPerM2Bag||null, bagM2:vbo.oppervlakte||null,
     bouwjaar:(fb&&fb.bj)||pand.bouwjaar||null, woningtype:wt, label:kb&&kb.lab?kb.lab.label:null, labelBron:kb&&kb.lab?kb.lab.bron:null, wozBuurt:b&&b.wozGem||null,
     fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
-    geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
+    geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, anker:ib&&ib.anker?ib.anker.waarde:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
     gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' ('+(r.gebouw.schuin?'tot nok ca. ':'ca. ')+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG'+(r.gebouw.schuin&&r.gebouw.lagen<=4?', schuin dak: zolder kan meetellen':'')+')':' (3D BAG)'):null), verdieping:a.verdieping||null,
     rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
@@ -2082,6 +2099,7 @@ function adviesVoorblad(d){
       ${kv('Gebouw en verdieping',esc([sm.gebouw,sm.verdieping&&sm.verdieping+' (opgegeven)'].filter(Boolean).join(' · ')))}
       ${kv('Vraagprijs',sm.vraagprijs?eur(sm.vraagprijs)+(sm.prijsM2?` (${eur(sm.prijsM2)} per m² BAG)`:''):null)}
       ${kv('Indicatie naar staat (geen taxatie)',sm.indic?eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''):null)}
+      ${kv('Eigen WOZ, geïndexeerd (anker 2)',sm.anker?eur(sm.anker):null)}
       ${kv('Betrouwbaarheid indicatie',esc(sm.betrouwbaarheid))}
       ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
       ${kv('Klimaatcijfer',sm.klimaat!=null?fmt(sm.klimaat)+' / 10 (bandbreedte '+fmt(sm.klimaatBand[0])+' tot '+fmt(sm.klimaatBand[1])+')':null)}
@@ -2242,6 +2260,8 @@ const INDIC = {
   extraZonderIndex: 4,     // extra onzekerheid in % als de CBS-prijsindex ontbreekt of handmatig is aangepast
   extraAfwijkendM2: 2,     // extra onzekerheid in % als het object >50% van het buurtgemiddelde afwijkt
   fallbackFactor: 1.15,    // marktfactor als de CBS-index niet beschikbaar is
+  ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
+  extraAnkerAfwijking: 2,  // extra onzekerheid in % bij zo'n verschil
   medianeWaarschuwing: 30, // % afwijking midden t.o.v. verwachte gemiddelde prijs waarbij een waarschuwing volgt
   extraAfwijkingControle: 2 // extra onzekerheid in % als het midden meer dan de waarschuwingsgrens van het controlegetal afwijkt
 };
@@ -2266,6 +2286,8 @@ function indicBereken(d){
   const bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte;
   const perM2=b.wozGem/wm.gemiddelde, mg=staatMarge(bi,bu);
   const med=d.registers.mediaan||null;
+  let Wz=null; try{ Wz=wozBereken(d); }catch(e){}
+  const anker=Wz?{waarde:(Wz.geind?Wz.geind.waarde:Wz.laatste.waarde), jaar:Wz.laatste.jaar, bron:Wz.laatste.bron, geind:!!Wz.geind}:null;
   const r1=v=>Math.round(v/1000)*1000, r5=v=>Math.round(v/5000)*5000;
   const kol=m=>{
     if(!m) return null;
@@ -2275,12 +2297,14 @@ function indicBereken(d){
     const midden=r1(geind*(1+mg.mid/100));
     const tovMed=med&&med.mediaan?(midden-med.mediaan)/med.mediaan*100:null;
     const mediaanAfw=tovMed!=null&&Math.abs(tovMed)>INDIC.medianeWaarschuwing;
-    const onz=INDIC.onzekerheid+(st.handmatig?INDIC.extraZonderIndex:0)+(afwijkend?INDIC.extraAfwijkendM2:0)+(mediaanAfw?INDIC.extraAfwijkingControle:0);
+    const tovAnker=anker?(midden-anker.waarde)/anker.waarde*100:null;
+    const ankerAfw=tovAnker!=null&&Math.abs(tovAnker)>INDIC.ankerWaarschuwing;
+    const onz=INDIC.onzekerheid+(st.handmatig?INDIC.extraZonderIndex:0)+(afwijkend?INDIC.extraAfwijkendM2:0)+(mediaanAfw?INDIC.extraAfwijkingControle:0)+(ankerAfw?INDIC.extraAnkerAfwijking:0);
     const laag=r5(geind*(1+mg.lo/100)*(1-onz/100)), hoog=r5(geind*(1+mg.hi/100)*(1+onz/100));
     const vp=a.vraagprijs;
     let positie=null;
     if(vp){ positie = vp<laag ? {t:'onder de bandbreedte',p:(vp-laag)/laag*100} : vp>hoog ? {t:'boven de bandbreedte',p:(vp-hoog)/hoog*100} : {t:'binnen de bandbreedte',p:null}; }
-    return {m2:m, maatPct, onz, tovMed, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
+    return {m2:m, maatPct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
   };
   const adv=kol(a.wonen), bg=kol(bag);
   const hf=adv||bg, rd=[]; let sc=5; const pen=(n,t)=>{ sc-=n; rd.push(t); };
@@ -2289,11 +2313,12 @@ function indicBereken(d){
   if(!(d.fundering&&d.fundering.woningtype)&&!((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3)) pen(0.5,'Het woningtype is niet vastgesteld; de buurtgemiddelde mengt alle typen.');
   if(bag&&a.wonen&&Math.abs(bag-a.wonen)/a.wonen>0.06) pen(1,'BAG-oppervlakte en advertentie-oppervlakte wijken meer dan 6% af.');
   if(hf&&Math.abs(hf.m2/wm.gemiddelde-1)>0.5) pen(1,'Het oppervlak wijkt meer dan 50% af van het buurtgemiddelde.');
+  if(hf&&hf.tovAnker!=null){ const ta=Math.abs(hf.tovAnker); if(ta>INDIC.ankerWaarschuwing) pen(1,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); else if(ta>10) pen(0.5,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); }
   if(hf&&hf.tovMed!=null&&Math.abs(hf.tovMed)>INDIC.medianeWaarschuwing) pen(1,'Het midden wijkt meer dan '+INDIC.medianeWaarschuwing+'% af van het controlegetal.');
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'advertentie wonen m²':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'advertentie wonen m²':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -2315,6 +2340,7 @@ function indicKpi(d){
   return `<span class="lab">Indicatie naar staat (binnen en buiten gelijk)</span>
     <div class="ind3">${sc.map(z=>`<div${z.label==='Goed'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
     <span class="src ind-aanname">Aanname: woningen worden vaak in goede staat verkocht. Niet gebaseerd op data. Kies zelf de staat die bij deze woning past.</span>
+    ${x.anker?`<span class="src">Anker 2, eigen WOZ geïndexeerd: <b>${eur(x.anker.waarde)}</b> · jouw midden ${h.tovAnker!=null?pct(h.tovAnker):'–'} t.o.v. dit anker</span>`:''}
     <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
 }
 function indicUit(d){
@@ -2340,6 +2366,8 @@ function indicUit(d){
     ${indicScenarios(d).map(z=>`<tr><td class="k">Scenario ${z.label.toLowerCase()} (binnen en buiten ${z.label.toLowerCase()})</td>${c.map((k,i)=>{ const q=i===0?z.bag:z.adv; return `<td class="num">${q?eur(q.laag)+' – '+eur(q.hoog)+'<br><span class="small">midden '+eur(q.midden)+'</span>':'–'}</td>`; }).join('')}</tr>`).join('')}
     ${row('Bandbreedte laag',k=>eur(k.laag))}
     ${row('Midden',k=>eur(k.midden),'tot')}
+    ${x.anker?`<tr><td class="k">Anker 2: eigen WOZ (peildatum 1-1-${x.anker.jaar}, ${x.anker.bron==='handmatig'?'handmatig':'register'}) ${x.anker.geind?'geïndexeerd naar nu':'zonder indexatie'}</td><td class="num" colspan="2">${eur(x.anker.waarde)}</td></tr>
+    ${row('Midden t.o.v. anker 2 (eigen WOZ)',k=>k.tovAnker!=null?pct(k.tovAnker):'–')}`:''}
     ${row('Bandbreedte hoog',k=>eur(k.hoog))}
     ${row('Vraagprijs',k=>k.positie?`${k.positie.t}${k.positie.p!=null?' ('+pct(k.positie.p)+')':''}`:'–')}
     ${x.mediaan?row(`Midden t.o.v. verwachte gemiddelde prijs ${esc(x.mediaan.typeFilter&&x.mediaan.typeFilter!=='TotaleTabel'?'('+x.mediaan.typeFilter.toLowerCase()+')':'(alle woningen)')} ${eur(x.mediaan.mediaan)}`,k=>k.tovMed!=null?pct(k.tovMed):'–'):''}
@@ -2402,12 +2430,14 @@ $('btnCheck').onclick=async()=>{
   }catch(e){ el.className='hint'; el.textContent='Niet gevonden: '+e.message; }
   finally{ btn.disabled=false; }
 };
-$('btnUpdate').onclick=()=>{
+$('btnUpdate').onclick=async()=>{
   const d=dossiers[0]; if(!d){ $('btnGo').click(); return; }
   const oud=d.advertentie||{};
   d.advertentie=advertentieUitOpties({adres:oud.adres, url:oud.url, fundaId:oud.fundaId, soort:oud.soort, eigendom:oud.eigendom});
   d.signalen=[]; d.analyse={}; d.strat=null; d.indic=null;
   if(d.klimaat&&d.advertentie.energielabelAdv&&!(d.klimaat.ep&&d.klimaat.ep.label)) d.klimaat.labelOverride=d.advertentie.energielabelAdv;
+  zetWoningtype(d,false);
+  try{ d.registers.mediaan=await cbsTypeVerwachting(d.registers.adres&&d.registers.adres.gemeentecode, (d.fundering&&d.fundering.woningtype&&d.fundering.woningtype.naam)||null); }catch(e){}
   analyse(d); renderResult();
   const m=$('msg'); m.className='msg ok'; m.textContent='Dossier bijgewerkt met de ingevulde woningdata.';
   const el=$('dossier-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
@@ -2419,6 +2449,7 @@ $('btnNieuw').onclick=()=>{
   $('q').value='';
   ['oVraagprijs','oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value='');
   ['oStaatBinnen','oStaatBuiten'].forEach(i=>{ $(i).value='3'; $(i).dispatchEvent(new Event('change')); });
+  if($('oType')) $('oType').value='';
   $('msg').className='msg'; $('msg').textContent='';
   $('qHint').className='hint'; $('qHint').textContent=HINT_STD;
   bronReset();
@@ -2429,7 +2460,7 @@ $('btnNieuw').onclick=()=>{
 $('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
-  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||3, staatBuiten:+$('oStaatBuiten').value||3, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000), verdieping:($('oVerdieping').value||'').trim().slice(0,60)||null }, extra||{});
+  return Object.assign({ staatBinnen:+$('oStaatBinnen').value||3, staatBuiten:+$('oStaatBuiten').value||3, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000), verdieping:($('oVerdieping').value||'').trim().slice(0,60)||null, typeHandmatig:($('oType')&&$('oType').value)||null }, extra||{});
 }
 /* ============ plak-oplossingen: WOZ-tabel, verkoophistorie en aanbod in de buurt ============
    De gebruiker kopieert zelf tekst van een openbare pagina; de tool leest die uit en bewaart niets buiten het geheugen. */
@@ -2580,6 +2611,7 @@ document.querySelector('main').addEventListener('click',e=>{
       if(!n){ if(m) m.textContent='Niets herkend. Plak de tabel met peildatum en WOZ-waarde.'; return; }
       d.woz=d.woz||{bron:'handmatig',reeks:[]}; d.woz.handmatig=d.woz.handmatig||{}; Object.entries(w).forEach(([j,v])=>{ d.woz.handmatig[j]=v; });
       const sec=$('woz-'+i); if(sec) sec.outerHTML=sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,i),`woz-${i}`);
+      const io=$('io-'+i); if(io) io.innerHTML=indicUit(d); const ik=$('ik-'+i); if(ik) ik.innerHTML=indicKpi(d);
       const m2e=$('pwm-'+i); if(m2e) m2e.textContent=n+' WOZ-waarde'+(n===1?'':'n')+' overgenomen. Controleer ze in de tabel; ze zijn handmatig en niet geverifieerd.'; return; }
     if(pk.dataset.plak==='hist'){ d.hist=parseHistorieTekst(($('ph-'+i)||{}).value); const el=$('hr-'+i); if(el) el.innerHTML=histHtml(d); return; }
     if(pk.dataset.plak==='aanbod'){ d.aanbod=parseAanbodTekst(($('pa-'+i)||{}).value); const el=$('ar-'+i); if(el) el.innerHTML=aanbodHtml(d); return; }
@@ -2654,7 +2686,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.8.0'; const MODEL_DATUM = '2026-11-12';
+const MODEL_VERSIE = '2.9.0'; const MODEL_DATUM = '2026-11-13';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
