@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.8.0 · november 2026**  
+> **Model 2.9.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Tweede anker, woningtype en bouwjaarverschil (2.9.0)
+- **Anker 2: eigen WOZ van het pand.** Als er een WOZ-reeks is (geplakt of uit het loket) rekent PandWise de laatste WOZ met de CBS-prijsindex door naar nu en zet die naast de buurtmethode. Het verschil (in %) staat in de KPI en de tabel en weegt mee in de betrouwbaarheid (meer dan 10% verschil: -0,5; meer dan 20%: -1 en +2 procentpunt onzekerheid).
+- **Woningtype kiezen:** een keuzelijst "Woningtype" overschrijft de automatische herkenning; het controlegetal gebruikt dat type (met de juiste CBS-koppeling voor 2-onder-1-kap).
+- **Bugfix woningtype en buurtpanden:** de BAG-WFS-opvraag gebruikte de verkeerde coördinatenvolgorde (lon,lat in plaats van lat,lon bij EPSG:4326) en haalde maximaal 60 panden op. Daardoor werd het woningtype vrijwel nooit herkend en ontbraken de buurtbouwjaren. Nu 250 panden in de juiste volgorde.
+- **Bouwjaarverschil:** bij 50 jaar of meer verschil tussen BAG en advertentie toont PandWise beide funderingscijfers (KPI en melding in het funderingstabblad).
 
 ### Bronnen, checklist, insluiten (2.8.0)
 - **Bronnen en status (sectie 09):** per dossier een lijst van 16 bronnen met "opgehaald", "schatting" of "niet beschikbaar" en een link naar de bron. Dit is de stand op het moment van opvragen.
