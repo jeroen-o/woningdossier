@@ -1218,10 +1218,10 @@ function analyse(d){
     d.analyse.oppervlakte = {bag, advertentieWonen:wonen, advertentieOverig:overig||0, advertentieTotaal:somAdv, verschil:verschilSom, verschilPct:pctSom, verschilTovWonen:bag-wonen};
     const abs=Math.abs(pctSom);
     if(abs>10) S.push({niveau:'rood', titel:'Oppervlakte wijkt sterk af van de BAG',
-      tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de advertentie (wonen plus overige inpandige ruimte): ${pct(pctSom)}. Vraag de meetstaat NEN 2580 op voordat je de waarde in het adviesdossier vastlegt.`});
+      tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de aangepaste gegevens (wonen plus overige inpandige ruimte): ${pct(pctSom)}. Vraag de meetstaat NEN 2580 op voordat je de waarde in het adviesdossier vastlegt.`});
     else if(abs>4) S.push({niveau:'geel', titel:'Oppervlakte wijkt af van de BAG',
-      tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de advertentie: ${pct(pctSom)}. Een afwijking tot enkele procenten is normaal omdat BAG en de meetinstructie andere definities hanteren.`});
-    else S.push({niveau:'groen', titel:'Oppervlakte sluit aan op de BAG', tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de advertentie: ${pct(pctSom)}.`});
+      tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de aangepaste gegevens: ${pct(pctSom)}. Een afwijking tot enkele procenten is normaal omdat BAG en de meetinstructie andere definities hanteren.`});
+    else S.push({niveau:'groen', titel:'Oppervlakte sluit aan op de BAG', tekst:`BAG ${m2(bag)} tegenover ${m2(somAdv)} in de aangepaste gegevens: ${pct(pctSom)}.`});
     if(prijs){ d.analyse.prijsPerM2Advertentie=Math.round(prijs/wonen); d.analyse.prijsPerM2Bag=Math.round(prijs/bag); d.analyse.waardeEffect=Math.round(verschilSom*(prijs/somAdv)); }
   } else if(bag && prijs){ d.analyse.prijsPerM2Bag=Math.round(prijs/bag); }
   if(a.bod){
@@ -1234,7 +1234,7 @@ function analyse(d){
   const bj = r.pand && r.pand.bouwjaar;
   if(bj && a.bouwjaar){
     const v=a.bouwjaar-bj; d.analyse.bouwjaar={bag:bj, advertentie:a.bouwjaar, verschil:v};
-    if(Math.abs(v)>2) S.push({niveau:'geel', titel:'Bouwjaar wijkt af', tekst:`De BAG noemt ${bj}, de advertentie ${a.bouwjaar}. Bij herbouw of ingrijpende verbouwing kan de BAG een nieuw bouwjaar voeren; controleer welk jaar de taxateur aanhoudt.`});
+    if(Math.abs(v)>2) S.push({niveau:'geel', titel:'Bouwjaar wijkt af', tekst:`De BAG noemt ${bj}, de aangepaste gegevens ${a.bouwjaar}. Bij herbouw of ingrijpende verbouwing kan de BAG een nieuw bouwjaar voeren; controleer welk jaar de taxateur aanhoudt.`});
   }
   const omg=r.omgeving;
   if(bj && bj<1970){
@@ -1249,9 +1249,9 @@ function analyse(d){
     const v=pg-a.perceel, p=(v/a.perceel)*100;
     d.analyse.perceel={brk:pg, brkAdrespunt:pgPunt, aantalPercelen:(r.percelen||[]).length||1, advertentie:a.perceel, verschil:v, verschilPct:p};
     if(Math.abs(p)>3) S.push({niveau:'geel', titel:'Perceelgrootte wijkt af van de BRK',
-      tekst:meervoudig ? `De ${(r.percelen||[]).length} percelen uit de advertentie meten samen ${m2(pg)} volgens de BRK; de advertentie noemt ${m2(a.perceel)}. Controleer welke percelen daadwerkelijk worden geleverd.`
-                       : `Het perceel op het adrespunt meet ${m2(pgPunt)}; de advertentie noemt ${m2(a.perceel)}. Vaak bestaat een kavel uit meerdere percelen — controleer de kadastrale aanduidingen in de akte.`});
-    else S.push({niveau:'groen', titel:'Perceelgrootte sluit aan op de BRK', tekst:`${meervoudig?(r.percelen.length+' percelen samen'):'Perceel'} ${m2(pg)} tegenover ${m2(a.perceel)} in de advertentie.`});
+      tekst:meervoudig ? `De ${(r.percelen||[]).length} percelen uit de aangepaste gegevens meten samen ${m2(pg)} volgens de BRK; de aangepaste gegevens zijn ${m2(a.perceel)}. Controleer welke percelen daadwerkelijk worden geleverd.`
+                       : `Het perceel op het adrespunt meet ${m2(pgPunt)}; de aangepaste gegevens zijn ${m2(a.perceel)}. Vaak bestaat een kavel uit meerdere percelen — controleer de kadastrale aanduidingen in de akte.`});
+    else S.push({niveau:'groen', titel:'Perceelgrootte sluit aan op de BRK', tekst:`${meervoudig?(r.percelen.length+' percelen samen'):'Perceel'} ${m2(pg)} tegenover ${m2(a.perceel)} in de aangepaste gegevens.`});
   } else if(pgPunt){ d.analyse.perceel={brk:pgPunt, aantalPercelen:1}; }
 
   const gd = r.verblijfsobject && r.verblijfsobject.gebruiksdoel;
@@ -1275,7 +1275,7 @@ function analyse(d){
   d.heeftAdvertentie = !!(wonen || a.perceel || a.bouwjaar || prijs || a.bod);
   if(!S.length) S.push({niveau:'grijs', titel:d.heeftAdvertentie?'Geen afwijkingen gevonden':'Registercontroles zonder bijzonderheden',
     tekst:d.heeftAdvertentie?'De ingevulde woningdata uit de woningadvertentie sluit aan op BAG en BRK; gebruiksdoel, BAG-status en het aantal objecten in het pand geven geen aanleiding tot opmerkingen.'
-      :'Gecontroleerd op gebruiksdoel, BAG-status, bouwjaar vóór 1970 en meerdere verblijfsobjecten in het pand: geen bijzonderheden. Vul vraagprijs, bod of oppervlakten in om de advertentie te vergelijken met de registers.'});
+      :'Gecontroleerd op gebruiksdoel, BAG-status, bouwjaar vóór 1970 en meerdere verblijfsobjecten in het pand: geen bijzonderheden. Vul vraagprijs, bod of oppervlakten in om de aangepaste gegevens te vergelijken met de registers.'});
 }
 
 /* ============ kaarten ============ */
@@ -1384,7 +1384,7 @@ function render(d, idx){
     <p class="small">Rekenkundig afgeleid uit vraagprijs en bod. Dit is geen taxatie en geen waardebepaling in de zin van de NRVT- of NWWI-normen en mag niet als zodanig in een adviesdossier worden opgenomen.</p>`:'';
 
   /* --- perceel & pand --- */
-  const percelenTabel=(r.percelen&&r.percelen.length>1)?`<h3>Kadastrale percelen uit de advertentie</h3><table><tr><th>Aanduiding</th><th class="num">Grootte (BRK)</th><th>Soort</th></tr>${r.percelen.map(x=>`<tr><td>${esc(x.aanduiding)}</td><td class="num">${m2(x.grootte)}</td><td>${esc(x.soort_grootte||'')}</td></tr>`).join('')}<tr class="tot"><td>Totaal</td><td class="num">${m2(r.percelenTotaal)}</td><td></td></tr></table>`:'';
+  const percelenTabel=(r.percelen&&r.percelen.length>1)?`<h3>Kadastrale percelen uit de aangepaste gegevens</h3><table><tr><th>Aanduiding</th><th class="num">Grootte (BRK)</th><th>Soort</th></tr>${r.percelen.map(x=>`<tr><td>${esc(x.aanduiding)}</td><td class="num">${m2(x.grootte)}</td><td>${esc(x.soort_grootte||'')}</td></tr>`).join('')}<tr class="tot"><td>Totaal</td><td class="num">${m2(r.percelenTotaal)}</td><td></td></tr></table>`:'';
   const registersBlok=`${kaartBlok(d)}${percelenTabel}
     <div class="grid2 reg2" style="margin-top:10px">
       <div><h3>Verblijfsobject en pand (BAG)</h3>${kv({'Verblijfsobject-ID':vbo.identificatie,'Oppervlakte':vbo.oppervlakte?m2(vbo.oppervlakte):null,'Gebruiksdoel':vbo.gebruiksdoel,'Status':vbo.status,'Bronhouder':vbo.bronhouder,'Documentdatum':vbo.documentdatum,'Pand-ID':pand.identificatie,'Bouwjaar':pand.bouwjaar,'Status pand':pand.status,'Verblijfsobjecten in pand':pand.aantal_verblijfsobjecten})}</div>
@@ -1590,9 +1590,9 @@ function biedHtml(d,idx){
   </div>`;
 
   const punten=[];
-  if(opp && opp.verschilPct<-4) punten.push(['geel','BAG-oppervlakte lager dan de advertentie',
+  if(opp && opp.verschilPct<-4) punten.push(['geel','BAG-oppervlakte lager dan de aangepaste gegevens',
     `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)} (${pct(opp.verschilPct)}). Vraag de meetstaat NEN 2580 op.${an.waardeEffect!=null?` Bij de geadverteerde prijs per m² vertegenwoordigt het verschil rekenkundig ${eur(Math.abs(an.waardeEffect))}.`:''}`]);
-  else if(opp && opp.verschilPct>4) punten.push(['grijs','BAG-oppervlakte hoger dan de advertentie',
+  else if(opp && opp.verschilPct>4) punten.push(['grijs','BAG-oppervlakte hoger dan de aangepaste gegevens',
     `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)}. Dit is geen argument voor een lager bod; waarschijnlijk telt de BAG ruimtes mee die volgens NEN 2580 buiten wonen vallen.`]);
   if(pand.bouwjaar && pand.bouwjaar<1970) punten.push(['geel','Bouwjaar '+pand.bouwjaar,
     `Neem een bouwkundige keuring op als voorbehoud en vraag naar funderingsonderzoek of -herstel.${omg&&omg.pctVoor1970>=50?` In de omgeving is ${omg.pctVoor1970}% van de panden van vóór 1970.`:''} De uitkomst van de keuring, met herstelkosten, is het concrete onderhandelingsmateriaal — niet het bouwjaar zelf.`]);
@@ -1695,13 +1695,13 @@ function verkoopHtml(d,idx){
       ${b&&b.wozGem?`<tr><td class="k">Gemiddelde WOZ-waarde buurt (CBS ${b.wozJaar}, peildatum 1-1-${b.wozPeiljaar})</td><td>${eur(b.wozGem)} <span class="small">— context, geen objectwaarde</span></td></tr>`:''}
       ${b&&b.woningM2?`<tr><td class="k">Gemiddelde woningoppervlakte buurt (BAG)</td><td>${m2(b.woningM2.gemiddelde)}${b.woningM2.objectPercentiel!=null?` <span class="small">— dit object ${m2(vbo.oppervlakte)}, groter dan ${b.woningM2.objectPercentiel}% van de woningen</span>`:''}</td></tr>`:''}
     </table>
-    ${oppAfw?punt(['geel','Oppervlakte uitlegbaar maken',`De advertentie (${m2(opp.advertentieTotaal)}) wijkt ${pct(opp.verschilPct)} af van de BAG (${m2(opp.bag)}). Kopers en taxateurs vergelijken met de BAG: laat een meetrapport NEN 2580 opstellen vóór publicatie en noem de BAG-oppervlakte niet als woonoppervlak.`]):''}
+    ${oppAfw?punt(['geel','Oppervlakte uitlegbaar maken',`De aangepaste gegevens (${m2(opp.advertentieTotaal)}) wijkt ${pct(opp.verschilPct)} af van de BAG (${m2(opp.bag)}). Kopers en taxateurs vergelijken met de BAG: laat een meetrapport NEN 2580 opstellen vóór publicatie en noem de BAG-oppervlakte niet als woonoppervlak.`]):''}
     <p class="small">De tool doet geen uitspraak over de hoogte van de vraagprijs. Laat die onderbouwen met referentietransacties door de verkopend makelaar of een gecertificeerd taxateur.</p>`;
 
   const meld=[['grijs','Mededelingsplicht','De verkoper moet bekende gebreken en feiten melden die voor een koper van belang zijn; de koper heeft een onderzoeksplicht. Wat je weet en niet meldt, kan later tot aansprakelijkheid leiden.']];
   if(oudbouw) meld.push(['geel','Fundering en bouwjaar '+pand.bouwjaar,'Kopers vragen bij dit bouwjaar vrijwel altijd naar de fundering. Leg vast wat bekend is: eerder onderzoek, herstel, meldingen bij de gemeente. Onbekend is ook een antwoord — maar zeg het expliciet.']);
   if(an.bouwjaar&&Math.abs(an.bouwjaar.verschil)>2) meld.push(['geel','Bouwjaar advertentie versus BAG',`Advertentie ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Licht toe wat is herbouwd of gerenoveerd en houd vergunningen beschikbaar.`]);
-  if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) meld.push(['geel','Perceel',`BRK ${m2(an.perceel.brk)} tegenover ${m2(an.perceel.advertentie)} in de advertentie. Controleer welke percelen je in eigendom hebt en levert.`]);
+  if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) meld.push(['geel','Perceel',`BRK ${m2(an.perceel.brk)} tegenover ${m2(an.perceel.advertentie)} in de aangepaste gegevens. Controleer welke percelen je in eigendom hebt en levert.`]);
   if(meer) meld.push(['geel','Appartementsrecht / VvE','Het pand telt '+pand.aantal_verblijfsobjecten+' verblijfsobjecten. Kopers en geldverstrekkers verwachten actuele VvE-stukken.']);
   if(vbo.gebruiksdoel&&!/woonfunctie/i.test(vbo.gebruiksdoel)) meld.push(['rood','Gebruiksdoel',`De BAG registreert "${vbo.gebruiksdoel}". Dit beperkt de financierbaarheid voor kopers; zoek vooraf uit of wijziging mogelijk is.`]);
 
@@ -2161,7 +2161,7 @@ const Fund = (()=>{
 
     return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het funderingscijfer is algemene informatie uit openbare registers, geen advies over een financieel product en geen officieel funderingsrapport. Gebruik je dit in een adviesgesprek, leg dan vast dat het een indicatie uit publieke bronnen is en dat funderingsonderzoek nodig is voordat er financiële conclusies aan worden verbonden.</div>`
       + (score.handmatig?`<div class="panel sec geel">${punt(['geel','Funderingscijfer handmatig aangepast','Het cijfer is aangepast naar '+score.cijfer+' / 10 (berekend op basis van de registers: '+score.berekend+' / 10). Zonder funderingsonderzoek blijft dit een inschatting. Het aangepaste cijfer telt mee in de waarde. Terugzetten kan via «Gegevens aanpassen» bovenaan het dossier: kies bij Funderingscijfer "Berekend".'])}</div>`:'')
-      + (altBouwjaar(d)?(()=>{ const al=altBouwjaar(d); return `<div class="panel sec geel">${punt(['geel','Bouwjaar wijkt sterk af: twee funderingscijfers','De BAG noemt '+al.bagBj+', de advertentie '+al.bj+' (verschil '+Math.abs(al.bj-al.bagBj)+' jaar). Met het BAG-bouwjaar is het cijfer '+c+' / 10; met het bouwjaar uit de advertentie '+al.cijfer+' / 10 (verwacht label '+al.label+'; '+al.titel.toLowerCase()+'). Welk jaar geldt, hangt af van herbouw of herstel. Vraag het bouwdossier en eventueel funderingsonderzoek op. Wil je het andere jaar doorrekenen, vul het hieronder in bij «Bouwjaar klopt niet?».'])}</div>`; })():'')
+      + (altBouwjaar(d)?(()=>{ const al=altBouwjaar(d); return `<div class="panel sec geel">${punt(['geel','Bouwjaar wijkt sterk af: twee funderingscijfers','De BAG noemt '+al.bagBj+', de aangepaste gegevens '+al.bj+' (verschil '+Math.abs(al.bj-al.bagBj)+' jaar). Met het BAG-bouwjaar is het cijfer '+c+' / 10; met het bouwjaar uit de aangepaste gegevens '+al.cijfer+' / 10 (verwacht label '+al.label+'; '+al.titel.toLowerCase()+'). Welk jaar geldt, hangt af van herbouw of herstel. Vraag het bouwdossier en eventueel funderingsonderzoek op. Wil je het andere jaar doorrekenen, vul het hieronder in bij «Bouwjaar klopt niet?».'])}</div>`; })():'')
       + `<div class="panel sec ${niv(c)}">${kop}</div>`
       + sectie('A / Woning en ondergrond','Woning en ondergrond','Bouwjaar, bodem, hoogte, grondwater en ligging','blauw',kpis)
       + sectie('B / Funderingstype','Verwacht funderingstype','Afgeleid uit bouwjaar en bodemtype','',typeBlok)
@@ -3256,7 +3256,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.6'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.7'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
