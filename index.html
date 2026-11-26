@@ -1364,7 +1364,7 @@ function render(d, idx){
     </table></div>
     <p class="small">De BAG registreert de gebruiksoppervlakte van het hele verblijfsobject; de meetinstructie NEN 2580 splitst dat in wonen en overige inpandige ruimte. Vergelijk daarom de som, niet alleen het woonoppervlak. Gebouwgebonden buitenruimte en externe bergruimte tellen in geen van beide mee.</p>`;
   } else {
-    vergelijk=`<p class="small">Geen advertentie-oppervlakte ingevuld. Vul wonen m² (en eventueel overige inpandige m²) in om de afwijking te berekenen.</p>
+    vergelijk=`<p class="small">Geen aangepast oppervlak ingevuld. Vul wonen m² (en eventueel overige inpandige m²) in om de afwijking te berekenen.</p>
     ${a.bouwjaar||pand.bouwjaar||perc.grootte?`<table><tr><th>Grootheid</th><th class="num">Advertentie</th><th class="num">Register</th></tr>
       <tr><td>Gebruiksoppervlakte</td><td class="num">${m2(a.wonen)}</td><td class="num">${m2(vbo.oppervlakte)}</td></tr>
       <tr><td>Perceel</td><td class="num">${m2(a.perceel)}</td><td class="num">${m2(r.percelenTotaal||perc.grootte)}</td></tr>
@@ -2795,7 +2795,7 @@ function indicBereken(d){
   if(st.handmatig) pen(1,'De marktfactor komt niet uit de CBS-prijsindex.');
   if(!med) pen(0.5,'Geen controlegetal beschikbaar (CBS-prijs per woningtype).');
   if(!(d.fundering&&d.fundering.woningtype)&&!((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3)) pen(0.5,'Het woningtype is niet vastgesteld; de buurtgemiddelde mengt alle typen.');
-  if(bag&&a.wonen&&Math.abs(bag-a.wonen)/a.wonen>0.06) pen(1,'BAG-oppervlakte en advertentie-oppervlakte wijken meer dan 6% af.');
+  if(bag&&a.wonen&&Math.abs(bag-a.wonen)/a.wonen>0.06) pen(1,'BAG-oppervlakte en aangepast oppervlak wijken meer dan 6% af.');
   if(hf&&Math.abs(hf.m2/wm.gemiddelde-1)>0.5) pen(1,'Het oppervlak wijkt meer dan 50% af van het buurtgemiddelde.');
   if(hf&&hf.tovAnker!=null){ const ta=Math.abs(hf.tovAnker); if(ta>INDIC.ankerWaarschuwing) pen(1,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); else if(ta>10) pen(0.5,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); }
   if(hf&&hf.tovMed!=null&&Math.abs(hf.tovMed)>INDIC.medianeWaarschuwing) pen(1,'Het midden wijkt meer dan '+INDIC.medianeWaarschuwing+'% af van het controlegetal.');
@@ -2804,7 +2804,7 @@ function indicBereken(d){
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'advertentie wonen m²':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -3257,7 +3257,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.9'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.10'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
