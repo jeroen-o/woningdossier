@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.11.0 · november 2026**  
+> **Model 2.12.1 · december 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Perceelcorrectie, standaardstaat en rapportopmaak (2.12.0 en 2.12.1)
+- **Perceelcorrectie voor woningen met eigen grond:** waarde ~ (perceel ÷ typisch perceel in de omgeving) ^ 0,08, begrensd op ±10%. Het typische perceel is de mediaan van kadastrale percelen van 40 tot 2000 m² binnen circa 200 m (BRK). Niet voor appartementen en meergezinspanden. Het is een expertaanname en niet gekalibreerd; de tabel toont de correctie en de reden als hij niet wordt toegepast.
+- **Standaardstaat:** binnen en buiten staan standaard op **uitstekend** (constante `STAAT_STANDAARD`). Dat is een aanname zonder data en geeft een hogere uitkomst dan de neutrale standaard "redelijk"; de toelichting bij de waarde zegt dat.
+- **Het uitlegblok "Wat doet PandWise?"** verdwijnt zodra je op Analyseren drukt en komt terug bij "Nieuwe berekening".
+- **Rapportopmaak:** scenariokaarten passen binnen het kader, kopjes blijven bij hun inhoud, de berekeningstabel heeft één kolom als BAG- en advertentie-oppervlak gelijk zijn en een bredere labelkolom, de registergegevens staan in twee kolommen, plak- en zoekinstructies komen niet meer in het rapport, het niet bevestigde waardeblok wordt weggelaten en foutmeldingen zijn leesbaar. Teksten over perceel en het aanpassen van gegevens zijn bijgewerkt.
 
 ### Tussenstap, woningwaarde en links (2.10.0 tot 2.11.0)
 - **Tussenstap vóór de waarde:** na het dossier controleert de bezoeker eerst woonoppervlakte, perceeloppervlakte, bouwjaar, woningtype, staat binnen en buiten, optioneel de vraagprijs en de laatste WOZ-waarde met peildatum. Pas na "Toon indicatieve woningwaarde" verschijnen de waarde en sectie 03; via "Gegevens aanpassen" ga je terug. Het perceel wordt getoond en vergeleken met de BRK, maar telt nog niet mee in de waarde (niet gekalibreerd).
