@@ -189,6 +189,11 @@
   @media(max-width:560px){.btns.actie button{flex:1 1 100%}}
   .hint{font-size:13px;color:var(--muted);margin:8px 0 0}
   .hint.herkend{color:var(--ok)}
+  .btabs{display:flex;gap:10px;margin:0 0 14px;flex-wrap:wrap}
+  .btabs button{background:#FCEBCF;border:2px solid var(--accent);border-radius:8px;color:var(--primary);padding:10px 18px;font-weight:700;font-size:15px}
+  .btabs button:hover{background:#F6D9A6}
+  .btabs button[aria-selected=true]{background:var(--accent);box-shadow:0 3px 10px rgba(229,161,56,.45)}
+  .btab-data .opties-panel{border:0;box-shadow:none;padding:0;margin:0;background:none}
   .opties-panel{margin-top:6px} .strat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
   .strat-head h2{margin:0}
   .msg{font-size:14px;margin-top:10px;min-height:20px}
@@ -537,6 +542,7 @@
 
   <div id="result"></div>
 
+  <div id="optiesHome">
     <div class="panel opties-panel hidden" id="opties">
       <h2 style="margin:0 0 10px">Woningdata uit woningadvertentie</h2>
       <div class="row5">
@@ -568,6 +574,7 @@
       </div>
       <p class="hint">Woningdata uit woningadvertentie, optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking. Bij een bod wordt de prijs per m² ook op het bod berekend en het verschil met de vraagprijs getoond.</p>
     </div>
+  </div>
 
 
   <div id="strat"></div>
@@ -1642,7 +1649,7 @@ function biedHtml(d,idx){
   const stappen=['Bezichtig en stel je vragen aan de verkopend makelaar.','Laat je maximale hypotheek berekenen door een erkend hypotheekadviseur, vóór je biedt.','Breng je bod schriftelijk uit met bedrag, voorbehouden, gewenste opleverdatum en geldigheidstermijn.','Mondelinge overeenstemming is nog geen koop: de koop komt pas tot stand bij een schriftelijke koopovereenkomst.','Na ontvangst van de getekende koopovereenkomst heb je 3 dagen wettelijke bedenktijd (art. 7:2 BW).','Laat taxatie en bouwkundige keuring uitvoeren binnen de termijn van de voorbehouden.','Regel de waarborgsom of bankgarantie (gebruikelijk 10% van de koopsom) en plan de overdracht bij de notaris.'];
 
   return strategieDisclaimer('bied')
-    + sectie('A / Uitgangspositie','Uitgangspositie','Wat je invulde, naast de registers','blauw',kpis)
+    + sectie('A / Uitgangspositie','Uitgangspositie','Wat je invulde, naast de registers','blauw',kpis+'<div class="nodruk" style="display:flex;justify-content:flex-end;margin-top:10px"><button type="button" data-naar-opties="1">Gegevens aanpassen</button></div>')
     + sectie('B / Onderhandelingspunten','Onderhandelingspunten uit het dossier','Controleerbare afwijkingen en aandachtspunten om in je bod of vragen te gebruiken','geel',punten.map(punt).join(''))
     + sectie('C / Doorrekening','Scenario\'s doorrekenen','Vul zelf bodbedragen, marktwaarde en eigen geld in','',calc)
     + sectie('D / Voorbehouden','Voorbehouden in je bod','Ontbindende voorwaarden die bij dit object passen','groen',`<table>${voorbehouden.map(([t,x])=>`<tr><td class="k"><b>${esc(t)}</b></td><td>${esc(x)}</td></tr>`).join('')}</table>`)
@@ -2907,12 +2914,13 @@ function indicUit(d){
 
 function verversIndicatie(d,i){ try{ const io=$('io-'+i); if(io) io.innerHTML=indicUit(d); const ik=$('ik-'+i); if(ik) ik.innerHTML=indicKpi(d); }catch(e){} }
 function renderResult(){
-  const op=$('opties'); if(op) op.classList.toggle('hidden',!dossiers.length);
+  const op=$('opties'); if(op&&$('optiesHome')) $('optiesHome').appendChild(op);
   const wd=$('watDoet'); if(wd) wd.classList.toggle('hidden',!!dossiers.length);
   $('result').innerHTML=dossiers.map(render).join('');
   $('strat').innerHTML=dossiers.map((d,i)=>`<div class="dwrap" id="sw-${i}">
-    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div data-pane="bied">${biedHtml(d,i)}</div></div>
+    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
     <div class="panel"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div></div></div>`).join('');
+  if(op){ const slot=document.querySelector('#bied-0 .btab-data'); if(dossiers.length&&slot){ slot.appendChild(op); op.classList.remove('hidden'); } else op.classList.add('hidden'); }
 }
 
 /* ============ adres uit een Funda-link ============ */
@@ -3147,8 +3155,17 @@ async function run(input, btn){
   finally{ laadStop(); btn.disabled=false; $('btnGo').disabled=false; $('skelet').classList.add('hidden'); }
 }
 
+function biedTab(i,t,scroll){
+  const w=$('bied-'+i); if(!w) return;
+  w.querySelectorAll('[data-biedtab]').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.biedtab===t)));
+  const pb=w.querySelector('[data-pane="bied"]'), pd=w.querySelector('[data-pane="biedData"]'); if(pb) pb.hidden=t!=='bied'; if(pd) pd.hidden=t!=='data';
+  if(scroll) w.scrollIntoView({behavior:'smooth',block:'start'});
+}
 document.querySelector('main').addEventListener('click',e=>{
   if(e.target.closest('[data-opnieuw]')){ $('btnGo').click(); return; }
+  const bt=e.target.closest('[data-biedtab]'); if(bt){ biedTab(+bt.dataset.i,bt.dataset.biedtab,false); return; }
+  if(e.target.closest('[data-naar-opties]')){ biedTab(0,'data',true); return; }
+  if(false){ const o=$('opties'); if(o){ o.classList.remove('hidden'); o.scrollIntoView({behavior:'smooth',block:'start'}); const f=o.querySelector('input,textarea,select'); if(f) setTimeout(()=>f.focus({preventScroll:true}),500); } return; }
   if(e.target.closest('[data-stapterug]')){ const d=dossiers[0]; if(d){ d.indicBevestigd=false; renderResult(); const el=$('ik-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
   if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
     $('oWonen').value=v('stw'); $('oPerceel').value=v('stp'); $('oBouwjaar').value=v('stbj'); $('oType').value=v('stt');
@@ -3239,7 +3256,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.1'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.3'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
