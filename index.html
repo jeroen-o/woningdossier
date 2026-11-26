@@ -1278,7 +1278,7 @@ function render(d, idx){
       <p class="small" style="margin:0 0 14px">Staat binnen ${indicInit(d).binnen} · ${STAAT.label[indicInit(d).binnen]}, staat buiten ${indicInit(d).buiten} · ${STAAT.label[indicInit(d).buiten]} (pas aan via «Gegevens aanpassen» bovenaan het dossier). Marktfactor ${num(indicInit(d).factor,3)} uit de CBS-prijsindex.</p>
       <div id="io-${idx}">${indicUit(d)}</div>
       <p class="small" style="margin-top:10px" id="ix-${idx}">${indexUitleg(d,idx)}</p>
-      <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; het perceel telt mee als kleine correctie (aanname, maximaal ±10%); woningtype en energielabel tellen niet mee in de berekening (de verwachte gemiddelde prijs per woningtype uit CBS is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; advertentie-m² volgen NEN 2580.</div>
+      <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; het perceel, het energielabel en het funderingscijfer tellen mee als correctie (aannames, niet gekalibreerd); het woningtype telt niet mee in de berekening (de verwachte gemiddelde prijs per woningtype uit CBS is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; advertentie-m² volgen NEN 2580.</div>
     </div>` : '';
   /* --- bronnen en status (stand op het moment van opvragen) --- */
   const kl=d.klimaat||{}, fu=d.fundering||{}, st=(ok,schat)=>ok?'ok':(schat?'schat':'nee');
@@ -1323,9 +1323,10 @@ function render(d, idx){
   ];
   const checkBlok=`<ul class="vink">${vinkItems.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul><p class="small" style="margin-bottom:0">Algemene checklist, aangepast aan bouwjaar, woningtype en signalen in dit dossier. Geen bouwkundig of juridisch advies.</p>`;
   /* --- verduurzamen --- */
-  const lblK=(d.klimaat&&((d.klimaat.ep&&d.klimaat.ep.label)||d.klimaat.labelOverride))||a.energielabel||null;
+  let lblSchat=null; try{ const kb0=d.fundering?Klim.bereken(d):null; if(kb0&&kb0.lab&&kb0.lab.bron==='schatting'&&kb0.lab.label!=='Onbekend') lblSchat=kb0.lab; }catch(e){}
+  const lblK=(d.klimaat&&((d.klimaat.ep&&d.klimaat.ep.label)||d.klimaat.labelOverride))||a.energielabel||(lblSchat?lblSchat.label:null);
   const lblL=lblK?String(lblK).toUpperCase().replace(/[^A-G+]/g,'').charAt(0):'';
-  const duurzaamBlok=`${lblK?punt([/[EFG]/.test(lblL)?'geel':/[CD]/.test(lblL)?'geel':'groen','Energielabel '+lblK,/[EFG]/.test(lblL)?'Een laag label betekent meestal substantiële investeringen (isolatie, warmte, ventilatie). Neem die kosten mee in de afweging van het bod.':/[CD]/.test(lblL)?'Redelijk label: er is vaak nog winst te halen met isolatie of een warmtepomp.':'Gunstig label: weinig directe verduurzamingsopgave.']):punt(['grijs','Energielabel onbekend','Er is geen geregistreerd label gevonden. Vraag naar het label of laat het opnemen.'])}
+  const duurzaamBlok=`${lblK?punt([/[EFG]/.test(lblL)?'geel':/[CD]/.test(lblL)?'geel':'groen','Energielabel '+lblK+((lblSchat&&!(d.klimaat&&((d.klimaat.ep&&d.klimaat.ep.label)||d.klimaat.labelOverride))&&!a.energielabel)?' (geschat uit bouwjaar)':''),/[EFG]/.test(lblL)?'Een laag label betekent meestal substantiële investeringen (isolatie, warmte, ventilatie). Neem die kosten mee in de afweging van het bod.':/[CD]/.test(lblL)?'Redelijk label: er is vaak nog winst te halen met isolatie of een warmtepomp.':'Gunstig label: weinig directe verduurzamingsopgave.']):punt(['grijs','Energielabel onbekend','Er is geen geregistreerd label gevonden. Vraag naar het label of laat het opnemen.'])}
     ${lijst([
       '<a href="https://www.rvo.nl/subsidies-financiering/isde" target="_blank" rel="noopener">ISDE-subsidie (RVO)</a>: subsidie voor onder meer isolatie, warmtepompen en zonneboilers; voorwaarden en bedragen wijzigen regelmatig.',
       '<a href="https://www.warmtefonds.nl" target="_blank" rel="noopener">Nationaal Warmtefonds</a>: financiering voor verduurzamen, ook met een lage rente voor bepaalde doelgroepen.',
@@ -1352,6 +1353,7 @@ function render(d, idx){
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
       ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · '+(r.gebouw.schuin?'tot nok ca. ':'hoogte ca. ')+num(r.gebouw.hoogte,1)+' m':''}${r.gebouw.schuin&&r.gebouw.lagen<=4?' · schuin dak, zolder kan meetellen':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
+      ${(()=>{ try{ const kb=d.fundering?Klim.bereken(d):null; if(!kb||!kb.lab||kb.lab.label==='Onbekend') return ''; const L=kb.lab; return `<div class="kpi"><span class="lab">Energielabel</span><b>${esc(L.label)}</b><span class="src">${L.bron==='EP-online'?'<em>EP-online</em> geregistreerd':L.bron==='handmatig'?'handmatig ingevoerd':'geschat uit bouwjaar'+(L.periode?' · '+esc(L.periode):'')}</span></div>`; }catch(e){ return ''; } })()}
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
@@ -2033,6 +2035,21 @@ const Fund = (()=>{
 })();
 
 /* ============ klimaatcijfer (overgenomen uit Klimaatcijfer.nl, herschreven naar Woningdossier-stijl) ============ */
+/* Energielabel schatten uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit per periode.
+   [vanaf bouwjaar, periode, eis, typisch label, score]. Ruwe indicatie: verbouwing, isolatie en installaties sinds de bouw zijn niet meegenomen. */
+const LABEL_PERIODEN=[
+  [2021,'vanaf 2021','BENG-eisen: nieuwbouw is bijna energieneutraal','A++ / A+++',9.5],
+  [2015,'2015 tot en met 2020','EPC-eis 0,4','A+ / A++',9],
+  [2011,'2011 tot en met 2014','EPC-eis 0,6','A / A+',8],
+  [2006,'2006 tot en met 2010','EPC-eis 0,8','A / B',7.5],
+  [2000,'2000 tot en met 2005','EPC-eis 1,0','B',7],
+  [1995,'1995 tot en met 1999','EPC-eis 1,4 en daarna 1,2','B / C',6.5],
+  [1992,'1992 tot en met 1994','Bouwbesluit 1992: eerste isolatie-eisen, nog geen EPC','C / D',5.5],
+  [1975,'1975 tot en met 1991','Voor het Bouwbesluit: beperkte isolatie-eisen','D / E',4.5],
+  [1946,'1946 tot en met 1974','Geen isolatie-eisen, vaak ongeïsoleerde spouw','E / F',3.5],
+  [0,'tot en met 1945','Geen isolatie-eisen, massieve muren, enkel glas','F / G',2.5]
+];
+function labelPeriode(bj){ return LABEL_PERIODEN.find(r=>bj>=r[0])||LABEL_PERIODEN[LABEL_PERIODEN.length-1]; }
 const Klim = (()=>{
   const haal = async url => { const r=await fetch(url,{signal:AbortSignal.timeout(9000)}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -2137,9 +2154,9 @@ const Klim = (()=>{
   /* --- energielabel --- */
   const LMAP={'A++++':10,'A+++':10,'A++':9,'A+':9,'A':8,'B':7,'C':6,'D':5,'E':4,'F':3,'G':2};
   function labelProxy(j){
-    if(!j) return {score:5,label:'Onbekend',desc:'Bouwjaar onbekend.',bron:'schatting'};
-    const r=j>=2021?[9,'A+++ / A++','BENG-norm, bijna energieneutraal.']:j>=2015?[8,'A / A+','EPC 0,4-norm, goed geïsoleerd.']:j>=2010?[7,'A / B','Voldoende isolatie.']:j>=2000?[6,'B / C','Redelijke isolatie.']:j>=1990?[5,'C / D','Matige isolatie, verduurzaming loont.']:j>=1975?[4,'D / E','Beperkte isolatie.']:j>=1960?[3,'E / F','Slechte isolatie.']:[2,'F / G','Vóór 1960, nauwelijks geïsoleerd.'];
-    return {score:r[0],label:r[1],desc:r[2]+' Schatting op basis van bouwjaar '+j+'.',bron:'schatting'};
+    if(!j) return {score:5,label:'Onbekend',desc:'Bouwjaar onbekend; het label kan niet worden geschat.',bron:'schatting',periode:''};
+    const r=labelPeriode(j);
+    return {score:Math.round(r[4]),label:r[3],periode:r[1]+', '+r[2],bron:'schatting',desc:'Bouwjaar '+j+' valt in de periode '+r[1]+' ('+r[2]+'). Typisch label '+r[3]+'. Dit is een schatting op basis van het bouwjaar volgens het Bouwbesluit; verbouwing, isolatie en installaties sinds de bouw zijn niet meegenomen. Pas het label aan als je het weet.'};
   }
   function labelData(K,bj){
     const auto=(K.ep&&K.ep.label)?{score:LMAP[String(K.ep.label).toUpperCase().replace(/\s/g,'')]||5,label:K.ep.label+(K.ep.voorlopig?' (voorlopig)':''),desc:'Geregistreerd energielabel '+K.ep.label+(K.ep.geldigTot?', geldig t/m '+K.ep.geldigTot:'')+'. Bron: EP-online (RVO).',bron:'EP-online'}:labelProxy(bj);
@@ -2246,8 +2263,9 @@ const Klim = (()=>{
       else extra=`<p class="small">${esc(tekst(x.id,s,prof,adr))}</p>`;
       return `<div class="dossier ${niv(s)}"><p style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${x.name}${ctx?'':' <span class="small">· weging '+Math.round(x.weight*100)+'%</span>'}${/Klimaateffectatlas/.test(Dx.bron)?' <span class="sig groen">locatiedata</span>':''}${lab.bron==='handmatig'&&x.id==='energielabel'?' <span class="sig geel">handmatig</span>':''}</b><span class="sig ${niv(s)}" style="font-size:14px">${s} / 10</span></p>${meterRow(rl(s),s*10)}${extra}${x.id!=='fundering'?`<details><summary class="small" style="cursor:pointer;color:var(--primary);font-weight:600">Hoe is deze score opgebouwd?</summary>${rekentabel(Dx)}</details>`:''}</div>`; };
     const dimBlok=`<div class="grid2">${DIMS.map(x=>dimKaart(x,D[x.id],false)).join('')}</div>`;
+    const lblTabel=`<details style="margin-top:10px"><summary><b>Hoe schatten we het energielabel?</b></summary><p class="small">Zonder geregistreerd label schatten we het label uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit in die periode. Het werkelijke label kan hoger liggen door verbouwing of isolatie, of lager door een slechte staat. Een geregistreerd of zelf ingevuld label gaat altijd voor.</p><div class="tabwrap"><table><tr><th>Bouwjaar</th><th>Eis in die periode</th><th>Typisch label</th></tr>${LABEL_PERIODEN.map(r=>`<tr${fb.bj&&labelPeriode(fb.bj)===r?' style="background:#FFF6E5;font-weight:600"':''}><td>${r[1]}</td><td>${esc(r[2])}</td><td>${r[3]}</td></tr>`).join('')}</table></div></details>`;
     const ctxBlok=`<p class="small" style="margin-top:0">Een energielabel is een woningeigenschap en bergingspotentieel een maatregel; beide zeggen niets over de blootstelling aan klimaatrisico's en tellen daarom niet mee.</p><div class="grid2">${DIMS_CTX.map(x=>dimKaart(x,C[x.id],true)).join('')}</div>
-      <div class="fc-corr" data-strat data-i="${idx}"><label for="kclbl-${idx}" style="margin:0">Energielabel klopt niet?</label><select id="kclbl-${idx}"><option value="">— Automatisch —</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${K.labelOverride===l?' selected':''}>${l}</option>`).join('')}</select><button type="button" data-klim-label="${idx}">Herbereken</button>${K.labelOverride?`<button type="button" class="link" data-klim-label-reset="${idx}">Automatisch label herstellen</button>`:''}</div>`;
+      <div class="fc-corr" data-strat data-i="${idx}"><label for="kclbl-${idx}" style="margin:0">Energielabel klopt niet?</label><select id="kclbl-${idx}"><option value="">— Automatisch —</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${K.labelOverride===l?' selected':''}>${l}</option>`).join('')}</select><button type="button" data-klim-label="${idx}">Herbereken</button>${K.labelOverride?`<button type="button" class="link" data-klim-label-reset="${idx}">Automatisch label herstellen</button>`:''}</div>${lblTabel}`;
     const tijd=`<div class="tabwrap"><table><tr><th>Dimensie</th><th class="num">Nu</th><th class="num">2030</th><th class="num">2050</th></tr>${DIMS.map(x=>{const s0=scores[x.id],s30=clamp(Math.round((s0+KNMI[x.id].d30)*10)/10,1,10),s50=clamp(Math.round((s0+KNMI[x.id].d50)*10)/10,1,10);const cel=v=>`<td class="num"><b style="color:${KL(v)}">${num(v,1)}</b></td>`;return `<tr><td>${x.name}</td>${cel(s0)}${cel(s30)}${cel(s50)}</tr>`;}).join('')}</table></div><p class="small">Richting-indicatie op basis van de KNMI'23-klimaatscenario's (W+, peildatum oktober 2023), zonder aanvullende maatregelen. Geen voorspelling voor dit specifieke adres.</p>`;
     const profielBlok=`<div class="grid2"><div>${radar(scores)}</div><div><h3 style="margin-top:0">Ontwikkeling 2030 / 2050</h3>${tijd}</div></div>`;
     // overstroming detail
@@ -2298,7 +2316,7 @@ const Klim = (()=>{
       droogte:{hoog:'Hoge droogtegevoeligheid in '+naam+'. Langdurige droogte laat de grondwaterstand dalen: ongunstig voor fundering, tuin en bodemzetting.',matig:'Matige droogtegevoeligheid. Droge zomers worden talrijker; grondwaterdaling is een groeiend aandachtspunt.',laag:'Beperkte droogtegevoeligheid. De waterhuishouding houdt de grondwaterstand hier relatief stabiel.'},
       wateropslag:{hoog:'Weinig ruimte voor waterberging op eigen perceel (appartement of klein kavel). Kijk naar dak- of gemeenschappelijke oplossingen.',matig:'Enige ruimte voor waterberging: een regenwaterput of infiltratiekrat past hier.',laag:'Ruim voldoende ruimte voor waterberging (regenwaterput, wadi, groen dak).'}};
     return (T[id]&&T[id][n])||'Score '+s+'/10.'; }
-  return {ophalen, bereken, uit, kpi};
+  return {ophalen, bereken, uit, kpi, labelProxy};
 })();
 
 function duurzaamLink(adr){
@@ -2570,6 +2588,11 @@ const INDIC = {
   fallbackFactor: 1.15,    // marktfactor als de CBS-index niet beschikbaar is
   perceelElasticiteit: 0.08, // waarde ~ (perceel / typisch perceel) ^ 0,08: expertaanname, niet gekalibreerd
   perceelCap: 10,            // maximale perceelcorrectie in %, beide kanten
+  // Aannames, niet gekalibreerd: orde van grootte van enkele procenten per labelstap, ten opzichte van label D
+  labelEffect:{'A':3.5,'A+':4,'A++':4.5,'A+++':5,'A++++':5,'B':2,'C':0.5,'D':0,'E':-2,'F':-4,'G':-6},
+  labelGeschatGewicht:0.5, // een label dat uit het bouwjaar is geschat telt voor de helft mee
+  // Funderingscijfer (2 tot 8) naar correctie op de waarde in %; 7 is neutraal, een slecht cijfer verlaagt de waarde (max. -15%)
+  fundEffect:{8:1,7:0,6:-1,5:-3,4:-6,3:-10,2:-15},
   ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
   extraAnkerAfwijking: 2,  // extra onzekerheid in % bij zo'n verschil
   medianeWaarschuwing: 30, // % afwijking midden t.o.v. verwachte gemiddelde prijs waarbij een waarschuwing volgt
@@ -2597,6 +2620,9 @@ function indicBereken(d){
   const bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte;
   const perM2=b.wozGem/wm.gemiddelde, mg=staatMarge(bi,bu);
   const med=d.registers.mediaan||null;
+  let labelInfo={toegepast:false,pct:0,label:null,bron:null}, fundInfo={toegepast:false,pct:0,cijfer:null};
+  try{ const kb=d.fundering?Klim.bereken(d):null; if(kb&&kb.lab&&kb.lab.label&&kb.lab.label!=='Onbekend'){ const tk=String(kb.lab.label).match(/A\+{0,4}|[B-G]/g)||[]; const eff=tk.map(t=>INDIC.labelEffect[t]).filter(x=>x!=null); if(eff.length){ const gem=eff.reduce((a,b)=>a+b,0)/eff.length, w=kb.lab.bron==='schatting'?INDIC.labelGeschatGewicht:1; labelInfo={toegepast:true,pct:gem*w,label:kb.lab.label,bron:kb.lab.bron}; } } }catch(e){}
+  try{ if(d.fundering){ const c=Fund.bereken(d.fundering).score.cijfer, e=INDIC.fundEffect[c]; if(e!=null) fundInfo={toegepast:true,pct:e,cijfer:c}; } }catch(e){}
   const percObj=a0perceel(d), typPerc=(d.registers.perceelOmgeving&&d.registers.perceelOmgeving.mediaan)||null, app0=isAppartement(d);
   const perceelPct=(!app0&&percObj&&typPerc)?Math.max(-INDIC.perceelCap,Math.min(INDIC.perceelCap,(Math.pow(percObj/typPerc,INDIC.perceelElasticiteit)-1)*100)):0;
   const perceelInfo={obj:percObj, typ:typPerc, pct:perceelPct, toegepast:!app0&&!!percObj&&!!typPerc, reden:app0?'appartement of meergezinspand: geen eigen grond':!percObj?'geen perceeloppervlakte bekend':!typPerc?'geen vergelijkingsgegevens in de omgeving':null};
@@ -2607,7 +2633,7 @@ function indicBereken(d){
     if(!m) return null;
     const maatPct=Math.max(-INDIC.maatCap,Math.min(INDIC.maatCap,(Math.pow(m/wm.gemiddelde,INDIC.maatElasticiteit-1)-1)*100));
     const afwijkend=Math.abs(m/wm.gemiddelde-1)>0.5;
-    const basis=m*perM2*(1+maatPct/100)*(1+perceelPct/100), geind=basis*f;
+    const basis=m*perM2*(1+maatPct/100)*(1+perceelPct/100)*(1+labelInfo.pct/100)*(1+fundInfo.pct/100), geind=basis*f;
     const midden=r1(geind*(1+mg.mid/100));
     const tovMed=med&&med.mediaan?(midden-med.mediaan)/med.mediaan*100:null;
     const mediaanAfw=tovMed!=null&&Math.abs(tovMed)>INDIC.medianeWaarschuwing;
@@ -2618,7 +2644,7 @@ function indicBereken(d){
     const vp=a.vraagprijs;
     let positie=null;
     if(vp){ positie = vp<laag ? {t:'onder de bandbreedte',p:(vp-laag)/laag*100} : vp>hoog ? {t:'boven de bandbreedte',p:(vp-hoog)/hoog*100} : {t:'binnen de bandbreedte',p:null}; }
-    return {m2:m, maatPct, perceelPct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
+    return {m2:m, maatPct, perceelPct, labelPct:labelInfo.pct, fundPct:fundInfo.pct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
   };
   const adv=kol(a.wonen), bg=kol(bag);
   const hf=adv||bg, rd=[]; let sc=5; const pen=(n,t)=>{ sc-=n; rd.push(t); };
@@ -2634,7 +2660,7 @@ function indicBereken(d){
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'advertentie wonen m²':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'advertentie wonen m²':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -2657,6 +2683,8 @@ function stapKaart(d){
   const types=['Appartement','Tussenwoning','Hoekwoning','2-onder-1-kapwoning','Vrijstaande woning'];
   let wz=null; try{ wz=wozReeks(d)[0]||null; }catch(e){}
   const link=wozLoketLink(adr), jaarNu=new Date().getFullYear();
+  let estLabel=''; try{ estLabel=bj?Klim.labelProxy(+bj).label:''; }catch(e){}
+  const curLabel=(d.klimaat&&d.klimaat.labelOverride)||'';
   const f=n=>n==null||n===''?'':String(n);
   return `<span class="lab">Stap 2 · Controleer de gegevens</span>
     <b class="ind-kop" style="font-size:20px">Pas aan wat niet klopt, daarna volgt de woningwaarde</b>
@@ -2666,6 +2694,7 @@ function stapKaart(d){
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
       <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch${auto?' ('+esc(auto)+')':''}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label for="stlbl">Energielabel</label><select id="stlbl"><option value="">${estLabel?'Schatting uit bouwjaar ('+esc(estLabel)+')':'Onbekend'}</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${curLabel===l?' selected':''}>${l}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Geregistreerd label? Zoek het op <a href="https://www.ep-online.nl" target="_blank" rel="noopener">ep-online.nl</a>.</span></div>
       <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||STAAT_STANDAARD)}</select></div>
       <div><label for="stsu">Staat buiten</label><select id="stsu">${staatOpties(+a.staatBuiten||STAAT_STANDAARD)}</select></div>
       <div><label for="stvp">Vraagprijs (optioneel)</label><input type="text" id="stvp" class="eur" inputmode="numeric" value="${a.vraagprijs?esc(Math.round(a.vraagprijs).toLocaleString('nl-NL')):''}" placeholder="€"></div>
@@ -2710,7 +2739,9 @@ function indicUit(d){
     ${row('D. Oppervlakte object',k=>m2(k.m2))}
     ${row('D2. Maatcorrectie (grotere woning = lagere prijs per m²)',k=>pctS(k.maatPct))}
     ${x.perceel.toegepast?row(`D3. Perceelcorrectie (${num(x.perceel.obj)} m² t.o.v. typisch ${num(x.perceel.typ)} m² in de omgeving; aanname, maximaal ±${INDIC.perceelCap}%)`,k=>pctS(k.perceelPct)):`<tr><td class="k">D3. Perceelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.perceel.reden||'')}</td></tr>`}
-    ${row(`E. C × D × maatcorrectie × perceelcorrectie × marktfactor ${num(x.factor,3)} ${x.index&&!x.handmatig?'(CBS-prijsindex)':'(handmatig of vaste aanname)'}`,k=>eur(k.geind))}
+    ${x.labelInfo.toegepast?row(`D4. Energielabelcorrectie (label ${esc(x.labelInfo.label)}, ${x.labelInfo.bron==='EP-online'?'geregistreerd':x.labelInfo.bron==='handmatig'?'handmatig ingevoerd':'geschat uit bouwjaar, half gewicht'}; aanname t.o.v. label D)`,k=>pctS(k.labelPct)):`<tr><td class="k">D4. Energielabelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: label onbekend</td></tr>`}
+    ${x.fundInfo.toegepast?row(`D5. Funderingscorrectie (cijfer ${x.fundInfo.cijfer} van 8; 7 is neutraal, slechter verlaagt de waarde, maximaal -15%; aanname)`,k=>pctS(k.fundPct)):''}
+    ${row(`E. C × D × maat-, perceel-, label- en funderingscorrectie × marktfactor ${num(x.factor,3)} ${x.index&&!x.handmatig?'(CBS-prijsindex)':'(handmatig of vaste aanname)'}`,k=>eur(k.geind))}
     <tr><td class="k">F. Correctie staat (binnen ${x.binnen} · buiten ${x.buiten})</td><td class="num" colspan="${kn}">${pctS(x.marge.lo)} tot ${pctS(x.marge.hi)}</td></tr>
     <tr><td class="k">G. Modelonzekerheid, aan beide kanten van de bandbreedte</td>${c.map(k=>`<td class="num">${k?'± '+num(k.onz,0)+'%':'–'}</td>`).join('')}</tr>
     <tr><td class="k">Betrouwbaarheid indicatie (consistentie van de gegevens, niet gekalibreerd)</td><td class="num" colspan="${kn}">${x.betrouwbaarheid.label} (${num(x.betrouwbaarheid.score,1)} van 5)</td></tr>
@@ -2734,6 +2765,7 @@ function indicUit(d){
   <div class="tol" style="margin-top:4px"><span><i style="background:rgba(0,48,87,.25)"></i>bandbreedte</span><span><i style="background:var(--primary)"></i>midden</span><span><i style="background:var(--accent)"></i>vraagprijs</span></div>`;
 }
 
+function verversIndicatie(d,i){ try{ const io=$('io-'+i); if(io) io.innerHTML=indicUit(d); const ik=$('ik-'+i); if(ik) ik.innerHTML=indicKpi(d); }catch(e){} }
 function renderResult(){
   const op=$('opties'); if(op) op.classList.toggle('hidden',!dossiers.length);
   const wd=$('watDoet'); if(wd) wd.classList.toggle('hidden',!!dossiers.length);
@@ -2981,6 +3013,7 @@ document.querySelector('main').addEventListener('click',e=>{
   if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
     $('oWonen').value=v('stw'); $('oPerceel').value=v('stp'); $('oBouwjaar').value=v('stbj'); $('oType').value=v('stt');
     $('oStaatBinnen').value=v('stsb'); $('oStaatBuiten').value=v('stsu'); $('oVraagprijs').value=v('stvp');
+    if(d.klimaat){ d.klimaat.labelOverride=v('stlbl')||null; if(v('stlbl')&&$('oPlak')) delete $('oPlak').dataset.label; }
     const wv=nlNum(v('stwoz')), wj=parseInt(v('stwozj'),10);
     if(wv>0&&wj>=1995&&wj<=new Date().getFullYear()+1){ d.woz=d.woz||{bron:'handmatig',reeks:[]}; d.woz.handmatig=d.woz.handmatig||{}; d.woz.handmatig[wj]=wv; }
     d.indicBevestigd=true; $('btnUpdate').click(); return; }
@@ -3018,11 +3051,11 @@ document.querySelector('main').addEventListener('click',e=>{
   if(fb||fr){ const i=+(fb||fr).dataset[fb?'fundBj':'fundBjReset'], d=dossiers[i]; if(!d||!d.fundering) return;
     if(fb){ const v=parseInt($('fcbj-'+i).value,10); if(!(v>=1500&&v<=2030)){ $('fcbj-'+i).focus(); alert('Vul een geldig bouwjaar in (1500–2030).'); return; } d.fundering.bouwjaarOverride=v; }
     else d.fundering.bouwjaarOverride=null;
-    const w=$('dw-'+i); w.querySelector('[data-pane="fund"]').innerHTML=Fund.uit(d,i); const k=$('fk-'+i); if(k) k.outerHTML=Fund.kpi(d,i); const kp=w.querySelector('[data-pane="klim"]'); if(kp) kp.innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); return; }
+    const w=$('dw-'+i); w.querySelector('[data-pane="fund"]').innerHTML=Fund.uit(d,i); const k=$('fk-'+i); if(k) k.outerHTML=Fund.kpi(d,i); const kp=w.querySelector('[data-pane="klim"]'); if(kp) kp.innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); verversIndicatie(d,i); return; }
   const kl=e.target.closest('[data-klim-label]'), kr=e.target.closest('[data-klim-label-reset]');
   if(kl||kr){ const i=+(kl||kr).dataset[kl?'klimLabel':'klimLabelReset'], d=dossiers[i]; if(!d||!d.klimaat) return;
     d.klimaat.labelOverride= kl ? ($('kclbl-'+i).value||null) : null;
-    const w=$('dw-'+i); w.querySelector('[data-pane="klim"]').innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); return; }
+    const w=$('dw-'+i); w.querySelector('[data-pane="klim"]').innerHTML=Klim.uit(d,i); const kk=$('kk-'+i); if(kk) kk.outerHTML=Klim.kpi(d,i); verversIndicatie(d,i); return; }
   const wr=e.target.closest('[data-woz-reset]');
   if(wr){ const i=+wr.dataset.wozReset, d=dossiers[i]; if(d&&d.woz){ d.woz.handmatig={}; const sec=$('woz-'+i); if(sec) sec.outerHTML=sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,i),`woz-${i}`); } return; }
   const gt=e.target.closest('[data-gotab]');
@@ -3065,7 +3098,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.15.1'; const MODEL_DATUM = '2026-12-10';
+const MODEL_VERSIE = '2.16.0'; const MODEL_DATUM = '2026-12-10';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
