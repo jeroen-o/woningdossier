@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.16.0 · december 2026**  
+> **Model 2.17.0 · december 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,10 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Funderingscijfer aanpasbaar (2.17.0)
+- In de tussenstap staat naast het energielabel een keuzelijst **Funderingscijfer**: standaard het berekende cijfer uit de registers (met titel en label), of een zelf gekozen cijfer van 8 tot 2. Het aangepaste cijfer telt mee in de waarde (rij D5), staat in het dossier met "handmatig aangepast (berekend: X)" en krijgt een melding in het funderingstabblad. Terugzetten kan via «Gegevens aanpassen» en kiezen voor "Berekend". Het bouwjaarverschil-signaal en de alternatieve score verdwijnen zolang het cijfer handmatig is.
+- De kop van de tussenstap is «Pas aan wat volgens jou anders is, daarna volgt de woningwaarde», met de toelichting «wijzig ze als het anders is of anders gaat worden».
 
 ### Energielabel en fundering in de waarde (2.16.0)
 - **Energielabel geschat uit het bouwjaar** aan de hand van de Bouwbesluit-periodes (EPC-eisen en eerdere isolatie-eisen), met een tabel "Hoe schatten we het energielabel?" in het klimaattabblad. Een geregistreerd of zelf ingevuld label gaat altijd voor; verbouwing en isolatie sinds de bouw zijn niet meegenomen. Het label staat als blokje in het dossier (met bron) en is aan te passen in de tussenstap en in het klimaattabblad.
