@@ -3037,6 +3037,7 @@ $('btnUpdate').onclick=async()=>{
   const el=$('dossier-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
 };
 $('btnNieuw').onclick=()=>{
+  laatsteZoek=null; wisOpties();
   $('oStatus').value=''; $('oPrijsdatum').value=''; $('oPlak').value=''; delete $('oPlak').dataset.label; $('plakMsg').textContent='';
   dossiers.length=0; if($('opties')) $('opties').classList.add('hidden'); if($('watDoet')) $('watDoet').classList.remove('hidden');
   $('result').innerHTML=''; $('strat').innerHTML='';
@@ -3051,7 +3052,7 @@ $('btnNieuw').onclick=()=>{
   window.scrollTo({top:0,behavior:'smooth'});
   $('q').focus();
 };
-$('btnVoorbeeld').onclick=()=>{ $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; ['oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value=''); $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
+$('btnVoorbeeld').onclick=()=>{ wisOpties(); laatsteZoek='darthuizerberg 1, 3825 bk amersfoort'; $('q').value='Darthuizerberg 1, 3825 BK Amersfoort'; $('oVraagprijs').value='1.100.000'; $('q').oninput(); $('btnGo').click(); };
 
 function advertentieUitOpties(extra){
   return Object.assign({ staatBinnen:+$('oStaatBinnen').value||STAAT_STANDAARD, staatBuiten:+$('oStaatBuiten').value||STAAT_STANDAARD, vraagprijs:nlNum($('oVraagprijs').value), bod:nlNum($('oBod').value), wonen:nlNum($('oWonen').value), overigInpandig:nlNum($('oOverig').value), perceel:nlNum($('oPerceel').value), bouwjaar:nlNum($('oBouwjaar').value), status:$('oStatus').value||null, prijsdatum:$('oPrijsdatum').value.trim()||null, energielabelAdv:$('oPlak').dataset.label||null, tekst:($('oPlak').value||'').slice(0,20000), verdieping:($('oVerdieping').value||'').trim().slice(0,60)||null, typeHandmatig:($('oType')&&$('oType').value)||null }, extra||{});
@@ -3173,9 +3174,19 @@ $('btnPlak').onclick=()=>{
   if(r.energielabel){ $('oPlak').dataset.label=r.energielabel; gevuld.push('energielabel '+r.energielabel); } else delete $('oPlak').dataset.label;
   m.textContent=gevuld.length?'Gevuld: '+gevuld.join(', ')+'. Controleer en klik op Dossier bijwerken.':'Niets herkend. Plak de kenmerkentekst van de Funda-pagina (o.a. Vraagprijs, Status, Aangeboden sinds, Wonen, Bouwjaar).';
 };
+/* Velden van "Aangepaste woningdata" terug naar de beginstand (nieuw adres = nieuwe gegevens) */
+function wisOpties(){
+  const o=$('opties'); if(!o) return;
+  o.querySelectorAll('input,textarea').forEach(e=>{ e.value=''; if(e.dataset) delete e.dataset.label; });
+  o.querySelectorAll('select').forEach(sel=>{ sel.selectedIndex=0; });
+  ['oStaatBinnen','oStaatBuiten'].forEach(i=>{ const e=$(i); if(e){ e.value=String(STAAT_STANDAARD); e.dispatchEvent(new Event('change')); } });
+  const pm=$('plakMsg'); if(pm) pm.textContent='';
+}
+let laatsteZoek=null;
 $('btnGo').onclick=()=>{
   const v=$('q').value.trim(); const m=$('msg');
   if(!v){ m.className='msg err'; m.textContent='Vul een adres of Funda-link in.'; return; }
+  { const nv=v.toLowerCase().replace(/\s+/g,' '); if(dossiers.length&&laatsteZoek!==null&&nv!==laatsteZoek) wisOpties(); laatsteZoek=nv; }
   if(isFundaUrl(v)){
     let a; try{ a=adresUitUrl(v); }catch(e){ m.className='msg err'; m.textContent=e.message; return; }
     run({q:a.zoekterm, advertentie:advertentieUitOpties({adres:`${a.straat} ${a.huisnummer}${a.toevoeging?' '+a.toevoeging:''}, ${a.plaats}`, url:v, fundaId:a.id, soort:a.soort})}, $('btnGo'));
@@ -3317,7 +3328,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.20.2'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.20.3'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
