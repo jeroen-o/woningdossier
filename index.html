@@ -124,15 +124,15 @@
 <meta property="og:url" content="https://pandwise.nl/">
 <meta property="og:title" content="PandWise – gratis woningcheck: waarde, fundering, klimaat">
 <meta property="og:description" content="Fundering, klimaat, geluid en een herleidbare waarde-indicatie. Gratis, zonder account, op open data. Indicatief, geen taxatie.">
-<meta property="og:image" content="https://pandwise.nl/og-image.jpg">
+<meta property="og:image" content="https://pandwise.nl/og-image.jpg?v=2">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="PandWise: de feitencheck van elke woning. Fundering, klimaat, geluid, waarde-indicatie en adviseursrapport.">
+<meta property="og:image:alt" content="PandWise: weet wat er achter de gevel zit. Gratis woningcheck met funderingscijfer, klimaatcijfer en waarde-indicatie (voorbeeldkaart).">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PandWise – gratis woningcheck: waarde, fundering, klimaat">
 <meta name="twitter:description" content="Fundering, klimaat, geluid en een herleidbare waarde-indicatie. Gratis, zonder account, op open data.">
-<meta name="twitter:image" content="https://pandwise.nl/og-image.jpg">
+<meta name="twitter:image" content="https://pandwise.nl/og-image.jpg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -3328,7 +3328,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.20.3'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.20.4'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
