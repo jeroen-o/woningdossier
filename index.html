@@ -2830,7 +2830,7 @@ function stapKaart(d){
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
-      <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch${auto?' ('+esc(auto)+')':''}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch herkend</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Herkend uit BAG: '+esc(auto)+'. Kies zelf een type om dit te overschrijven.</span>':''}</div>
       <div><label for="stlbl">Energielabel</label><select id="stlbl"><option value="">${estLabel?'Schatting uit bouwjaar ('+esc(estLabel)+')':'Onbekend'}</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${curLabel===l?' selected':''}>${l}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Geregistreerd label? Zoek het op <a href="https://www.ep-online.nl" target="_blank" rel="noopener">ep-online.nl</a>.</span></div>
       <div><label for="stfund">Funderingscijfer</label><select id="stfund"><option value="">${fundBer?'Berekend: '+fundBer.cijfer+' · '+esc(fundBer.titel.toLowerCase())+' (label '+esc(fundBer.label)+')':'Berekend uit de registers'}</option>${FUND_OPT.map(([c,t])=>`<option value="${c}"${+fundCur===c?' selected':''}>${c} · ${t}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Zonder funderingsonderzoek blijft dit een inschatting.</span></div>
       <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||STAAT_STANDAARD)}</select></div>
@@ -3237,7 +3237,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.18.2'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.18.3'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
