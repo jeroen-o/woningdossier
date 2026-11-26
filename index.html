@@ -470,6 +470,7 @@
     <nav class="hoofdnav" aria-label="Hoofdmenu">
       <button type="button" class="navbtn" id="navHome">Home</button>
       <button type="button" class="navbtn" id="navBied">Biedstrategie</button>
+      <button type="button" class="navbtn" id="navVerkoop">Verkoopstrategie</button>
       <button type="button" class="navbtn" id="navAdviseur">Voor adviseurs</button>
       <button type="button" class="navbtn" id="navOver">Over ons</button>
       <button type="button" class="navbtn" id="navDisclaimer">Disclaimer</button>
@@ -3256,18 +3257,19 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.8'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.9'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
 const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet getoond
-(function(){ const dlg={over:$('dlgOver'),disc:$('dlgDisclaimer')}; const nav=['navHome','navBied','navOver','navDisclaimer'].map($);
+(function(){ const dlg={over:$('dlgOver'),disc:$('dlgDisclaimer')}; const nav=['navHome','navBied','navVerkoop','navOver','navDisclaimer'].map($);
   const open=d=>{ if(!d) return; if(typeof d.showModal==='function'){ if(!d.open) d.showModal(); } else d.setAttribute('open',''); };
   const sluitAlles=()=>Object.values(dlg).forEach(d=>{ if(d&&d.open) d.close(); });
   const info=[BEDRIJF.naam,BEDRIJF.kvk&&'KvK '+BEDRIJF.kvk,BEDRIJF.contact].filter(Boolean).join(' · ');
   const bl=$('dlgBedrijf'); if(bl) bl.textContent=info; else null;
   if($('navHome')) $('navHome').onclick=()=>{ sluitAlles(); if(dossiers.length&&$('btnNieuw')) $('btnNieuw').click(); window.scrollTo({top:0,behavior:'smooth'}); };
   if($('navBied')) $('navBied').onclick=()=>{ sluitAlles(); const p=document.querySelector('[id^="bied-"]'); if(p){ p.scrollIntoView({behavior:'smooth',block:'start'}); } else { const m=$('msg'); if(m){ m.className='msg'; m.textContent='Zoek eerst een adres; daarna verschijnt de biedstrategie onder het resultaat.'; } window.scrollTo({top:0,behavior:'smooth'}); const q=$('q'); if(q) q.focus(); } };
+  if($('navVerkoop')) $('navVerkoop').onclick=()=>{ sluitAlles(); const p=document.querySelector('[id^="verkoop-"]'); if(p){ p.scrollIntoView({behavior:'smooth',block:'start'}); } else { const m=$('msg'); if(m){ m.className='msg'; m.textContent='Zoek eerst een adres; daarna verschijnt de verkoopstrategie onder het resultaat.'; } window.scrollTo({top:0,behavior:'smooth'}); const q=$('q'); if(q) q.focus(); } };
   if($('navOver')) $('navOver').onclick=()=>open(dlg.over);
   if($('navAdviseur')) $('navAdviseur').onclick=()=>{ open($('dlgAdviseur')); if(typeof advVernieuw==='function') advVernieuw(); };
   document.querySelectorAll('[data-open-adviseur]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); open($('dlgAdviseur')); if(typeof advVernieuw==='function') advVernieuw(); }));
