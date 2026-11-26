@@ -2855,11 +2855,12 @@ function indicKpi(d){
   return `<span class="lab">Indicatieve woningwaarde (geen taxatie)</span>
     <b class="ind-kop">${eur(h.midden)}</b>
     <span class="src ind-kopsub">Midden bij jouw staat: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()} · bandbreedte ${eur(h.laag)} – ${eur(h.hoog)}</span>
-    <span class="lab" style="margin-top:10px;display:block">Vijf scenario's naar staat (binnen en buiten gelijk) · <button type="button" class="link" data-stapterug="1">Gegevens aanpassen</button></span>
+    <span class="lab" style="margin-top:10px;display:block">Vijf scenario's naar staat (binnen en buiten gelijk)</span>
     <div class="ind3">${sc.map(z=>`<div${(x.binnen===x.buiten&&z.niv===x.binnen)?' class="mid"':''}><i>${z.label}</i><b><bdi>${eur(z.hoofd.laag)}</bdi> – <bdi>${eur(z.hoofd.hoog)}</bdi></b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
     <span class="src ind-aanname">Aanname: de staat staat standaard op uitstekend, binnen en buiten. Niet gebaseerd op data en geen oordeel over deze woning. Kies zelf de staat die erbij past.</span>
     ${x.anker?`<span class="src">Anker 2, eigen WOZ geïndexeerd: <b>${eur(x.anker.waarde)}</b> · jouw midden ${h.tovAnker!=null?pct(h.tovAnker):'–'} t.o.v. dit anker</span>`:''}
-    <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
+    <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>
+    <div class="nodruk" style="display:flex;justify-content:flex-end;margin-top:10px"><button type="button" data-stapterug="1">Pas gegevens aan</button></div>`;
 }
 function indicUit(d){
   const x=indicBereken(d); if(!x) return '<p class="small">Niet te berekenen: WOZ-gemiddelde of woningoppervlakte van de buurt ontbreekt.</p>';
@@ -3238,7 +3239,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
