@@ -2843,9 +2843,6 @@ function stapKaart(d){
       <div><label for="stfund">Funderingscijfer</label><select id="stfund"><option value="">${fundBer?'Berekend: '+fundBer.cijfer+' · '+esc(fundBer.titel.toLowerCase())+' (label '+esc(fundBer.label)+')':'Berekend uit de registers'}</option>${FUND_OPT.map(([c,t])=>`<option value="${c}"${+fundCur===c?' selected':''}>${c} · ${t}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Zonder funderingsonderzoek blijft dit een inschatting.</span></div>
       <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||STAAT_STANDAARD)}</select></div>
       <div><label for="stsu">Staat buiten</label><select id="stsu">${staatOpties(+a.staatBuiten||STAAT_STANDAARD)}</select></div>
-      <div><label for="stvp">Vraagprijs (optioneel)</label><input type="text" id="stvp" class="eur" inputmode="numeric" value="${a.vraagprijs?esc(Math.round(a.vraagprijs).toLocaleString('nl-NL')):''}" placeholder="€"></div>
-      <div><label for="stwoz">Laatste WOZ-waarde (optioneel)</label><input type="text" id="stwoz" class="eur" inputmode="numeric" value="${wz?esc(Math.round(wz.waarde).toLocaleString('nl-NL')):''}" placeholder="€"><span class="small">${link?`<a href="${esc(link)}" target="_blank" rel="noopener">Laatst bekende WOZ-waarde opzoeken in het WOZ-waardeloket ↗</a>`:'Zoek de WOZ-waarde in het WOZ-waardeloket.'}</span></div>
-      <div><label for="stwozj">Peildatum WOZ (jaar)</label><input type="text" id="stwozj" inputmode="numeric" value="${wz?wz.jaar:jaarNu-1}"><span class="small">Het loket toont "1 januari ${jaarNu-1}" als laatste peildatum.</span></div>
     </div>
     <div class="btns" style="margin-top:12px"><button type="button" id="stapBtn" data-stap="1">Toon indicatieve woningwaarde</button></div>`;
 }
@@ -3169,7 +3166,7 @@ document.querySelector('main').addEventListener('click',e=>{
   if(e.target.closest('[data-stapterug]')){ const d=dossiers[0]; if(d){ d.indicBevestigd=false; renderResult(); const el=$('ik-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
   if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
     $('oWonen').value=v('stw'); $('oPerceel').value=v('stp'); $('oBouwjaar').value=v('stbj'); $('oType').value=v('stt');
-    $('oStaatBinnen').value=v('stsb'); $('oStaatBuiten').value=v('stsu'); $('oVraagprijs').value=v('stvp');
+    $('oStaatBinnen').value=v('stsb'); $('oStaatBuiten').value=v('stsu'); if($('stvp')) $('oVraagprijs').value=v('stvp');
     if(d.fundering){ const fc=parseInt(v('stfund'),10); d.fundering.cijferOverride=(fc>=2&&fc<=8)?fc:null; }
     if(d.klimaat){ d.klimaat.labelOverride=v('stlbl')||null; if(v('stlbl')&&$('oPlak')) delete $('oPlak').dataset.label; }
     const wv=nlNum(v('stwoz')), wj=parseInt(v('stwozj'),10);
@@ -3256,7 +3253,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.3'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.6'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
