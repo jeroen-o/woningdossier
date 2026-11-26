@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.12.1 · december 2026**  
+> **Model 2.14.2 · december 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,11 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Laadscherm, navigatie, footer en vijf scenario's (2.13.0 tot 2.14.2)
+- **Laadscherm bij Analyseren:** een draaiende zandloper, een voortgangsbalk, wisselende berichten en een live lijst van 14 bronnen (bezig, klaar of niet beschikbaar). Tekst: "Dit kan tot een minuut duren". Respecteert `prefers-reduced-motion`.
+- **Navigatie rechtsboven:** Home (terug naar de beginstand), Over ons en Disclaimer (uitklapvensters). Footer met menu, bronnen, "Waarom gratis?", modelversie en de disclaimerregel; niet in het rapport of bij `?embed=1`. De disclaimertekst is algemene informatie en geen juridisch advies; laat hem toetsen.
+- **Vijf scenario's gelijk aan de keuzelijst Staat:** slecht, matig, redelijk, goed en uitstekend. Het scenario dat bij de gekozen staat hoort (binnen en buiten gelijk) is gemarkeerd; bij gemengde keuzes staat de eigen invoer eronder. Hetzelfde in de berekeningstabel en het rapport (de hero past weer op pagina 1).
 
 ### Perceelcorrectie, standaardstaat en rapportopmaak (2.12.0 en 2.12.1)
 - **Perceelcorrectie voor woningen met eigen grond:** waarde ~ (perceel ÷ typisch perceel in de omgeving) ^ 0,08, begrensd op ±10%. Het typische perceel is de mediaan van kadastrale percelen van 40 tot 2000 m² binnen circa 200 m (BRK). Niet voor appartementen en meergezinspanden. Het is een expertaanname en niet gekalibreerd; de tabel toont de correctie en de reden als hij niet wordt toegepast.
