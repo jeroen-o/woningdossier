@@ -1494,6 +1494,7 @@ function render(d, idx){
       ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde · mediaan ${m2(b.woningM2.mediaan)}</span></div>`:''}
       ${r.gebouw?`<div class="kpi"><span class="lab">Gebouw</span><b>${r.gebouw.lagen||'–'} bouwla${r.gebouw.lagen===1?'ag':'gen'}</b><span class="src"><em>3D BAG</em>${r.gebouw.hoogte?' · '+(r.gebouw.schuin?'tot nok ca. ':'hoogte ca. ')+num(r.gebouw.hoogte,1)+' m':''}${r.gebouw.schuin&&r.gebouw.lagen<=4?' · schuin dak, zolder kan meetellen':''}${a.verdieping?' · '+esc(a.verdieping):''}</span></div>`:''}
       ${(()=>{ try{ const kb=d.fundering?Klim.bereken(d):null; if(!kb||!kb.lab||kb.lab.label==='Onbekend') return ''; const L=kb.lab; return `<div class="kpi"><span class="lab">Energielabel</span><b>${esc(L.label)}</b><span class="src">${L.bron==='EP-online'?'<em>EP-online</em> geregistreerd':L.bron==='handmatig'?'handmatig ingevoerd':'geschat uit bouwjaar'+(L.periode?' · '+esc(L.periode):'')}</span></div>`; }catch(e){ return ''; } })()}
+      ${(d.fundering&&d.fundering.woningtype)?`<div class="kpi"><span class="lab">Woningtype</span><b class="small">${esc(d.fundering.woningtype.naam)}</b><span class="src">${d.fundering.woningtype.handmatig?'opgegeven door de gebruiker':'<em>BAG</em> indicatie uit pandgeometrie'}</span></div>`:''}
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
@@ -2838,7 +2839,7 @@ function stapKaart(d){
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
-      <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch herkend</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Herkend uit BAG: '+esc(auto)+'. Kies zelf een type om dit te overschrijven.</span>':''}</div>
+      <div><label for="stt">Woningtype</label><select id="stt"><option value="">${esc(auto||'Onbekend')}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Dit denken we op basis van de BAG-pandgeometrie. Kies zelf een type om het te overschrijven.</span>':''}</div>
       <div><label for="stlbl">Energielabel</label><select id="stlbl"><option value="">${estLabel?'Schatting uit bouwjaar ('+esc(estLabel)+')':'Onbekend'}</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${curLabel===l?' selected':''}>${l}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Geregistreerd label? Zoek het op <a href="https://www.ep-online.nl" target="_blank" rel="noopener">ep-online.nl</a>.</span></div>
       <div><label for="stfund">Funderingscijfer</label><select id="stfund"><option value="">${fundBer?'Berekend: '+fundBer.cijfer+' · '+esc(fundBer.titel.toLowerCase())+' (label '+esc(fundBer.label)+')':'Berekend uit de registers'}</option>${FUND_OPT.map(([c,t])=>`<option value="${c}"${+fundCur===c?' selected':''}>${c} · ${t}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Zonder funderingsonderzoek blijft dit een inschatting.</span></div>
       <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||STAAT_STANDAARD)}</select></div>
@@ -2920,6 +2921,7 @@ function renderResult(){
   $('strat').innerHTML=dossiers.map((d,i)=>`<div class="dwrap" id="sw-${i}">
     <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-scope="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="bied" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
     <div class="panel" id="verkoop-${i}"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="verkoop" data-scope="verkoop" data-i="${i}" aria-selected="true">Verkoopstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="verkoop" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div><div class="btab-data nodruk" data-pane="verkoopData" hidden></div></div></div>`).join('');
+  const o0=op&&op.querySelector('#oType option[value=""]'); if(o0){ const dn=dossiers.length&&dossiers[0]._typeAuto&&dossiers[0]._typeAuto.naam; o0.textContent=dn||'— Automatisch —'; }
   if(op){ const slot=document.querySelector('#bied-0 .btab-data'); if(dossiers.length&&slot){ slot.appendChild(op); op.classList.remove('hidden'); } else op.classList.add('hidden'); }
 }
 
@@ -3257,7 +3259,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.4'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.5'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
