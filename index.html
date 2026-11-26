@@ -2398,7 +2398,7 @@ const Klim = (()=>{
     const dimBlok=`<div class="grid2">${DIMS.map(x=>dimKaart(x,D[x.id],false)).join('')}</div>`;
     const lblTabel=`<details style="margin-top:10px"><summary><b>Hoe schatten we het energielabel?</b></summary><p class="small">Zonder geregistreerd label schatten we het label uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit in die periode. Het werkelijke label kan hoger liggen door verbouwing of isolatie, of lager door een slechte staat. Een geregistreerd of zelf ingevuld label gaat altijd voor.</p><div class="tabwrap"><table><tr><th>Bouwjaar</th><th>Eis in die periode</th><th>Typisch label</th></tr>${LABEL_PERIODEN.map(r=>`<tr${fb.bj&&labelPeriode(fb.bj)===r?' style="background:#FFF6E5;font-weight:600"':''}><td>${r[1]}</td><td>${esc(r[2])}</td><td>${r[3]}</td></tr>`).join('')}</table></div></details>`;
     const ctxBlok=`<p class="small" style="margin-top:0">Een energielabel is een woningeigenschap en bergingspotentieel een maatregel; beide zeggen niets over de blootstelling aan klimaatrisico's en tellen daarom niet mee.</p><div class="grid2">${DIMS_CTX.map(x=>dimKaart(x,C[x.id],true)).join('')}</div>
-      <div class="fc-corr" data-strat data-i="${idx}"><label for="kclbl-${idx}" style="margin:0">Energielabel klopt niet?</label><select id="kclbl-${idx}"><option value="">— Automatisch —</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${K.labelOverride===l?' selected':''}>${l}</option>`).join('')}</select><button type="button" data-klim-label="${idx}">Herbereken</button>${K.labelOverride?`<button type="button" class="link" data-klim-label-reset="${idx}">Automatisch label herstellen</button>`:''}</div>${lblTabel}`;
+      ${lblTabel}`;
     const tijd=`<div class="tabwrap"><table><tr><th>Dimensie</th><th class="num">Nu</th><th class="num">2030</th><th class="num">2050</th></tr>${DIMS.map(x=>{const s0=scores[x.id],s30=clamp(Math.round((s0+KNMI[x.id].d30)*10)/10,1,10),s50=clamp(Math.round((s0+KNMI[x.id].d50)*10)/10,1,10);const cel=v=>`<td class="num"><b style="color:${KL(v)}">${num(v,1)}</b></td>`;return `<tr><td>${x.name}</td>${cel(s0)}${cel(s30)}${cel(s50)}</tr>`;}).join('')}</table></div><p class="small">Richting-indicatie op basis van de KNMI'23-klimaatscenario's (W+, peildatum oktober 2023), zonder aanvullende maatregelen. Geen voorspelling voor dit specifieke adres.</p>`;
     const profielBlok=`<div class="grid2"><div>${radar(scores)}</div><div><h3 style="margin-top:0">Ontwikkeling 2030 / 2050</h3>${tijd}</div></div>`;
     // overstroming detail
@@ -3237,7 +3237,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.18.3'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.18.4'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
