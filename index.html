@@ -98,10 +98,10 @@
   .pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:99px}
   .pill.rood{background:var(--err-bg);color:var(--err)} .pill.geel{background:var(--warn-bg);color:var(--warn)} .pill.groen{background:var(--ok-bg);color:var(--ok)} .pill.grijs{background:var(--bg);color:var(--muted)}
   .pill i{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 6px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin:18px 0 6px;grid-auto-flow:dense}
   .kpi{background:var(--bg);border-radius:10px;padding:14px 14px 12px;position:relative}
   .kpi .lab{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .kpi b{display:block;font-family:var(--head);font-size:26px;font-weight:800;color:var(--primary);line-height:1.15;margin:4px 0 2px;letter-spacing:-.01em}
+  .kpi b{display:block;white-space:nowrap;font-family:var(--head);font-size:24px;font-weight:800;color:var(--primary);line-height:1.15;margin:4px 0 2px;letter-spacing:-.01em}
   .kpi b.small{font-size:16px;word-break:break-word}
   .kpi .src{font-size:11px;color:var(--muted)}
   .kpi-fund{cursor:pointer;border:1px solid transparent}
@@ -122,14 +122,21 @@
   .btn-woz{display:inline-block;background:var(--accent);color:var(--primary);font-weight:700;font-size:16px;padding:14px 24px;border-radius:8px;text-decoration:none;box-shadow:0 3px 10px rgba(229,161,56,.4)}
   .btn-woz:hover{background:#D9912A}
   @media(max-width:560px){.btn-woz{width:100%;text-align:center}}
-  .ind3{display:grid;grid-template-columns:1fr;gap:6px;margin:6px 0 4px}
-  .ind3>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+  .ind-kop{display:block;font-size:30px;color:var(--primary);line-height:1.15;margin:2px 0}
+  .ind-kopsub{display:block;margin-bottom:2px}
+  .stap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin-top:10px}
+  .stap-grid label{display:block;font-size:12px;font-weight:600;color:var(--primary);margin-bottom:3px}
+  .stap-grid input,.stap-grid select{width:100%}
+  .stap-grid .small{display:block;margin-top:3px;font-size:11.5px;line-height:1.35}
+  @media(max-width:720px){.stap-grid{grid-template-columns:1fr}}
+  .ind3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+  .ind3>div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
   .ind3>div.mid{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .ind3 i{font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);min-width:64px}
-  .ind3 b{font-size:15px;color:var(--primary);white-space:nowrap}
-  .ind-aanname{display:block;font-style:italic;margin:2px 0 4px}
-  .ind3 span{font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
-  .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:span 2}
+  .ind3 i{display:block;font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .ind3 b{display:block;font-size:15px;color:var(--primary);white-space:nowrap;margin-top:2px}
+  .ind3 span{display:block;font-size:12px;color:var(--muted)}
+  @media(max-width:720px){.ind3{grid-template-columns:1fr}.ind3>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}.ind3 i{min-width:64px}.ind3 span{margin-left:auto;white-space:nowrap}}
+  .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:1/-1}
   .kpi b.band{font-size:21px}
   @media(max-width:560px){.kpi-ind{grid-column:auto}}
   .bandbar{position:relative;height:14px;background:var(--bg);border-radius:99px;min-width:140px}
@@ -216,10 +223,13 @@
   .dtabs{display:flex;gap:10px;margin:20px 0 0;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
   .dtabs .tab-link{display:inline-block;background:#fff;border:2px solid var(--primary-2);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px;text-decoration:none}
   .dtabs .tab-link:hover{background:var(--bg)}
-  .dtabs button[data-tab]{background:#FCEBCF;border:2px solid var(--accent);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px}
-  .dtabs button[data-tab]:hover{background:#F6D9A6;box-shadow:0 2px 8px rgba(229,161,56,.35)}
-  .dtabs button[data-tab][aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--primary);box-shadow:0 3px 10px rgba(229,161,56,.45)}
-  @media(max-width:560px){.dtabs button[data-tab]{flex:1 1 100%}}
+  .dtabs button[data-tab]:not(.printbtn){background:#FCEBCF;border:2px solid var(--accent);border-radius:8px;color:var(--primary);padding:11px 20px;font-weight:700;font-size:15px}
+  .dtabs button[data-tab]:not(.printbtn):hover{background:#F6D9A6;box-shadow:0 2px 8px rgba(229,161,56,.35)}
+  .dtabs button[data-tab][role=tab][aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--primary);box-shadow:0 3px 10px rgba(229,161,56,.45)}
+  @media(max-width:560px){.dtabs button[data-tab][role=tab]{flex:1 1 100%}}
+  .dact{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .dtabs .dact .printbtn{margin-left:0}
+  @media(max-width:600px){.dact{margin-left:0;width:100%}.dact .printbtn{flex:1 1 calc(50% - 8px)}}
   .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   @media(max-width:900px){.row4{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){.row4{grid-template-columns:1fr}}
@@ -401,7 +411,7 @@ function parsePoint(wkt){ const m=String(wkt||'').match(/POINT\(\s*([-\d.]+)\s+(
 function bboxAround(pt,d){ return [pt.lon-d,pt.lat-d*0.62,pt.lon+d,pt.lat+d*0.62].map(x=>x.toFixed(6)).join(','); }
 
 async function geocode(q){
-  const fl='id,weergavenaam,type,straatnaam,huisnummer,huis_nlt,huisletter,huisnummertoevoeging,postcode,woonplaatsnaam,gemeentenaam,provincienaam,buurtnaam,buurtcode,wijknaam,wijkcode,centroide_ll,adresseerbaarobject_id,nummeraanduiding_id,gekoppeld_perceel,gemeentecode';
+  const fl='id,weergavenaam,type,straatnaam,huisnummer,huis_nlt,huisletter,huisnummertoevoeging,postcode,woonplaatsnaam,gemeentenaam,provincienaam,buurtnaam,buurtcode,wijknaam,wijkcode,centroide_ll,centroide_rd,adresseerbaarobject_id,nummeraanduiding_id,gekoppeld_perceel,gemeentecode';
   const url=`${LS}?q=${encodeURIComponent(q)}&fq=${encodeURIComponent('type:adres')}&rows=5&fl=${encodeURIComponent(fl)}`;
   const j=await getJson(url);
   const docs=(j.response&&j.response.docs)||[];
@@ -559,9 +569,12 @@ function wozLoketLink(adr){
   return 'https://www.wozwaardeloket.nl/?locatie='+encodeURIComponent(String(adr.postcode).replace(/\s+/g,'').toUpperCase()+' '+(adr.huis_nlt||adr.huisnummer));
 }
 function bagViewerLink(adr){
+  // Formaat zoals de BAG Viewer het zelf toont: ?searchQuery=3825bg+38&objectId=<nummeraanduiding>&theme=BRT+Achtergrond&geometry.x=..&geometry.y=..&zoomlevel=15
   if(!adr||!adr.nummeraanduiding_id) return null;
-  const q=[adr.straat,adr.huis_nlt||adr.huisnummer,adr.woonplaats].filter(Boolean).join(' ');
-  return 'https://bagviewer.kadaster.nl/?searchQuery='+encodeURIComponent(q)+'&objectId='+encodeURIComponent(adr.nummeraanduiding_id)+'&theme=BRT+Achtergrond&zoomlevel=15';
+  const pc=String(adr.postcode||'').replace(/\s+/g,'').toLowerCase(), nr=String(adr.huis_nlt||adr.huisnummer||'').trim().replace(/\s+/g,'');
+  const q=pc&&nr?pc+'+'+encodeURIComponent(nr):encodeURIComponent([adr.straat,adr.huis_nlt||adr.huisnummer,adr.woonplaats].filter(Boolean).join(' ')).replace(/%20/g,'+');
+  const rd=adr.rd&&adr.rd.length===2&&adr.rd.every(isFinite)?'&geometry.x='+adr.rd[0]+'&geometry.y='+adr.rd[1]:'';
+  return 'https://bagviewer.kadaster.nl/?searchQuery='+q+'&objectId='+encodeURIComponent(adr.nummeraanduiding_id)+'&theme=BRT+Achtergrond'+rd+'&zoomlevel=15';
 }
 
 async function bagWoningenInGebied(geom){
@@ -589,6 +602,16 @@ async function bagWoningenInGebied(geom){
   opp.sort((a,b)=>a-b);
   const q=f=>opp[Math.min(opp.length-1,Math.floor(opp.length*f))];
   return {aantal:opp.length, gemiddelde:Math.round(opp.reduce((t,x)=>t+x,0)/opp.length), mediaan:q(.5), p25:q(.25), p75:q(.75), afgekapt, _sorted:opp};
+}
+/* Terugval: gemiddelde woonoppervlakte van woningen binnen circa 300 m, als de hele buurt niet is op te halen */
+async function bagWoningenOmgeving(pt){
+  const dx=0.0045, dy=0.0028, bb=[pt.lon-dx,pt.lat-dy,pt.lon+dx,pt.lat+dy].map(x=>x.toFixed(6)).join(',');
+  const j=await getJson(`${BAG}/verblijfsobject/items?bbox=${bb}&limit=1000&f=json`);
+  const opp=[];
+  (j.features||[]).forEach(f=>{ const p=f.properties||{}; if(!/woonfunctie/i.test(p.gebruiksdoel||'')||!/in gebruik/i.test(p.status||'')) return; const o=+p.oppervlakte; if(o>=15&&o<=1500) opp.push(o); });
+  if(opp.length<15) return null;
+  opp.sort((a,b)=>a-b); const q=f=>opp[Math.min(opp.length-1,Math.floor(opp.length*f))];
+  return {aantal:opp.length, gemiddelde:Math.round(opp.reduce((t,x)=>t+x,0)/opp.length), mediaan:q(.5), p25:q(.25), p75:q(.75), afgekapt:false, omgeving:true, _sorted:opp};
 }
 async function cbsBuurt(pt){
   const bbox=[pt.lat,pt.lon,pt.lat+0.00001,pt.lon+0.00001].join(',')+',EPSG:4326';
@@ -625,7 +648,8 @@ async function bouwDossier(input){
     postcode:adr.postcode, woonplaats:adr.woonplaatsnaam, gemeente:adr.gemeentenaam, provincie:adr.provincienaam,
     buurt:adr.buurtnaam, buurtcode:adr.buurtcode, wijk:adr.wijknaam, wijkcode:adr.wijkcode,
     verblijfsobject_id:adr.adresseerbaarobject_id, nummeraanduiding_id:adr.nummeraanduiding_id,
-    gekoppeld_perceel:adr.gekoppeld_perceel, gemeentecode:adr.gemeentecode, lat:pt&&pt.lat, lon:pt&&pt.lon
+    gekoppeld_perceel:adr.gekoppeld_perceel, gemeentecode:adr.gemeentecode, lat:pt&&pt.lat, lon:pt&&pt.lon,
+    rd:(String(adr.centroide_rd||'').match(/POINT\(\s*([-\d.]+)\s+([-\d.]+)/)||[]).slice(1,3).map(Number)
   };
   bronStatus('ls','ok',adr.weergavenaam);
   if(!pt) throw new Error('Geen coördinaat bij dit adres; verificatie niet mogelijk.');
@@ -677,7 +701,10 @@ async function bouwDossier(input){
   const pCbs = (async()=>{
     try{ const b=await cbsBuurt(pt);
       if(b){ const geom=b._geom; delete b._geom; d.registers.buurt=b; bronStatus('cbs','ok',b.buurt||'');
-        const pW = geom ? (async()=>{ try{ const w=await bagWoningenInGebied(geom); if(w){ b.woningM2=w; bronStatus('cbs','ok',(b.buurt||'')+' · gem. '+m2(w.gemiddelde)); } }catch(e){ d.fouten.push('BAG woningen buurt: '+e.message); } })() : null;
+        const pW = (async()=>{ let w=null;
+          if(geom){ for(let poging=0;poging<2&&!w;poging++){ try{ w=await bagWoningenInGebied(geom); }catch(e){ if(poging===1) d.fouten.push('BAG woningen buurt: '+e.message); } } }
+          if(!w){ try{ w=await bagWoningenOmgeving(pt); }catch(e){ d.fouten.push('BAG woningen omgeving: '+e.message); } }
+          if(w){ b.woningM2=w; bronStatus('cbs','ok',(b.buurt||'')+' · gem. '+m2(w.gemiddelde)); } })();
         const pZ = (async()=>{ const z=await kwbWozRecent(b.buurtcode); if(z){ b.wozGem2024=b.wozGem; b.wozGem=z.waarde; b.wozJaar=z.jaar; b.wozPeiljaar=z.peiljaar; } })();
         await Promise.all([pW,pZ]);
       } else bronStatus('cbs','fail','niet gevonden'); }
@@ -1041,7 +1068,7 @@ function render(d, idx){
   /* --- advertentie --- */
   const advChips=[a.soortWoning, a.energielabel?'Energielabel '+a.energielabel:null, a.bouwjaar?'Bouwjaar '+a.bouwjaar:null, a.wonen?'Wonen '+m2(a.wonen):null, a.perceel?'Perceel '+m2(a.perceel):null, a.eigendom].filter(Boolean);
 
-  const indicBlok = indicBereken(d) ? `<div data-strat data-i="${idx}">
+  const indicBlok = (d.indicBevestigd&&indicBereken(d)) ? `<div data-strat data-i="${idx}">
       <p class="small" style="margin:0 0 14px">Staat binnen ${indicInit(d).binnen} · ${STAAT.label[indicInit(d).binnen]}, staat buiten ${indicInit(d).buiten} · ${STAAT.label[indicInit(d).buiten]} (uit de woningdata onder het dossier; pas aan en klik op Dossier bijwerken). Marktfactor ${num(indicInit(d).factor,3)} uit de CBS-prijsindex.</p>
       <div id="io-${idx}">${indicUit(d)}</div>
       <p class="small" style="margin-top:10px" id="ix-${idx}">${indexUitleg(d,idx)}</p>
@@ -1122,10 +1149,10 @@ function render(d, idx){
       ${r.geluid?`<div class="kpi"><span class="lab">Geluid (Lden)</span><b>${r.geluid.db} dB</b><span class="src"><em>RIVM</em> alle bronnen · modelwaarde</span></div>`:''}
       ${Fund.kpi(d,idx)}
       ${Klim.kpi(d,idx)}
-      ${indicKpi(d)?`<div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>`:''}
+      <div class="kpi kpi-ind" id="ik-${idx}">${indicKpi(d)}</div>
     </div>
     ${advChips.length?`<div class="chip-facts">${advChips.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-print="${idx}" data-tab="advies" title="Volledig adviseursrapport met voorblad en samenvatting">Adviseursrapport</button><button class="printbtn" data-print="${idx}" data-tab="adviesKort" title="Kort rapport: voorblad, samenvatting, signalen, indicatie en checklist">Kort rapport</button><button class="printbtn" data-vergelijk="${idx}" title="Voeg dit adres toe aan de vergelijking (maximaal 3)">+ Vergelijk</button><button class="printbtn" data-deel="${idx}">Deel link</button></div>
+    <div class="dtabs" role="tablist" data-i="${idx}">${[['dossier','Dossier'],['fund','Funderingscijfer'],['klim','Klimaatcijfer']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}${duurzaamLink(adr)?`<a class="tab-link" href="${esc(duurzaamLink(adr))}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a>`:''}<span class="dact"><button class="printbtn" data-print="${idx}" title="Drukt het rapport van het geopende tabblad af">Rapport afdrukken</button><button class="printbtn" data-print="${idx}" data-tab="advies" title="Volledig adviseursrapport met voorblad en samenvatting">Adviseursrapport</button><button class="printbtn" data-print="${idx}" data-tab="adviesKort" title="Kort rapport: voorblad, samenvatting, signalen, indicatie en checklist">Kort rapport</button><button class="printbtn" data-vergelijk="${idx}" title="Voeg dit adres toe aan de vergelijking (maximaal 3)">+ Vergelijk</button><button class="printbtn" data-deel="${idx}">Deel link</button></span></div>
   </div>`;
 
   return `<div class="dwrap" id="dw-${idx}">` + hero
@@ -2086,13 +2113,13 @@ function samenvatting(d){
   let fb=null, kb=null, ib=null;
   try{ fb=d.fundering?Fund.bereken(d.fundering):null; }catch(e){}
   try{ kb=Klim.bereken(d); }catch(e){}
-  try{ ib=indicBereken(d); }catch(e){}
+  try{ ib=d.indicBevestigd?indicBereken(d):null; }catch(e){}
   const sig=d.signalen||[];
   const wt=d.fundering&&d.fundering.woningtype?d.fundering.woningtype.naam:null;
   return { adres:adr.weergavenaam||a.adres||'', vraagprijs:a.vraagprijs||null, prijsM2:an.prijsPerM2Bag||null, bagM2:vbo.oppervlakte||null,
     bouwjaar:(fb&&fb.bj)||pand.bouwjaar||null, woningtype:wt, label:kb&&kb.lab?kb.lab.label:null, labelBron:kb&&kb.lab?kb.lab.bron:null, wozBuurt:b&&b.wozGem||null,
     fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
-    geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, anker:ib&&ib.anker?ib.anker.waarde:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
+    geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, indicMidden:ib&&ib.hoofd?ib.hoofd.midden:null, anker:ib&&ib.anker?ib.anker.waarde:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
     gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' ('+(r.gebouw.schuin?'tot nok ca. ':'ca. ')+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG'+(r.gebouw.schuin&&r.gebouw.lagen<=4?', schuin dak: zolder kan meetellen':'')+')':' (3D BAG)'):null), verdieping:a.verdieping||null,
     rvo:!!(d.fundering&&d.fundering.rvo&&d.fundering.rvo.gevonden), erfpacht:/erfpacht/i.test(a.eigendom||'') };
@@ -2123,7 +2150,7 @@ function adviesVoorblad(d){
       ${kv('Bouwjaar / woningtype',esc([sm.bouwjaar,sm.woningtype].filter(Boolean).join(' · ')))}
       ${kv('Gebouw en verdieping',esc([sm.gebouw,sm.verdieping&&sm.verdieping+' (opgegeven)'].filter(Boolean).join(' · ')))}
       ${kv('Vraagprijs',sm.vraagprijs?eur(sm.vraagprijs)+(sm.prijsM2?` (${eur(sm.prijsM2)} per m² BAG)`:''):null)}
-      ${kv('Indicatie naar staat (geen taxatie)',sm.indic?eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''):null)}
+      ${kv('Indicatieve woningwaarde (geen taxatie)',!sm.indic?'Nog niet berekend: de gegevens zijn niet bevestigd':(sm.indicMidden?eur(sm.indicMidden)+' (midden bij de gekozen staat), ':'')+'bandbreedte '+eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''))}
       ${kv('Eigen WOZ, geïndexeerd (anker 2)',sm.anker?eur(sm.anker):null)}
       ${kv('Betrouwbaarheid indicatie',esc(sm.betrouwbaarheid))}
       ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
@@ -2340,6 +2367,7 @@ function indicBereken(d){
   if(hf&&Math.abs(hf.m2/wm.gemiddelde-1)>0.5) pen(1,'Het oppervlak wijkt meer dan 50% af van het buurtgemiddelde.');
   if(hf&&hf.tovAnker!=null){ const ta=Math.abs(hf.tovAnker); if(ta>INDIC.ankerWaarschuwing) pen(1,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); else if(ta>10) pen(0.5,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); }
   if(hf&&hf.tovMed!=null&&Math.abs(hf.tovMed)>INDIC.medianeWaarschuwing) pen(1,'Het midden wijkt meer dan '+INDIC.medianeWaarschuwing+'% af van het controlegetal.');
+  if(wm.omgeving) pen(0.5,'De gemiddelde woonoppervlakte komt uit een steekproef rond het adres, niet uit de hele buurt.');
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
@@ -2358,11 +2386,45 @@ function indicScenarios(d){
   try{ return INDIC_SCEN.map(([bi,bu,label])=>{ st.binnen=bi; st.buiten=bu; const x=indicBereken(d); return {label, hoofd:x&&x.hoofd, bag:x&&x.bag, adv:x&&x.adv}; }); }
   finally{ st.binnen=bewaard[0]; st.buiten=bewaard[1]; }
 }
+function stapKaart(d){
+  const r=d.registers||{}, a=d.advertentie||{}, vbo=r.verblijfsobject||{}, adr=r.adres||{};
+  const wonen=a.wonen||vbo.oppervlakte||'', perc=a.perceel||r.percelenTotaal||(r.perceel&&r.perceel.grootte)||'';
+  const bj=a.bouwjaar||(d.fundering&&d.fundering.bagBouwjaar)||(r.pand&&r.pand.bouwjaar)||'';
+  const auto=(d._typeAuto&&d._typeAuto.naam)||((r.pand&&r.pand.aantal_verblijfsobjecten>=3)?'Appartement':null);
+  const types=['Appartement','Tussenwoning','Hoekwoning','2-onder-1-kapwoning','Vrijstaande woning'];
+  let wz=null; try{ wz=wozReeks(d)[0]||null; }catch(e){}
+  const link=wozLoketLink(adr), jaarNu=new Date().getFullYear();
+  const f=n=>n==null||n===''?'':String(n);
+  return `<span class="lab">Stap 2 · Controleer de gegevens</span>
+    <b class="ind-kop" style="font-size:20px">Pas aan wat niet klopt, daarna volgt de woningwaarde</b>
+    <span class="src ind-kopsub">De uitkomst hangt sterk af van deze gegevens. Ze zijn ingevuld uit de registers; wijzig ze als je het beter weet.</span>
+    <div class="stap-grid">
+      <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
+      <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Wordt getoond en vergeleken met de BRK; telt nog niet mee in de waarde.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
+      <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
+      <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch${auto?' ('+esc(auto)+')':''}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||3)}</select></div>
+      <div><label for="stsu">Staat buiten</label><select id="stsu">${staatOpties(+a.staatBuiten||3)}</select></div>
+      <div><label for="stvp">Vraagprijs (optioneel)</label><input type="text" id="stvp" class="eur" inputmode="numeric" value="${a.vraagprijs?esc(Math.round(a.vraagprijs).toLocaleString('nl-NL')):''}" placeholder="€"></div>
+      <div><label for="stwoz">Laatste WOZ-waarde (optioneel)</label><input type="text" id="stwoz" class="eur" inputmode="numeric" value="${wz?esc(Math.round(wz.waarde).toLocaleString('nl-NL')):''}" placeholder="€"><span class="small">${link?`<a href="${esc(link)}" target="_blank" rel="noopener">Laatst bekende WOZ-waarde opzoeken in het WOZ-waardeloket ↗</a>`:'Zoek de WOZ-waarde in het WOZ-waardeloket.'}</span></div>
+      <div><label for="stwozj">Peildatum WOZ (jaar)</label><input type="text" id="stwozj" inputmode="numeric" value="${wz?wz.jaar:jaarNu-1}"><span class="small">Het loket toont "1 januari ${jaarNu-1}" als laatste peildatum.</span></div>
+    </div>
+    <div class="btns" style="margin-top:12px"><button type="button" id="stapBtn" data-stap="1">Toon indicatieve woningwaarde</button></div>`;
+}
 function indicKpi(d){
-  const x=indicBereken(d); if(!x||!x.hoofd) return '';
+  if(!d.indicBevestigd) return stapKaart(d);
+  const x=indicBereken(d);
+  if(!x||!x.hoofd){
+    const b=d.registers&&d.registers.buurt, wm=b&&b.woningM2;
+    const reden=!b?'de CBS-buurtgegevens zijn niet opgehaald':!b.wozGem?'de gemiddelde WOZ van de buurt ontbreekt':!(wm&&wm.gemiddelde)?'de gemiddelde woonoppervlakte van de buurt is niet opgehaald (BAG)':'er is geen oppervlakte van het object';
+    return `<span class="lab">Indicatieve woningwaarde (geen taxatie)</span><b class="ind-kop" style="font-size:20px">Niet te berekenen</b><span class="src ind-kopsub">Reden: ${esc(reden)}. Dit is meestal tijdelijk. <button type="button" class="link" data-opnieuw="1">Opnieuw proberen</button></span>`;
+  }
   const h=x.hoofd;
   const sc=indicScenarios(d).filter(z=>z.hoofd);
-  return `<span class="lab">Indicatie naar staat (binnen en buiten gelijk)</span>
+  return `<span class="lab">Indicatieve woningwaarde (geen taxatie)</span>
+    <b class="ind-kop">${eur(h.midden)}</b>
+    <span class="src ind-kopsub">Midden bij jouw staat: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()} · bandbreedte ${eur(h.laag)} – ${eur(h.hoog)} · gerekend op ${x.hoofdBasis}</span>
+    <span class="lab" style="margin-top:10px;display:block">Drie scenario's (binnen en buiten gelijk) · <button type="button" class="link" data-stapterug="1">Gegevens aanpassen</button></span>
     <div class="ind3">${sc.map(z=>`<div${z.label==='Goed'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
     <span class="src ind-aanname">Aanname: woningen worden vaak in goede staat verkocht. Niet gebaseerd op data. Kies zelf de staat die bij deze woning past.</span>
     ${x.anker?`<span class="src">Anker 2, eigen WOZ geïndexeerd: <b>${eur(x.anker.waarde)}</b> · jouw midden ${h.tovAnker!=null?pct(h.tovAnker):'–'} t.o.v. dit anker</span>`:''}
@@ -2380,7 +2442,7 @@ function indicUit(d){
   return `<div class="tabwrap"><table>
     <tr><th>Stap</th><th class="num">Op BAG-oppervlakte</th><th class="num">Op advertentie wonen m²</th></tr>
     <tr><td class="k">A. Gemiddelde WOZ-waarde buurt (CBS ${x.jaar}, peildatum 1-1-${x.peiljaar})</td><td class="num" colspan="2">${eur(x.woz)}</td></tr>
-    <tr><td class="k">B. Gemiddelde woningoppervlakte buurt (BAG)</td><td class="num" colspan="2">${m2(x.gemM2)}</td></tr>
+    <tr><td class="k">B. Gemiddelde woningoppervlakte ${d.registers.buurt&&d.registers.buurt.woningM2&&d.registers.buurt.woningM2.omgeving?'in de omgeving, circa 300 m (BAG; de hele buurt was niet op te halen)':'buurt (BAG)'}</td><td class="num" colspan="2">${m2(x.gemM2)}</td></tr>
     <tr><td class="k">C. Gemiddelde WOZ per m² (A ÷ B)</td><td class="num" colspan="2">${eur(x.perM2)}</td></tr>
     ${row('D. Oppervlakte object',k=>m2(k.m2))}
     ${row('D2. Maatcorrectie (grotere woning = lagere prijs per m²)',k=>pctS(k.maatPct))}
@@ -2632,6 +2694,14 @@ async function run(input, btn){
 }
 
 document.querySelector('main').addEventListener('click',e=>{
+  if(e.target.closest('[data-opnieuw]')){ $('btnGo').click(); return; }
+  if(e.target.closest('[data-stapterug]')){ const d=dossiers[0]; if(d){ d.indicBevestigd=false; renderResult(); const el=$('ik-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
+  if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
+    $('oWonen').value=v('stw'); $('oPerceel').value=v('stp'); $('oBouwjaar').value=v('stbj'); $('oType').value=v('stt');
+    $('oStaatBinnen').value=v('stsb'); $('oStaatBuiten').value=v('stsu'); $('oVraagprijs').value=v('stvp');
+    const wv=nlNum(v('stwoz')), wj=parseInt(v('stwozj'),10);
+    if(wv>0&&wj>=1995&&wj<=new Date().getFullYear()+1){ d.woz=d.woz||{bron:'handmatig',reeks:[]}; d.woz.handmatig=d.woz.handmatig||{}; d.woz.handmatig[wj]=wv; }
+    d.indicBevestigd=true; $('btnUpdate').click(); return; }
   const pk=e.target.closest('[data-plak]');
   if(pk){ const i=+pk.dataset.i, d=dossiers[i]; if(!d) return;
     if(pk.dataset.plak==='woz'){ const w=parseWozTekst(($('pw-'+i)||{}).value), n=Object.keys(w).length, m=$('pwm-'+i);
@@ -2713,7 +2783,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.9.1'; const MODEL_DATUM = '2026-11-26';
+const MODEL_VERSIE = '2.11.0'; const MODEL_DATUM = '2026-11-26';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
