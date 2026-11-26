@@ -1374,9 +1374,9 @@ function render(d, idx){
       ${a.vraagprijs?`<tr><td class="k">Vraagprijs${(a.status||a.prijsdatum)?` <span class="small">(${[a.status,a.prijsdatum].filter(Boolean).join(', ')})</span>`:''}</td><td>${eur(a.vraagprijs)}</td></tr>`:''}
       ${(()=>{const m=d.registers&&d.registers.mediaan;if(!m||!a.vraagprijs)return '';const pct=Math.round((a.vraagprijs-m.mediaan)/m.mediaan*100);return `<tr><td class="k">Verwachte gemiddelde prijs in de gemeente <span class="small">${esc(m.kwartaal)}${m.typeFilter&&m.typeFilter!=='TotaleTabel'?' · '+esc(m.typeFilter):''}</span></td><td>${eur(m.mediaan)} <span class="small" style="color:${pct>15?'var(--err)':pct>5?'var(--accent)':'var(--ok)'}">${pct>0?'+':''}${pct}%</span></td></tr>`;})()}
       ${an.bod?`<tr><td class="k">Al geboden / voorgenomen bod</td><td>${eur(an.bod.bod)}${an.bod.verschil!=null?` <span class="small">— ${an.bod.verschil>=0?'+ ':'− '}${eur(Math.abs(an.bod.verschil))} (${pct(an.bod.verschilPct)}) t.o.v. de vraagprijs</span>`:''}</td></tr>`:''}
-      ${an.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak (vraagprijs)</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>`:''}
+      ${an.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op aangepast woonoppervlak (vraagprijs)</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>`:''}
       ${an.prijsPerM2Bag?`<tr><td class="k">Prijs per m² op BAG-oppervlakte (vraagprijs)</td><td>${eur(an.prijsPerM2Bag)}</td></tr>`:''}
-      ${an.bod&&an.bod.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op advertentie-woonoppervlak (bod)</td><td>${eur(an.bod.prijsPerM2Advertentie)}</td></tr>`:''}
+      ${an.bod&&an.bod.prijsPerM2Advertentie?`<tr><td class="k">Prijs per m² op aangepast woonoppervlak (bod)</td><td>${eur(an.bod.prijsPerM2Advertentie)}</td></tr>`:''}
       ${an.bod&&an.bod.prijsPerM2Bag?`<tr><td class="k">Prijs per m² op BAG-oppervlakte (bod)</td><td>${eur(an.bod.prijsPerM2Bag)}</td></tr>`:''}
       ${an.waardeEffect!=null?`<tr><td class="k">Effect van de m²-afwijking bij gelijke prijs per m²</td><td>${eur(an.waardeEffect)}</td></tr>`:''}
       ${b&&b.wozGem?`<tr><td class="k">Gemiddelde WOZ-waarde in de buurt (CBS ${b.wozJaar}, peildatum 1-1-${b.wozPeiljaar})</td><td>${eur(b.wozGem)} <span class="small">— buurtgemiddelde, geen indicatie voor dit object</span></td></tr>`:''}
@@ -2869,7 +2869,7 @@ function indicKpi(d){
 }
 function indicUit(d){
   const x=indicBereken(d); if(!x) return '<p class="small">Niet te berekenen: WOZ-gemiddelde of woningoppervlakte van de buurt ontbreekt.</p>';
-  const zelfde=!!(x.bag&&x.adv&&Math.round(x.bag.m2)===Math.round(x.adv.m2)); const c=!x.adv?[x.bag]:!x.bag?[x.adv]:zelfde?[x.adv]:[x.bag,x.adv], kn=c.length; const kolKop=kn===2?'<th class="num">Op BAG-oppervlakte</th><th class="num">Op advertentie wonen m²</th>':(c[0]===x.bag?'<th class="num">Op BAG-oppervlakte</th>':zelfde?'<th class="num">Op de woonoppervlakte</th>':'<th class="num">Op advertentie wonen m²</th>'), row=(l,f,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="k">${l}</td>${c.map(k=>`<td class="num">${k?f(k):'–'}</td>`).join('')}</tr>`;
+  const zelfde=!!(x.bag&&x.adv&&Math.round(x.bag.m2)===Math.round(x.adv.m2)); const c=!x.adv?[x.bag]:!x.bag?[x.adv]:zelfde?[x.adv]:[x.bag,x.adv], kn=c.length; const kolKop=kn===2?'<th class="num">Op BAG-oppervlakte</th><th class="num">Op aangepast woonoppervlak</th>':(c[0]===x.bag?'<th class="num">Op BAG-oppervlakte</th>':zelfde?'<th class="num">Op de woonoppervlakte</th>':'<th class="num">Op aangepast woonoppervlak</th>'), row=(l,f,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="k">${l}</td>${c.map(k=>`<td class="num">${k?f(k):'–'}</td>`).join('')}</tr>`;
   const pctS=v=>(v>0?'+':'')+num(v,1)+'%';
   const bar=k=>{
     if(!k) return '–';
@@ -3256,7 +3256,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.6'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.8'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
