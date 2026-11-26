@@ -505,7 +505,7 @@
       <div><b>Waarde-indicatie</b><span>Vijf scenario's (slecht, matig, redelijk, goed, uitstekend) met bandbreedte, gebaseerd op buurt-WOZ, prijsindex en eventueel de eigen WOZ van het pand.</span></div>
       <div><b>Fundering</b><span>Cijfer op bouwjaar, bodem, ligging en RVO-aandachtsgebieden, met de volledige rekentabel.</span></div>
       <div><b>Klimaat en geluid</b><span>Overstroming, hitte, wateroverlast, droogte en geluidsbelasting op het adres.</span></div>
-      <div><b>Signalen</b><span>Wat in de advertentie afwijkt van BAG en kadaster: oppervlakte, perceel, bouwjaar en trefwoorden in de tekst.</span></div>
+      <div><b>Signalen</b><span>Wat in de aangepaste gegevens afwijkt van BAG en kadaster: oppervlakte, perceel, bouwjaar en trefwoorden in de tekst.</span></div>
       <div><b>Checklist en bronnen</b><span>Een bezichtigingschecklist op maat en per bron wat is opgehaald en wat geschat.</span></div>
       <div><b>Rapport</b><span>Adviseursrapport of kort rapport met voorblad, en tot drie adressen naast elkaar vergelijken.</span></div>
     </div>
@@ -545,7 +545,7 @@
 
   <div id="optiesHome">
     <div class="panel opties-panel hidden" id="opties">
-      <h2 style="margin:0 0 10px">Woningdata uit woningadvertentie</h2>
+      <h2 style="margin:0 0 10px">Aangepaste woningdata</h2>
       <div class="row5">
         <div><label for="oVraagprijs">Vraagprijs</label><input type="text" class="eur" id="oVraagprijs" inputmode="numeric"></div>
         <div><label for="oBod">Bod (al geboden)</label><input type="text" class="eur" id="oBod" inputmode="numeric"></div>
@@ -555,7 +555,7 @@
         <div><label for="oBouwjaar">Bouwjaar</label><input type="text" id="oBouwjaar" inputmode="numeric"></div>
       </div>
       <div class="row" style="margin-top:12px">
-        <div><label for="oStatus">Status advertentie</label><select id="oStatus"><option value="">— Onbekend —</option><option value="te koop">Te koop</option><option value="onder bod">Onder bod</option><option value="verkocht ovb">Verkocht onder voorbehoud</option><option value="verkocht">Verkocht</option><option value="ingetrokken">Ingetrokken</option></select></div>
+        <div><label for="oStatus">Status woning</label><select id="oStatus"><option value="">— Onbekend —</option><option value="te koop">Te koop</option><option value="onder bod">Onder bod</option><option value="verkocht ovb">Verkocht onder voorbehoud</option><option value="verkocht">Verkocht</option><option value="ingetrokken">Ingetrokken</option></select></div>
         <div><label for="oPrijsdatum">Datum van de prijs (aangeboden sinds / verkocht op)</label><input type="text" id="oPrijsdatum" placeholder="bijv. 12-09-2026"></div>
       </div>
       <div style="margin-top:12px"><label for="oPlak">Funda-tekst plakken (optioneel)</label><textarea id="oPlak" rows="3" placeholder="Selecteer op de Funda-pagina de kenmerken (Overdracht, Bouw, Oppervlakten, Energie), kopieer en plak hier. De velden hierboven worden automatisch gevuld."></textarea>
@@ -573,7 +573,7 @@
       <div class="btns actie">
         <button id="btnUpdate" type="button">Dossier bijwerken</button>
       </div>
-      <p class="hint">Woningdata uit woningadvertentie, optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking. Bij een bod wordt de prijs per m² ook op het bod berekend en het verschil met de vraagprijs getoond.</p>
+      <p class="hint">Aangepaste woningdata, optioneel. Zonder deze cijfers toont het dossier alleen de registers; met deze cijfers berekent het de afwijking. Bij een bod wordt de prijs per m² ook op het bod berekend en het verschil met de vraagprijs getoond.</p>
     </div>
   </div>
 
@@ -1268,14 +1268,14 @@ function analyse(d){
   if(a.tekst) adTekstSignalen(a.tekst).forEach(x=>S.push(x));
   const av = r.pand && r.pand.aantal_verblijfsobjecten;
   if(av && av>1) S.push({niveau:'geel', titel:'Pand bevat meerdere verblijfsobjecten', tekst:`Het pand telt ${av} verblijfsobjecten. Controleer of sprake is van splitsing, een VvE of een appartementsrecht in plaats van volle eigendom.`});
-  if(r.perceel && /erfpacht/i.test(a.eigendom||'')) S.push({niveau:'geel', titel:'Erfpacht volgens de advertentie', tekst:`Eigendomssituatie in de advertentie: "${a.eigendom}". Controleer canon, looptijd en afkoop in het kadastrale uittreksel; dit weegt mee in de financiering.`});
+  if(r.perceel && /erfpacht/i.test(a.eigendom||'')) S.push({niveau:'geel', titel:'Erfpacht volgens de aangepaste gegevens', tekst:`Eigendomssituatie in de aangepaste gegevens: "${a.eigendom}". Controleer canon, looptijd en afkoop in het kadastrale uittreksel; dit weegt mee in de financiering.`});
   const b=r.buurt;
   if(b && b.wozGem && d.analyse.prijsPerM2Bag && bag){
     d.analyse.wozBuurtGem=b.wozGem;
   }
   d.heeftAdvertentie = !!(wonen || a.perceel || a.bouwjaar || prijs || a.bod);
   if(!S.length) S.push({niveau:'grijs', titel:d.heeftAdvertentie?'Geen afwijkingen gevonden':'Registercontroles zonder bijzonderheden',
-    tekst:d.heeftAdvertentie?'De ingevulde woningdata uit de woningadvertentie sluit aan op BAG en BRK; gebruiksdoel, BAG-status en het aantal objecten in het pand geven geen aanleiding tot opmerkingen.'
+    tekst:d.heeftAdvertentie?'De ingevulde aangepaste woningdata sluit aan op BAG en BRK; gebruiksdoel, BAG-status en het aantal objecten in het pand geven geen aanleiding tot opmerkingen.'
       :'Gecontroleerd op gebruiksdoel, BAG-status, bouwjaar vóór 1970 en meerdere verblijfsobjecten in het pand: geen bijzonderheden. Vul vraagprijs, bod of oppervlakten in om de aangepaste gegevens te vergelijken met de registers.'});
 }
 
@@ -1335,7 +1335,7 @@ function render(d, idx){
     ${rood?`<span class="pill rood"><i></i>${rood} signa${rood>1?'len':'al'}</span>`:''}
     ${geel?`<span class="pill geel"><i></i>${geel} aandachtspunt${geel>1?'en':''}</span>`:''}
     ${groen?`<span class="pill groen"><i></i>${groen} in orde</span>`:''}
-    ${!rood&&!geel&&!groen?`<span class="pill grijs"><i></i>Alleen registers — geen woningdata uit woningadvertentie</span>`:''}
+    ${!rood&&!geel&&!groen?`<span class="pill grijs"><i></i>Alleen registers — geen aangepaste woningdata</span>`:''}
   </div>`;
   const sig=d.signalen.map(s=>`<div class="dossier ${s.niveau}"><p><span class="sig ${s.niveau}">${s.niveau==='rood'?'Signaal':s.niveau==='geel'?'Aandachtspunt':s.niveau==='groen'?'In orde':'Info'}</span> <b>${esc(s.titel)}</b></p><p class="small">${esc(s.tekst)}</p></div>`).join('');
   const kleurSec = rood?'rood':geel?'geel':groen?'groen':'blauw';
@@ -1349,13 +1349,13 @@ function render(d, idx){
     const abs=Math.abs(opp.verschilPct);
     const kleurV = abs>10?'var(--err)':abs>4?'var(--warn)':'var(--ok)';
     vergelijk=`<div class="bars">
-      <div class="bar"><span>Advertentie: wonen + overig inpandig</span><div class="track"><div class="fill adv" style="width:${w(opp.advertentieTotaal)}"></div></div><span class="val">${m2(opp.advertentieTotaal)}</span></div>
+      <div class="bar"><span>Aangepast: wonen + overig inpandig</span><div class="track"><div class="fill adv" style="width:${w(opp.advertentieTotaal)}"></div></div><span class="val">${m2(opp.advertentieTotaal)}</span></div>
       <div class="bar"><span>BAG: gebruiksoppervlakte verblijfsobject</span><div class="track"><div class="fill" style="width:${w(opp.bag)}"></div></div><span class="val">${m2(opp.bag)}</span></div>
       <div class="bar"><span>Verschil</span><div class="track" style="background:none"></div><span class="val" style="color:${kleurV}">${opp.verschil>0?'+':''}${num(opp.verschil)} m² · ${pct(opp.verschilPct)}</span></div>
       <div class="tol"><span><i style="background:var(--ok)"></i>tot 4% normaal</span><span><i style="background:var(--warn)"></i>4–10% verklaring vragen</span><span><i style="background:var(--err)"></i>&gt;10% meetstaat NEN 2580 opvragen</span></div>
     </div>
     <div class="tabwrap"><table style="margin-top:12px">
-      <tr><th>Grootheid</th><th class="num">Advertentie</th><th class="num">Register</th><th class="num">Verschil</th></tr>
+      <tr><th>Grootheid</th><th class="num">Aangepast</th><th class="num">Register</th><th class="num">Verschil</th></tr>
       <tr><td>Wonen (meetinstructie)</td><td class="num">${m2(opp.advertentieWonen)}</td><td class="num">–</td><td class="num">–</td></tr>
       <tr><td>Overige inpandige ruimte</td><td class="num">${m2(opp.advertentieOverig)}</td><td class="num">–</td><td class="num">–</td></tr>
       <tr class="tot"><td>Totaal binnen het verblijfsobject</td><td class="num">${m2(opp.advertentieTotaal)}</td><td class="num">${m2(opp.bag)}</td><td class="num">${opp.verschil>0?'+':''}${num(opp.verschil)} m² (${pct(opp.verschilPct)})</td></tr>
@@ -1365,7 +1365,7 @@ function render(d, idx){
     <p class="small">De BAG registreert de gebruiksoppervlakte van het hele verblijfsobject; de meetinstructie NEN 2580 splitst dat in wonen en overige inpandige ruimte. Vergelijk daarom de som, niet alleen het woonoppervlak. Gebouwgebonden buitenruimte en externe bergruimte tellen in geen van beide mee.</p>`;
   } else {
     vergelijk=`<p class="small">Geen aangepast oppervlak ingevuld. Vul wonen m² (en eventueel overige inpandige m²) in om de afwijking te berekenen.</p>
-    ${a.bouwjaar||pand.bouwjaar||perc.grootte?`<table><tr><th>Grootheid</th><th class="num">Advertentie</th><th class="num">Register</th></tr>
+    ${a.bouwjaar||pand.bouwjaar||perc.grootte?`<table><tr><th>Grootheid</th><th class="num">Aangepast</th><th class="num">Register</th></tr>
       <tr><td>Gebruiksoppervlakte</td><td class="num">${m2(a.wonen)}</td><td class="num">${m2(vbo.oppervlakte)}</td></tr>
       <tr><td>Perceel</td><td class="num">${m2(a.perceel)}</td><td class="num">${m2(r.percelenTotaal||perc.grootte)}</td></tr>
       <tr><td>Bouwjaar</td><td class="num">${a.bouwjaar??'–'}</td><td class="num">${pand.bouwjaar??'–'}</td></tr></table>`:''}`;
@@ -1419,7 +1419,7 @@ function render(d, idx){
       <p class="small" style="margin:0 0 14px">Staat binnen ${indicInit(d).binnen} · ${STAAT.label[indicInit(d).binnen]}, staat buiten ${indicInit(d).buiten} · ${STAAT.label[indicInit(d).buiten]} (pas aan via «Gegevens aanpassen» bovenaan het dossier). Marktfactor ${num(indicInit(d).factor,3)} uit de CBS-prijsindex.</p>
       <div id="io-${idx}">${indicUit(d)}</div>
       <p class="small" style="margin-top:10px" id="ix-${idx}">${indexUitleg(d,idx)}</p>
-      <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; het perceel, het energielabel en het funderingscijfer tellen mee als correctie (aannames, niet gekalibreerd); het woningtype telt niet mee in de berekening (de verwachte gemiddelde prijs per woningtype uit CBS is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; advertentie-m² volgen NEN 2580.</div>
+      <div class="notice" style="margin:12px 0 0"><b>Indicatie, geen woningwaarde.</b> Dit is een rekenkundige buurtindicatie, geen taxatie of waardebepaling volgens NRVT/NWWI. Niet opnemen in een adviesdossier en niet gebruiken als onderbouwing van financiering of bod. Beperkingen: de staatcorrectie berust op aannames en jouw eigen inschatting; het buurtgemiddelde mengt huur en koop, appartementen en eengezinswoningen; de maatcorrectie (waarde ~ m² ^ 0,85, maximaal ±15%) is een aanname; de bandbreedte bevat een vaste modelonzekerheid en geen gemeten spreiding; het perceel, het energielabel en het funderingscijfer tellen mee als correctie (aannames, niet gekalibreerd); het woningtype telt niet mee in de berekening (de verwachte gemiddelde prijs per woningtype uit CBS is alleen een controlegetal); de prijsindex is een regiogemiddelde. De kolom op BAG-oppervlakte is methodisch zuiverder, omdat het buurtgemiddelde ook op BAG-oppervlakte is gebaseerd; aangepaste m² volgen NEN 2580.</div>
     </div>` : '';
   /* --- bronnen en status (stand op het moment van opvragen) --- */
   const kl=d.klimaat||{}, fu=d.fundering||{}, st=(ok,schat)=>ok?'ok':(schat?'schat':'nee');
@@ -1483,12 +1483,12 @@ function render(d, idx){
       <div><span class="eyebrow">PandWise · Woningdossier</span><p class="adres">${esc(adr.weergavenaam||a.adres||'Onbekend adres')}</p>
       <p class="sub">${esc([adr.buurt,adr.gemeente,adr.provincie].filter(Boolean).join(' · '))}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">advertentie</a>`:''}</p>
       ${oordeel}</div>
-      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${(a.status||a.prijsdatum)?`<small>${a.status?esc({'te koop':'Te koop','onder bod':'Onder bod','verkocht ovb':'Verkocht onder voorbehoud','verkocht':'Verkocht','ingetrokken':'Ingetrokken'}[a.status]||a.status):'Prijs'}${a.prijsdatum?' · '+(a.status==='verkocht'||a.status==='verkocht ovb'?'verkocht op ':'aangeboden sinds ')+esc(a.prijsdatum):''} · bron: advertentie</small>`:''}${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
+      <div class="prijs">${a.vraagprijs?eur(a.vraagprijs):'<span class="small" style="font-weight:400">Geen vraagprijs ingevuld</span>'}<small>${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² op BAG-oppervlakte':''}</small>${(a.status||a.prijsdatum)?`<small>${a.status?esc({'te koop':'Te koop','onder bod':'Onder bod','verkocht ovb':'Verkocht onder voorbehoud','verkocht':'Verkocht','ingetrokken':'Ingetrokken'}[a.status]||a.status):'Prijs'}${a.prijsdatum?' · '+(a.status==='verkocht'||a.status==='verkocht ovb'?'verkocht op ':'aangeboden sinds ')+esc(a.prijsdatum):''} · bron: aangepaste gegevens</small>`:''}${an.bod?`<small style="margin-top:8px;color:var(--primary);font-weight:600">Bod ${eur(an.bod.bod)}${an.bod.verschilPct!=null?' · '+pct(an.bod.verschilPct)+' t.o.v. vraagprijs':''}</small>${an.bod.prijsPerM2Bag?`<small>${eur(an.bod.prijsPerM2Bag)} per m² op BAG-oppervlakte</small>`:''}`:''}</div>
     </div>
     <div class="kpis">
-      <div class="kpi"><span class="lab">Oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em> gebruiksoppervlakte${a.wonen?' · advertentie '+m2(a.wonen+(a.overigInpandig||0)):''}</span></div>
-      <div class="kpi"><span class="lab">Bouwjaar</span><b>${pand.bouwjaar??'–'}</b><span class="src"><em>BAG</em> pand${a.bouwjaar&&a.bouwjaar!==pand.bouwjaar?' · advertentie '+a.bouwjaar:''}</span></div>
-      <div class="kpi"><span class="lab">Perceel</span><b>${m2(r.percelenTotaal||perc.grootte)}</b><span class="src"><em>BRK</em> ${r.percelenTotaal?(r.percelen.length+' percelen'):esc(perc.aanduiding||'')}${a.perceel?' · advertentie '+m2(a.perceel):''}</span></div>
+      <div class="kpi"><span class="lab">Oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em> gebruiksoppervlakte${a.wonen?' · aangepast '+m2(a.wonen+(a.overigInpandig||0)):''}</span></div>
+      <div class="kpi"><span class="lab">Bouwjaar</span><b>${pand.bouwjaar??'–'}</b><span class="src"><em>BAG</em> pand${a.bouwjaar&&a.bouwjaar!==pand.bouwjaar?' · aangepast '+a.bouwjaar:''}</span></div>
+      <div class="kpi"><span class="lab">Perceel</span><b>${m2(r.percelenTotaal||perc.grootte)}</b><span class="src"><em>BRK</em> ${r.percelenTotaal?(r.percelen.length+' percelen'):esc(perc.aanduiding||'')}${a.perceel?' · aangepast '+m2(a.perceel):''}</span></div>
       <div class="kpi"><span class="lab">Gebruiksdoel</span><b class="small">${esc(vbo.gebruiksdoel||'–')}</b><span class="src"><em>BAG</em> ${esc(vbo.status||'')}</span></div>
       <div class="kpi"><span class="lab">Objecten in pand</span><b>${pand.aantal_verblijfsobjecten??'–'}</b><span class="src"><em>BAG</em> verblijfsobjecten</span></div>
       ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem).replace('€ ','€ ')}</b><span class="src"><em>CBS</em> gemiddelde ${b.wozJaar} · peildatum 1-1-${b.wozPeiljaar}</span></div>`:''}
@@ -1508,7 +1508,7 @@ function render(d, idx){
   return `<div class="dwrap" id="dw-${idx}">` + hero
     + `<div data-pane="dossier"${tab!=='dossier'?' hidden':''}>`
     + sectie('01 / Signalen','Signalen voor het dossier','Wat afwijkt, wat aandacht vraagt en wat in orde is',kleurSec,sig)
-    + (d.heeftAdvertentie?sectie('02 / Vergelijking','Advertentie tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld):'')
+    + (d.heeftAdvertentie?sectie('02 / Vergelijking','Aangepaste gegevens tegenover registers','Oppervlakte, perceel en bouwjaar naast BAG en BRK','blauw',vergelijk+geld):'')
     + (indicBlok?sectie('03 / Indicatie','Indicatie op basis van buurt en staat','Gemiddelde WOZ per m² in de buurt, doorgerekend naar dit object, met bandbreedte naar staat','geel',indicBlok):'')
     + sectie('04 / WOZ en markt','Marktstatus en WOZ-waarde','Te koop of verkocht via Funda, en vastgestelde WOZ-waarden per peildatum','geel',wozBlok(d,idx),`woz-${idx}`)
     + sectie('04b / Historie en aanbod','Verkoophistorie en woningen in de buurt','Plak tekst van een openbare bron; de tool leest data, prijzen en m² uit','blauw',histAanbodBlok(d,idx),`ha-${idx}`)
@@ -1584,7 +1584,7 @@ function biedHtml(d,idx){
   const kpis=`<div class="kpis" style="margin-top:0">
     <div class="kpi"><span class="lab">Vraagprijs</span><b>${eur(a.vraagprijs)}</b><span class="src">${an.prijsPerM2Bag?eur(an.prijsPerM2Bag)+' per m² BAG':'invoer'}</span></div>
     <div class="kpi"><span class="lab">Al geboden</span><b>${eur(a.bod)}</b><span class="src">${an.bod&&an.bod.verschilPct!=null?pct(an.bod.verschilPct)+' t.o.v. vraagprijs':'invoer'}</span></div>
-    <div class="kpi"><span class="lab">BAG-oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em>${opp?' · advertentie '+m2(opp.advertentieTotaal):''}</span></div>
+    <div class="kpi"><span class="lab">BAG-oppervlakte</span><b>${m2(vbo.oppervlakte)}</b><span class="src"><em>BAG</em>${opp?' · aangepast '+m2(opp.advertentieTotaal):''}</span></div>
     <div class="kpi"><span class="lab">Bouwjaar</span><b>${pand.bouwjaar??'–'}</b><span class="src"><em>BAG</em> pand</span></div>
     ${b&&b.wozGem?`<div class="kpi"><span class="lab">WOZ buurt</span><b>${eur(b.wozGem)}</b><span class="src"><em>CBS</em> context, geen objectwaarde</span></div>`:''}
     ${b&&b.woningM2?`<div class="kpi"><span class="lab">Woning m² buurt</span><b>${m2(b.woningM2.gemiddelde)}</b><span class="src"><em>BAG</em> gemiddelde${b.woningM2.objectPercentiel!=null?' · object groter dan '+b.woningM2.objectPercentiel+'%':''}</span></div>`:''}
@@ -1592,15 +1592,15 @@ function biedHtml(d,idx){
 
   const punten=[];
   if(opp && opp.verschilPct<-4) punten.push(['geel','BAG-oppervlakte lager dan de aangepaste gegevens',
-    `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)} (${pct(opp.verschilPct)}). Vraag de meetstaat NEN 2580 op.${an.waardeEffect!=null?` Bij de geadverteerde prijs per m² vertegenwoordigt het verschil rekenkundig ${eur(Math.abs(an.waardeEffect))}.`:''}`]);
+    `De BAG registreert ${m2(opp.bag)}, de aangepaste gegevens ${m2(opp.advertentieTotaal)} (${pct(opp.verschilPct)}). Vraag de meetstaat NEN 2580 op.${an.waardeEffect!=null?` Bij de geadverteerde prijs per m² vertegenwoordigt het verschil rekenkundig ${eur(Math.abs(an.waardeEffect))}.`:''}`]);
   else if(opp && opp.verschilPct>4) punten.push(['grijs','BAG-oppervlakte hoger dan de aangepaste gegevens',
-    `De BAG registreert ${m2(opp.bag)}, de advertentie ${m2(opp.advertentieTotaal)}. Dit is geen argument voor een lager bod; waarschijnlijk telt de BAG ruimtes mee die volgens NEN 2580 buiten wonen vallen.`]);
+    `De BAG registreert ${m2(opp.bag)}, de aangepaste gegevens ${m2(opp.advertentieTotaal)}. Dit is geen argument voor een lager bod; waarschijnlijk telt de BAG ruimtes mee die volgens NEN 2580 buiten wonen vallen.`]);
   if(pand.bouwjaar && pand.bouwjaar<1970) punten.push(['geel','Bouwjaar '+pand.bouwjaar,
     `Neem een bouwkundige keuring op als voorbehoud en vraag naar funderingsonderzoek of -herstel.${omg&&omg.pctVoor1970>=50?` In de omgeving is ${omg.pctVoor1970}% van de panden van vóór 1970.`:''} De uitkomst van de keuring, met herstelkosten, is het concrete onderhandelingsmateriaal — niet het bouwjaar zelf.`]);
-  if(an.bouwjaar && Math.abs(an.bouwjaar.verschil)>2) punten.push(['geel','Bouwjaar in advertentie wijkt af',
-    `Advertentie ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Vraag welke delen zijn gerenoveerd of herbouwd en met welke vergunning.`]);
+  if(an.bouwjaar && Math.abs(an.bouwjaar.verschil)>2) punten.push(['geel','Bouwjaar in aangepaste gegevens wijkt af',
+    `Aangepast ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Vraag welke delen zijn gerenoveerd of herbouwd en met welke vergunning.`]);
   if(an.perceel && an.perceel.verschilPct!=null && Math.abs(an.perceel.verschilPct)>3) punten.push(['geel','Perceelgrootte wijkt af',
-    `BRK ${m2(an.perceel.brk)}, advertentie ${m2(an.perceel.advertentie)}. Laat in de koopovereenkomst vastleggen welke kadastrale percelen worden geleverd.`]);
+    `BRK ${m2(an.perceel.brk)}, aangepast ${m2(an.perceel.advertentie)}. Laat in de koopovereenkomst vastleggen welke kadastrale percelen worden geleverd.`]);
   if((pand.aantal_verblijfsobjecten||0)>1) punten.push(['geel','Meerdere objecten in het pand',
     'Vraag de VvE-stukken op: splitsingsakte, meerjarenonderhoudsplan, stand reservefonds, notulen van de laatste vergaderingen en de maandelijkse bijdrage.']);
   if(vbo.gebruiksdoel && !/woonfunctie/i.test(vbo.gebruiksdoel)) punten.push(['rood','Gebruiksdoel is geen woonfunctie',
@@ -1701,7 +1701,7 @@ function verkoopHtml(d,idx){
 
   const meld=[['grijs','Mededelingsplicht','De verkoper moet bekende gebreken en feiten melden die voor een koper van belang zijn; de koper heeft een onderzoeksplicht. Wat je weet en niet meldt, kan later tot aansprakelijkheid leiden.']];
   if(oudbouw) meld.push(['geel','Fundering en bouwjaar '+pand.bouwjaar,'Kopers vragen bij dit bouwjaar vrijwel altijd naar de fundering. Leg vast wat bekend is: eerder onderzoek, herstel, meldingen bij de gemeente. Onbekend is ook een antwoord — maar zeg het expliciet.']);
-  if(an.bouwjaar&&Math.abs(an.bouwjaar.verschil)>2) meld.push(['geel','Bouwjaar advertentie versus BAG',`Advertentie ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Licht toe wat is herbouwd of gerenoveerd en houd vergunningen beschikbaar.`]);
+  if(an.bouwjaar&&Math.abs(an.bouwjaar.verschil)>2) meld.push(['geel','Bouwjaar aangepast versus BAG',`Aangepast ${an.bouwjaar.advertentie}, BAG ${an.bouwjaar.bag}. Licht toe wat is herbouwd of gerenoveerd en houd vergunningen beschikbaar.`]);
   if(an.perceel&&Math.abs(an.perceel.verschilPct||0)>3) meld.push(['geel','Perceel',`BRK ${m2(an.perceel.brk)} tegenover ${m2(an.perceel.advertentie)} in de aangepaste gegevens. Controleer welke percelen je in eigendom hebt en levert.`]);
   if(meer) meld.push(['geel','Appartementsrecht / VvE','Het pand telt '+pand.aantal_verblijfsobjecten+' verblijfsobjecten. Kopers en geldverstrekkers verwachten actuele VvE-stukken.']);
   if(vbo.gebruiksdoel&&!/woonfunctie/i.test(vbo.gebruiksdoel)) meld.push(['rood','Gebruiksdoel',`De BAG registreert "${vbo.gebruiksdoel}". Dit beperkt de financierbaarheid voor kopers; zoek vooraf uit of wijziging mogelijk is.`]);
@@ -1710,7 +1710,7 @@ function verkoopHtml(d,idx){
     ['Energielabel','verplicht','Bij verkoop verplicht; ontbreken kan tot een boete leiden.'],
     ['Eigendomsbewijs en kadastraal uittreksel','basis',''],
     ['Vragenlijst verkoper en lijst van zaken','standaard',''],
-    ['Meetrapport NEN 2580', oppAfw?'sterk aanbevolen':'aanbevolen', oppAfw?'Advertentie en BAG wijken meer dan 4% af.':''],
+    ['Meetrapport NEN 2580', oppAfw?'sterk aanbevolen':'aanbevolen', oppAfw?'Aangepaste gegevens en BAG wijken meer dan 4% af.':''],
     oudbouw?['Bouwkundig verkooprapport','aanbevolen','Neemt onzekerheid bij kopers weg bij bouwjaar vóór 1970.']:null,
     oudbouw?['Funderingsinformatie','aanbevolen','Eerder onderzoek, herstel of informatie van het gemeentelijk funderingsloket.']:null,
     meer?['VvE-stukken','nodig','Splitsingsakte, meerjarenonderhoudsplan, reservefonds, notulen, bijdrage.']:null,
@@ -2066,7 +2066,7 @@ const Fund = (()=>{
   function kpi(d,idx){
     const F=d.fundering; if(!F) return '';
     const {score}=bereken(F); const alt=altBouwjaar(d);
-    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}${score.handmatig?' · <b>handmatig aangepast</b> (berekend: '+score.berekend+')':''}</span>${alt?`<span class="src" style="color:var(--warn);font-weight:600">bij bouwjaar ${alt.bj} (advertentie): ${alt.cijfer} / 10</span>`:''}</div>`;
+    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}${score.handmatig?' · <b>handmatig aangepast</b> (berekend: '+score.berekend+')':''}</span>${alt?`<span class="src" style="color:var(--warn);font-weight:600">bij bouwjaar ${alt.bj} (aangepast): ${alt.cijfer} / 10</span>`:''}</div>`;
   }
   function uit(d,idx){
     const F=d.fundering;
@@ -2917,8 +2917,8 @@ function renderResult(){
   const wd=$('watDoet'); if(wd) wd.classList.toggle('hidden',!!dossiers.length);
   $('result').innerHTML=dossiers.map(render).join('');
   $('strat').innerHTML=dossiers.map((d,i)=>`<div class="dwrap" id="sw-${i}">
-    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-scope="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="bied" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
-    <div class="panel" id="verkoop-${i}"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="verkoop" data-scope="verkoop" data-i="${i}" aria-selected="true">Verkoopstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="verkoop" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div><div class="btab-data nodruk" data-pane="verkoopData" hidden></div></div></div>`).join('');
+    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-scope="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="bied" data-i="${i}" aria-selected="false">Aangepaste woningdata</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
+    <div class="panel" id="verkoop-${i}"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="verkoop" data-scope="verkoop" data-i="${i}" aria-selected="true">Verkoopstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="verkoop" data-i="${i}" aria-selected="false">Aangepaste woningdata</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div><div class="btab-data nodruk" data-pane="verkoopData" hidden></div></div></div>`).join('');
   const o0=op&&op.querySelector('#oType option[value=""]'); if(o0){ const dn=dossiers.length&&dossiers[0]._typeAuto&&dossiers[0]._typeAuto.naam; o0.textContent=dn||'— Automatisch —'; }
   if(op){ const slot=document.querySelector('#bied-0 .btab-data'); if(dossiers.length&&slot){ slot.appendChild(op); op.classList.remove('hidden'); } else op.classList.add('hidden'); }
 }
@@ -3257,7 +3257,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.19.10'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.19.11'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
