@@ -1564,15 +1564,15 @@ function waardeBlok(d,soort,idx){
   let x=null; try{ x=indicBereken(d); }catch(e){}
   if(!x||!x.hoofd) return '<p class="small">De indicatieve woningwaarde is voor dit adres niet te berekenen (buurtgegevens ontbreken); daardoor is hier geen vergelijking mogelijk.</p>';
   const h=x.hoofd, sc=indicScenarios(d).filter(z=>z.hoofd);
-  const pos=(v,z)=>{ if(!v) return '–'; if(v<z.hoofd.laag) return `onder (${pct((v-z.hoofd.laag)/z.hoofd.laag*100)} t.o.v. ondergrens)`; if(v>z.hoofd.hoog) return `boven (${pct((v-z.hoofd.hoog)/z.hoofd.hoog*100)} t.o.v. bovengrens)`; return 'binnen'; };
+  const pos=(v,z)=>{ if(!v) return '–'; if(v<z.hoofd.laag) return `onder (${pct((v-z.hoofd.laag)/z.hoofd.laag*100)})`; if(v>z.hoofd.hoog) return `boven (${pct((v-z.hoofd.hoog)/z.hoofd.hoog*100)})`; return 'binnen'; };
   const metBod=soort==='bied'&&a.bod;
   const rij=sc.map(z=>{ const mijn=x.binnen===x.buiten&&z.niv===x.binnen; return `<tr${mijn?' class="tot"':''}><td class="k">${z.label}${mijn?' <span class="small">(jouw staat)</span>':''}</td><td class="num">${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</td><td class="num">${eur(z.hoofd.midden)}</td><td>${pos(a.vraagprijs,z)}</td>${metBod?`<td>${pos(a.bod,z)}</td>`:''}</tr>`; }).join('');
   const vergelijk=v=>{ if(!v) return ''; const t=(h.midden-v)/v*100; return `${eur(v)} ligt ${pos(v,{hoofd:h}).split(' (')[0]} de bandbreedte bij jouw staat; het midden van de indicatie ligt ${num(Math.abs(t),1)}% ${t<0?'lager':'hoger'}.`; };
   const regels=[ a.vraagprijs?'Vraagprijs: '+vergelijk(a.vraagprijs):'', metBod?'Bod: '+vergelijk(a.bod):'' ].filter(Boolean);
   return `<p class="small" style="margin-top:0">Bij jouw staat (binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}) ligt de indicatieve waarde tussen ${eur(h.laag)} en ${eur(h.hoog)} (midden ${eur(h.midden)}). Betrouwbaarheid: ${esc(x.betrouwbaarheid.label.toLowerCase())}.</p>
     ${regels.length?`<ul class="check">${regels.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:`<p class="small">Geen vraagprijs${soort==='bied'?' of bod':''} ingevuld. Vul die in via <b>Gegevens aanpassen</b> om de vergelijking te zien.</p>`}
-    <div class="tabwrap"><table><tr><th>Staat (binnen en buiten gelijk)</th><th class="num">Bandbreedte</th><th class="num">Midden</th><th>Vraagprijs</th>${metBod?'<th>Bod</th>':''}</tr>${rij}</table></div>
-    <p class="small" style="margin-top:8px">${indexUitleg(d,idx)}</p>
+    <div class="tabwrap"><table><tr><th>Staat</th><th class="num">Bandbreedte</th><th class="num">Midden</th><th>Vraagprijs</th>${metBod?'<th>Bod</th>':''}</tr>${rij}</table></div>
+    <p class="small" style="margin-top:8px">Bij “onder” of “boven” is het percentage het verschil met de onder- of bovengrens van de bandbreedte. ${indexUitleg(d,idx)}</p>
     <p class="small"><b>Let op:</b> dit is een rekenkundige indicatie op buurtgemiddelden, geen taxatie of waardebepaling en geen advies over ${soort==='bied'?'welk bedrag je moet bieden':'welke vraagprijs je moet hanteren'}. Een bod of vraagprijs buiten de bandbreedte zegt niets over de juiste prijs; taxateur of makelaar onderbouwen dat met referentietransacties.</p>`;
 }
 const kkTotaal = k => ['kosten','notaris','taxKosten','advies','makelaar','keuring'].reduce((t,x)=>t+(k[x]||0),0);
@@ -2689,12 +2689,13 @@ function rapportAfdrukken(i,tabOverride){
   const advies=tab==='advies'||tab==='adviesKort';
   const houd=tab==='advies'?['dossier','fund','klim']:tab==='adviesKort'?['dossier']:[tab];
   c.querySelectorAll('[data-pane]').forEach(p=>{ if(!houd.includes(p.dataset.pane)) p.remove(); else p.removeAttribute('hidden'); });
+  c.querySelectorAll('.panel').forEach(pn=>{ if(pn.querySelector('.strat-head')&&!pn.querySelector('[data-pane]')) pn.remove(); });
   if(tab==='adviesKort') c.querySelectorAll('[data-pane="dossier"] > .panel.sec').forEach(pn=>{ const n=((pn.querySelector('.num-eye')||{}).textContent||'').trim(); if(!/^0[138]\b/.test(n)) pn.remove(); });
   { const leeg=id=>{ const e=c.querySelector('#'+id+'-'+i); return !e||!e.textContent.trim(); };
     if(leeg('hr')&&leeg('ar')){ const sc=c.querySelector('#ha-'+i); if(sc) sc.remove(); }
     if(leeg('wo')){ const sc=c.querySelector('#woz-'+i); if(sc) sc.remove(); }
     if(!d.indicBevestigd) c.querySelectorAll('.kpi-ind').forEach(x=>x.remove());
-    c.querySelectorAll('.nodruk,.kpi-ind button,button.link').forEach(x=>x.remove()); }
+    c.querySelectorAll('.nodruk,.btabs,.kpi-ind button,button.link').forEach(x=>x.remove()); }
   c.querySelectorAll('details').forEach(x=>x.setAttribute('open',''));
   c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
@@ -2725,7 +2726,7 @@ function rapportAfdrukken(i,tabOverride){
   h2{font-size:17px} h3{font-size:14px;break-after:avoid}
   .hero .adres,.hero .prijs{font-size:22px}
   .kpis{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;margin:12px 0 4px!important} .kpi{padding:9px 10px!important} .kpi b{font-size:17px!important} .kpi .src{font-size:10.5px!important;line-height:1.35} .kpi .lab{font-size:9.5px!important}
-  .panel:has(.hero){break-inside:auto!important}
+  .panel:has(.hero){break-inside:auto!important} .panel:has(.panel.sec){break-inside:auto!important}
   .kaarten{grid-template-columns:1fr 1fr}
   .row3,.row4{grid-template-columns:repeat(3,1fr)}
   .printval{padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#FAFBFC;font-weight:600}
@@ -3316,7 +3317,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.20.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.20.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
