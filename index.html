@@ -192,6 +192,16 @@
   .woz-jaren span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
   .notice{border-left:4px solid var(--accent);background:var(--warn-bg);padding:10px 14px;font-size:13px;margin:0 0 16px;border-radius:0 8px 8px 0}
   .hidden{display:none!important}
+  .watdoet .wd-lead{font-size:15px;margin:0 0 14px}
+  .wd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .wd-grid>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .wd-grid b{display:block;color:var(--primary);font-size:14px;margin-bottom:3px}
+  .wd-grid span{font-size:13px;color:var(--muted)}
+  .wd-stappen{margin:14px 0 0;padding-left:22px;font-size:14px}
+  .wd-stappen li{padding:3px 0}
+  .wd-slot{margin:12px 0 0}
+  @media(max-width:860px){.wd-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.wd-grid{grid-template-columns:1fr}}
   details summary{cursor:pointer;font-weight:700;color:var(--primary);margin:10px 0;font-family:var(--head)}
   .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
   .fotos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
@@ -269,6 +279,21 @@
     <div class="msg" id="msg"></div>
   </div>
 
+  <section class="panel watdoet noembed" id="watDoet" aria-labelledby="watDoetKop">
+    <h2 id="watDoetKop" style="margin-top:0">Wat doet PandWise?</h2>
+    <p class="wd-lead">PandWise is een gratis feitencheck voor een woning. Vul een adres of Funda-link in en je krijgt in één dossier wat de openbare registers over het pand zeggen, met een herleidbare indicatie van de waarde.</p>
+    <div class="wd-grid">
+      <div><b>Waarde-indicatie</b><span>Drie scenario's (slecht, redelijk, goed) met bandbreedte, gebaseerd op buurt-WOZ, prijsindex en eventueel de eigen WOZ van het pand.</span></div>
+      <div><b>Fundering</b><span>Cijfer op bouwjaar, bodem, ligging en RVO-aandachtsgebieden, met de volledige rekentabel.</span></div>
+      <div><b>Klimaat en geluid</b><span>Overstroming, hitte, wateroverlast, droogte en geluidsbelasting op het adres.</span></div>
+      <div><b>Signalen</b><span>Wat in de advertentie afwijkt van BAG en kadaster: oppervlakte, perceel, bouwjaar en trefwoorden in de tekst.</span></div>
+      <div><b>Checklist en bronnen</b><span>Een bezichtigingschecklist op maat en per bron wat is opgehaald en wat geschat.</span></div>
+      <div><b>Rapport</b><span>Adviseursrapport of kort rapport met voorblad, en tot drie adressen naast elkaar vergelijken.</span></div>
+    </div>
+    <ol class="wd-stappen"><li>Vul een adres of Funda-link in en klik op Analyseren.</li><li>Bekijk het dossier. Pas daarna de woningdata aan, bijvoorbeeld vraagprijs, oppervlakte of staat.</li><li>Print het rapport of vergelijk adressen.</li></ol>
+    <p class="small wd-slot">Een indicatie en geen taxatie, waardebepaling of financieel advies. Zie "Waarom gratis?" onderaan.</p>
+  </section>
+
   <div id="skelet" class="panel hidden">
     <div class="skel" style="width:40%;height:28px"></div>
     <div class="skel" style="width:25%"></div>
@@ -278,7 +303,7 @@
 
   <div id="result"></div>
 
-    <div class="panel opties-panel" id="opties">
+    <div class="panel opties-panel hidden" id="opties">
       <h2 style="margin:0 0 10px">Woningdata uit woningadvertentie</h2>
       <div class="row5">
         <div><label for="oVraagprijs">Vraagprijs</label><input type="text" class="eur" id="oVraagprijs" inputmode="numeric"></div>
@@ -2384,6 +2409,8 @@ function indicUit(d){
 }
 
 function renderResult(){
+  const op=$('opties'); if(op) op.classList.toggle('hidden',!dossiers.length);
+  const wd=$('watDoet'); if(wd) wd.classList.toggle('hidden',!!dossiers.length);
   $('result').innerHTML=dossiers.map(render).join('');
   $('strat').innerHTML=dossiers.map((d,i)=>`<div class="dwrap" id="sw-${i}">
     <div class="panel"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div data-pane="bied">${biedHtml(d,i)}</div></div>
@@ -2444,7 +2471,7 @@ $('btnUpdate').onclick=async()=>{
 };
 $('btnNieuw').onclick=()=>{
   $('oStatus').value=''; $('oPrijsdatum').value=''; $('oPlak').value=''; delete $('oPlak').dataset.label; $('plakMsg').textContent='';
-  dossiers.length=0;
+  dossiers.length=0; if($('opties')) $('opties').classList.add('hidden'); if($('watDoet')) $('watDoet').classList.remove('hidden');
   $('result').innerHTML=''; $('strat').innerHTML='';
   $('q').value='';
   ['oVraagprijs','oBod','oWonen','oOverig','oPerceel','oBouwjaar'].forEach(i=>$(i).value='');
@@ -2686,7 +2713,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.9.0'; const MODEL_DATUM = '2026-11-13';
+const MODEL_VERSIE = '2.9.1'; const MODEL_DATUM = '2026-11-26';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
