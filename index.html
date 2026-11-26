@@ -1848,7 +1848,7 @@ const Fund = (()=>{
     if(slap) return {naam:'Houten paalfundering (waarschijnlijk)',uitleg:'Op slappe bodem werd vóór 1960 vrijwel altijd op houten palen gefundeerd. Bij droogstand ontstaat paalrot; bij een schommelende grondwaterstand bacteriële aantasting.',hout:true};
     return {naam:'Ondiepe fundering / fundering op staal (waarschijnlijk)',uitleg:'Op draagkrachtige zand- of lössgrond werd vóór 1960 doorgaans ondiep gefundeerd, zonder palen. Dit is minder risicovol dan houten palen op slappe bodem.',hout:false};
   }
-  function berekenCijfer(bj,bodemCode,nap,rvo,gwO){
+  function berekenCijfer(bj,bodemCode,nap,rvo,gwO,cijferOverride){
     const bType=bodemTypeUit(bodemCode); let basis,bjU;
     if(!bj){basis=5;bjU='Bouwjaar onbekend — neutrale middenscore aangehouden';}
     else if(bj>=1970){basis=8;bjU=bj+' — betonpaalfundering vrijwel zeker';}
@@ -1869,7 +1869,7 @@ const Fund = (()=>{
     if(rvo&&rvo.gevonden){ rC=-1; const pct=parseFloat(String(rvo.pctVoor1970||'').replace(',','.'));
       rU=!isNaN(pct)&&pct>=40?'Ligt in RVO-aandachtsgebied: '+String(pct).replace('.',',')+'% van de panden in dit postcodegebied is van vóór 1970':'Ligt binnen een door RVO aangemerkt indicatief aandachtsgebied funderingsproblematiek'; }
     const gC=gwO?gwO.correctie:0, gU=gwO?gwO.kop:'Geen grondwaterdata beschikbaar';
-    const cijfer=Math.max(2,Math.min(8,basis+bC+nC+rC+gC));
+    const berekend=Math.max(2,Math.min(8,basis+bC+nC+rC+gC)), ovr=(cijferOverride>=2&&cijferOverride<=8)?Math.round(cijferOverride):null, cijfer=ovr||berekend;
     const labels={8:'A',7:'A/B',6:'B',5:'B/C',4:'C/D',3:'D',2:'D/E'};
     const INFO={8:['Uitstekend','Zeer lage kans op funderingsproblemen. Het pand heeft vrijwel zeker een betonpaalfundering. Funderingsonderzoek is doorgaans niet nodig.'],
       7:['Goed','Lage kans op funderingsproblemen. Bouwjaar, bodem en omgeving geven geen aanleiding tot zorg.'],
@@ -1878,7 +1878,7 @@ const Fund = (()=>{
       4:['Onvoldoende','Verhoogd funderingsrisico. De combinatie van bouwjaar, bodem en ligging is ongunstig. Funderingsonderzoek wordt aanbevolen vóór aankoop.'],
       3:['Slecht','Hoog funderingsrisico. Oud pand op risicovolle bodem binnen een RVO-aandachtsgebied. Professioneel funderingsonderzoek is sterk aanbevolen.'],
       2:['Zeer slecht','Zeer hoog funderingsrisico. Meerdere ongunstige factoren komen samen. Laat vóór aankoop of financiering een volledig funderingsonderzoek uitvoeren door een gecertificeerd bureau.']};
-    return {cijfer,basis,bC,nC,rC,gC,bType,bjU,bU,nU,rU,gU,label:labels[cijfer],titel:INFO[cijfer][0],tekst:INFO[cijfer][1]};
+    return {cijfer,berekend,handmatig:!!ovr,basis,bC,nC,rC,gC,bType,bjU,bU,nU,rU,gU,label:labels[cijfer],titel:INFO[cijfer][0],tekst:INFO[cijfer][1]};
   }
 
   // Ophalen: alles wat alleen de locatie nodig heeft, parallel aan de overige registers.
@@ -1906,7 +1906,7 @@ const Fund = (()=>{
     const bj=F.bouwjaarOverride||F.bagBouwjaar;
     const ftype=funderingsType(bj,bodemTypeUit(F.bodem&&F.bodem.code));
     const gwO=beoordeelGrondwater(F.gw,ftype.hout);
-    const score=berekenCijfer(bj,F.bodem&&F.bodem.code,F.nap,F.rvo,gwO);
+    const score=berekenCijfer(bj,F.bodem&&F.bodem.code,F.nap,F.rvo,gwO,F.cijferOverride);
     let buurt=null;
     if(F.jaren.length>=3){ const s=[...F.jaren].sort((a,b)=>a-b), v70=s.filter(j=>j<1970).length;
       buurt={totaal:s.length, voor1970:v70, pct:Math.round(v70/s.length*100), mediaan:s[Math.floor(s.length/2)], oudste:s[0], nieuwste:s[s.length-1], zelfde:bj?s.filter(j=>Math.abs(j-bj)<=3).length:null}; }
@@ -1916,7 +1916,7 @@ const Fund = (()=>{
   const KLEUR={2:'#A81C1C',3:'#C03A1A',4:'#D4860F',5:'#B07C00',6:'#7A9A2A',7:'#3A7A3A',8:'#1B6B3A'};
   const niv=c=>c>=7?'groen':c>=5?'geel':'rood';
   function altBouwjaar(d){
-    const F=d.fundering, a=d.advertentie||{}; if(!F||F.bouwjaarOverride||!a.bouwjaar||!F.bagBouwjaar) return null;
+    const F=d.fundering, a=d.advertentie||{}; if(!F||F.cijferOverride||F.bouwjaarOverride||!a.bouwjaar||!F.bagBouwjaar) return null;
     if(Math.abs(a.bouwjaar-F.bagBouwjaar)<50) return null;
     const sc=bereken(Object.assign({},F,{bouwjaarOverride:a.bouwjaar})).score;
     return {bj:a.bouwjaar, bagBj:F.bagBouwjaar, cijfer:sc.cijfer, label:sc.label, titel:sc.titel};
@@ -1924,7 +1924,7 @@ const Fund = (()=>{
   function kpi(d,idx){
     const F=d.fundering; if(!F) return '';
     const {score}=bereken(F); const alt=altBouwjaar(d);
-    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}</span>${alt?`<span class="src" style="color:var(--warn);font-weight:600">bij bouwjaar ${alt.bj} (advertentie): ${alt.cijfer} / 10</span>`:''}</div>`;
+    return `<div class="kpi kpi-fund" id="fk-${idx}" data-gotab="fund" data-i="${idx}" title="Bekijk funderingscijfer"><span class="lab">Funderingscijfer</span><b style="color:${KLEUR[score.cijfer]}">${score.cijfer}<span style="font-size:15px;color:var(--muted)"> / 10</span></b><span class="src">${esc(score.titel)} · label ${esc(score.label)}${score.handmatig?' · <b>handmatig aangepast</b> (berekend: '+score.berekend+')':''}</span>${alt?`<span class="src" style="color:var(--warn);font-weight:600">bij bouwjaar ${alt.bj} (advertentie): ${alt.cijfer} / 10</span>`:''}</div>`;
   }
   function uit(d,idx){
     const F=d.fundering;
@@ -2019,6 +2019,7 @@ const Fund = (()=>{
     const bronnen=`<table>${br.map(([n,s,v,u])=>`<tr><td class="k"><a href="${u}" target="_blank" rel="noopener">${esc(n)}</a></td><td><span class="sig ${s==='ok'?'groen':s==='schat'?'geel':'grijs'}">${s==='ok'?'opgehaald':s==='schat'?'schatting / geen data':'info'}</span> ${esc(v)}</td></tr>`).join('')}</table>`;
 
     return `<div class="notice"><b>Geen advies in de zin van de Wft.</b> Het funderingscijfer is algemene informatie uit openbare registers, geen advies over een financieel product en geen officieel funderingsrapport. Gebruik je dit in een adviesgesprek, leg dan vast dat het een indicatie uit publieke bronnen is en dat funderingsonderzoek nodig is voordat er financiële conclusies aan worden verbonden.</div>`
+      + (score.handmatig?`<div class="panel sec geel">${punt(['geel','Funderingscijfer handmatig aangepast','Het cijfer is aangepast naar '+score.cijfer+' / 10 (berekend op basis van de registers: '+score.berekend+' / 10). Zonder funderingsonderzoek blijft dit een inschatting. Het aangepaste cijfer telt mee in de waarde. Terugzetten kan via «Gegevens aanpassen» bovenaan het dossier: kies bij Funderingscijfer "Berekend".'])}</div>`:'')
       + (altBouwjaar(d)?(()=>{ const al=altBouwjaar(d); return `<div class="panel sec geel">${punt(['geel','Bouwjaar wijkt sterk af: twee funderingscijfers','De BAG noemt '+al.bagBj+', de advertentie '+al.bj+' (verschil '+Math.abs(al.bj-al.bagBj)+' jaar). Met het BAG-bouwjaar is het cijfer '+c+' / 10; met het bouwjaar uit de advertentie '+al.cijfer+' / 10 (verwacht label '+al.label+'; '+al.titel.toLowerCase()+'). Welk jaar geldt, hangt af van herbouw of herstel. Vraag het bouwdossier en eventueel funderingsonderzoek op. Wil je het andere jaar doorrekenen, vul het hieronder in bij «Bouwjaar klopt niet?».'])}</div>`; })():'')
       + `<div class="panel sec ${niv(c)}">${kop}</div>`
       + sectie('A / Woning en ondergrond','Woning en ondergrond','Bouwjaar, bodem, hoogte, grondwater en ligging','blauw',kpis)
@@ -2375,7 +2376,7 @@ function samenvatting(d){
   const wt=d.fundering&&d.fundering.woningtype?d.fundering.woningtype.naam:null;
   return { adres:adr.weergavenaam||a.adres||'', vraagprijs:a.vraagprijs||null, prijsM2:an.prijsPerM2Bag||null, bagM2:vbo.oppervlakte||null,
     bouwjaar:(fb&&fb.bj)||pand.bouwjaar||null, woningtype:wt, label:kb&&kb.lab?kb.lab.label:null, labelBron:kb&&kb.lab?kb.lab.bron:null, wozBuurt:b&&b.wozGem||null,
-    fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
+    fund:fb?fb.score.cijfer:null, fundLabel:fb?fb.score.label:null, fundHandmatig:!!(fb&&fb.score.handmatig), klimaat:kb?kb.eind.cijfer:null, klimaatBand:kb?[kb.eind.onder,kb.eind.boven]:null,
     geluid:r.geluid?r.geluid.db:null, indic:ib&&ib.hoofd?[ib.hoofd.laag,ib.hoofd.hoog]:null, indicMidden:ib&&ib.hoofd?ib.hoofd.midden:null, anker:ib&&ib.anker?ib.anker.waarde:null, betrouwbaarheid:ib?ib.betrouwbaarheid.label+' ('+ib.betrouwbaarheid.score.toLocaleString('nl-NL')+' van 5)':null, indicPositie:ib&&ib.hoofd&&ib.hoofd.positie?ib.hoofd.positie.t:null,
     rood:sig.filter(x=>x.niveau==='rood').length, geel:sig.filter(x=>x.niveau==='geel').length, groen:sig.filter(x=>x.niveau==='groen').length,
     gebouw:(r.gebouw&&r.gebouw.lagen?r.gebouw.lagen+' bouwlagen'+(r.gebouw.hoogte?' ('+(r.gebouw.schuin?'tot nok ca. ':'ca. ')+r.gebouw.hoogte.toLocaleString('nl-NL')+' m, 3D BAG'+(r.gebouw.schuin&&r.gebouw.lagen<=4?', schuin dak: zolder kan meetellen':'')+')':' (3D BAG)'):null), verdieping:a.verdieping||null,
@@ -2410,7 +2411,7 @@ function adviesVoorblad(d){
       ${kv('Indicatieve woningwaarde (geen taxatie)',!sm.indic?'Nog niet berekend: de gegevens zijn niet bevestigd':(sm.indicMidden?eur(sm.indicMidden)+' (midden bij de gekozen staat), ':'')+'bandbreedte '+eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''))}
       ${kv('Eigen WOZ, geïndexeerd (anker 2)',sm.anker?eur(sm.anker):null)}
       ${kv('Betrouwbaarheid indicatie',esc(sm.betrouwbaarheid))}
-      ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
+      ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.fundHandmatig?' · handmatig aangepast':'')+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
       ${kv('Klimaatcijfer',sm.klimaat!=null?fmt(sm.klimaat)+' / 10 (bandbreedte '+fmt(sm.klimaatBand[0])+' tot '+fmt(sm.klimaatBand[1])+')':null)}
       ${kv('Energielabel',sm.label?(/EP-online|handmatig/i.test(sm.labelBron||'')?esc(sm.label)+(/handmatig/i.test(sm.labelBron)?' (handmatig ingevoerd, niet geverifieerd)':' (EP-online)'):'onbekend; schatting uit bouwjaar: '+esc(sm.label)):null)}
       ${kv('Geluidsbelasting (Lden)',sm.geluid!=null?sm.geluid+' dB (RIVM-model)':null)}
@@ -2685,16 +2686,20 @@ function stapKaart(d){
   const link=wozLoketLink(adr), jaarNu=new Date().getFullYear();
   let estLabel=''; try{ estLabel=bj?Klim.labelProxy(+bj).label:''; }catch(e){}
   const curLabel=(d.klimaat&&d.klimaat.labelOverride)||'';
+  let fundBer=null, fundCur=(d.fundering&&d.fundering.cijferOverride)||'';
+  try{ if(d.fundering) fundBer=Fund.bereken(Object.assign({},d.fundering,{cijferOverride:null})).score; }catch(e){}
+  const FUND_OPT=[[8,'uitstekend, label A'],[7,'goed, label A/B'],[6,'voldoende, label B'],[5,'matig, label B/C'],[4,'onvoldoende, label C/D'],[3,'slecht, label D'],[2,'zeer slecht, label D/E']];
   const f=n=>n==null||n===''?'':String(n);
   return `<span class="lab">Stap 2 · Controleer de gegevens</span>
-    <b class="ind-kop" style="font-size:20px">Pas aan wat niet klopt, daarna volgt de woningwaarde</b>
-    <span class="src ind-kopsub">De uitkomst hangt sterk af van deze gegevens. Ze zijn ingevuld uit de registers; wijzig ze als je het beter weet.</span>
+    <b class="ind-kop" style="font-size:20px">Pas aan wat volgens jou anders is, daarna volgt de woningwaarde</b>
+    <span class="src ind-kopsub">De uitkomst hangt sterk af van deze gegevens. Ze zijn ingevuld uit de registers; wijzig ze als het anders is of anders gaat worden.</span>
     <div class="stap-grid">
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
       <div><label for="stt">Woningtype</label><select id="stt"><option value="">Automatisch${auto?' ('+esc(auto)+')':''}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select></div>
       <div><label for="stlbl">Energielabel</label><select id="stlbl"><option value="">${estLabel?'Schatting uit bouwjaar ('+esc(estLabel)+')':'Onbekend'}</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${curLabel===l?' selected':''}>${l}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Geregistreerd label? Zoek het op <a href="https://www.ep-online.nl" target="_blank" rel="noopener">ep-online.nl</a>.</span></div>
+      <div><label for="stfund">Funderingscijfer</label><select id="stfund"><option value="">${fundBer?'Berekend: '+fundBer.cijfer+' · '+esc(fundBer.titel.toLowerCase())+' (label '+esc(fundBer.label)+')':'Berekend uit de registers'}</option>${FUND_OPT.map(([c,t])=>`<option value="${c}"${+fundCur===c?' selected':''}>${c} · ${t}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Zonder funderingsonderzoek blijft dit een inschatting.</span></div>
       <div><label for="stsb">Staat binnen</label><select id="stsb">${staatOpties(+a.staatBinnen||STAAT_STANDAARD)}</select></div>
       <div><label for="stsu">Staat buiten</label><select id="stsu">${staatOpties(+a.staatBuiten||STAAT_STANDAARD)}</select></div>
       <div><label for="stvp">Vraagprijs (optioneel)</label><input type="text" id="stvp" class="eur" inputmode="numeric" value="${a.vraagprijs?esc(Math.round(a.vraagprijs).toLocaleString('nl-NL')):''}" placeholder="€"></div>
@@ -3013,6 +3018,7 @@ document.querySelector('main').addEventListener('click',e=>{
   if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
     $('oWonen').value=v('stw'); $('oPerceel').value=v('stp'); $('oBouwjaar').value=v('stbj'); $('oType').value=v('stt');
     $('oStaatBinnen').value=v('stsb'); $('oStaatBuiten').value=v('stsu'); $('oVraagprijs').value=v('stvp');
+    if(d.fundering){ const fc=parseInt(v('stfund'),10); d.fundering.cijferOverride=(fc>=2&&fc<=8)?fc:null; }
     if(d.klimaat){ d.klimaat.labelOverride=v('stlbl')||null; if(v('stlbl')&&$('oPlak')) delete $('oPlak').dataset.label; }
     const wv=nlNum(v('stwoz')), wj=parseInt(v('stwozj'),10);
     if(wv>0&&wj>=1995&&wj<=new Date().getFullYear()+1){ d.woz=d.woz||{bron:'handmatig',reeks:[]}; d.woz.handmatig=d.woz.handmatig||{}; d.woz.handmatig[wj]=wv; }
@@ -3098,7 +3104,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.16.0'; const MODEL_DATUM = '2026-12-10';
+const MODEL_VERSIE = '2.17.0'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
