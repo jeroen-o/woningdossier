@@ -1564,7 +1564,7 @@ function biedUit(d){
     ${row('Bodbedrag',c=>eur(c.b),'tot')}
     ${row('T.o.v. vraagprijs',c=>c.tov!=null?pct(c.tov):'–')}
     ${row('Per m² BAG-oppervlakte',c=>eur(c.m2bag))}
-    ${row('Per m² advertentie-woonoppervlak',c=>eur(c.m2adv))}
+    ${row('Per m² aangepast woonoppervlak',c=>eur(c.m2adv))}
     ${row('Overdrachtsbelasting',c=>eur(c.ovb))}
     ${row('Overige kosten koper',c=>eur(c.kosten))}
     ${row('Totale verwervingskosten',c=>eur(c.totaal),'tot')}
@@ -1691,7 +1691,7 @@ function verkoopHtml(d,idx){
   const positie=`<table>
       <tr><td class="k">Vraagprijs (invoer)</td><td>${eur(a.vraagprijs)}</td></tr>
       <tr><td class="k">Per m² BAG-oppervlakte</td><td>${eur(an.prijsPerM2Bag)}</td></tr>
-      <tr><td class="k">Per m² advertentie-woonoppervlak</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>
+      <tr><td class="k">Per m² aangepast woonoppervlak</td><td>${eur(an.prijsPerM2Advertentie)}</td></tr>
       ${b&&b.wozGem?`<tr><td class="k">Gemiddelde WOZ-waarde buurt (CBS ${b.wozJaar}, peildatum 1-1-${b.wozPeiljaar})</td><td>${eur(b.wozGem)} <span class="small">— context, geen objectwaarde</span></td></tr>`:''}
       ${b&&b.woningM2?`<tr><td class="k">Gemiddelde woningoppervlakte buurt (BAG)</td><td>${m2(b.woningM2.gemiddelde)}${b.woningM2.objectPercentiel!=null?` <span class="small">— dit object ${m2(vbo.oppervlakte)}, groter dan ${b.woningM2.objectPercentiel}% van de woningen</span>`:''}</td></tr>`:''}
     </table>
