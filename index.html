@@ -720,10 +720,18 @@ function bboxAround(pt,d){ return [pt.lon-d,pt.lat-d*0.62,pt.lon+d,pt.lat+d*0.62
 
 async function geocode(q){
   const fl='id,weergavenaam,type,straatnaam,huisnummer,huis_nlt,huisletter,huisnummertoevoeging,postcode,woonplaatsnaam,gemeentenaam,provincienaam,buurtnaam,buurtcode,wijknaam,wijkcode,centroide_ll,centroide_rd,adresseerbaarobject_id,nummeraanduiding_id,gekoppeld_perceel,gemeentecode';
-  const url=`${LS}?q=${encodeURIComponent(q)}&fq=${encodeURIComponent('type:adres')}&rows=5&fl=${encodeURIComponent(fl)}`;
+  const url=`${LS}?q=${encodeURIComponent(q)}&fq=${encodeURIComponent('type:adres')}&rows=10&fl=${encodeURIComponent(fl)}`;
   const j=await getJson(url);
   const docs=(j.response&&j.response.docs)||[];
   if(!docs.length) throw new Error('Adres niet gevonden in de Locatieserver. Controleer straat, huisnummer en plaats.');
+  // PDOK-score kiest soms "62a" boven "62": kies het resultaat dat exact overeenkomt met wat is getypt
+  const m=q.replace(/\b\d{4}\s?[a-z]{2}\b/i,' ').match(/(?:^|[\s,])(\d+)\s*(?:([a-z])(?![a-z])|[-\s]\s*(\d+|[a-z]{1,2}\d*))?(?=[\s,]|$)/i);
+  if(m){
+    const nr=m[1], hl=(m[2]||'').toLowerCase(), tv=(m[3]||'').toLowerCase();
+    const exact=docs.find(d=>String(d.huisnummer)===nr && (d.huisletter||'').toLowerCase()===hl && (d.huisnummertoevoeging||'').toLowerCase()===tv)
+      || (tv && docs.find(d=>String(d.huisnummer)===nr && (d.huisletter||'').toLowerCase()===tv && !d.huisnummertoevoeging));
+    if(exact) return exact;
+  }
   return docs[0];
 }
 
@@ -3229,7 +3237,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.18.1'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.18.2'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
