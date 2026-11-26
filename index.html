@@ -123,6 +123,7 @@
   .btn-woz:hover{background:#D9912A}
   @media(max-width:560px){.btn-woz{width:100%;text-align:center}}
   .ind-kop{display:block;font-size:30px;color:var(--primary);line-height:1.15;margin:2px 0}
+  .kpi-ind>.src{display:block;margin-top:5px;line-height:1.5}
   .ind-kopsub{display:block;margin-bottom:4px;font-size:15px!important;line-height:1.45;color:var(--text)}
   .stap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin-top:10px}
   .stap-grid label{display:block;font-size:12px;font-weight:600;color:var(--primary);margin-bottom:3px}
@@ -130,11 +131,11 @@
   .stap-grid .small{display:block;margin-top:3px;font-size:11.5px;line-height:1.35}
   @media(max-width:720px){.stap-grid{grid-template-columns:1fr}}
   .ind3{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:6px 0 4px}
-  .ind3>div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+  .ind3>div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:0}
   .ind3>div.mid{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
   .ind3 bdi{white-space:nowrap}
   .ind3 i{display:block;font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-  .ind3 b{display:block;font-size:15px;color:var(--primary);white-space:nowrap;margin-top:2px}
+  .ind3 b{display:block;font-size:14.5px;line-height:1.3;color:var(--primary);white-space:normal;margin-top:2px}
   .ind3 span{display:block;font-size:12px;color:var(--muted)}
   @media(max-width:960px){.ind3{grid-template-columns:repeat(3,minmax(0,1fr))}}
   @media(max-width:720px){.ind3{grid-template-columns:1fr}.ind3>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}.ind3 i{min-width:64px}.ind3 span{margin-left:auto;white-space:nowrap}}
@@ -224,6 +225,21 @@
   .navbtn[aria-current=page]{background:var(--accent);border-color:var(--accent);color:var(--primary)}
   @media(max-width:560px){.hoofdnav{margin-left:0;width:100%}.navbtn{flex:1 1 auto}}
   .dlg{border:none;border-radius:14px;padding:0;max-width:720px;width:calc(100% - 28px);max-height:86vh;box-shadow:0 20px 60px rgba(0,30,60,.35);color:var(--text)}
+  .dlg-breed{max-width:860px}
+  .av-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+  .av-grid label{display:block;font-size:12px;font-weight:600;color:var(--primary);margin-bottom:3px}
+  .av-grid input:not([type=file]){width:100%;font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
+  .av-grid input:not([type=file]):focus{outline:2px solid var(--accent);outline-offset:1px}
+  .av-grid input[type=file]{width:100%;font-size:13px}
+  @media(max-width:640px){.av-grid{grid-template-columns:1fr}}
+  .av-preview{border:1px dashed var(--line);border-radius:10px;padding:10px;background:var(--bg)}
+  .av-embed{white-space:pre-wrap;word-break:break-all;background:#F3F6F9;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;margin:6px 0}
+  .adv-balk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:10px 16px;margin:0 0 14px}
+  .adv-balk img{max-height:44px;max-width:160px;object-fit:contain}
+  .adv-balk b{display:block;color:var(--primary);font-size:16px}
+  .adv-balk .adv-adres{font-size:13px;color:var(--muted)}
+  .adv-contact{margin-left:auto;display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13.5px}
+  @media print{.adv-balk{display:none!important}}
   .dlg::backdrop{background:rgba(0,30,60,.55)}
   .dlg-kop{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;border-bottom:3px solid var(--accent);position:sticky;top:0;background:#fff}
   .dlg-kop h2{margin:0;font-size:20px;color:var(--primary)}
@@ -326,12 +342,14 @@
     </div>
     <nav class="hoofdnav" aria-label="Hoofdmenu">
       <button type="button" class="navbtn" id="navHome">Home</button>
+      <button type="button" class="navbtn" id="navAdviseur">Voor adviseurs</button>
       <button type="button" class="navbtn" id="navOver">Over ons</button>
       <button type="button" class="navbtn" id="navDisclaimer">Disclaimer</button>
     </nav>
   </div>
 </header>
 <main>
+  <div id="advBalk" class="adv-balk hidden"></div>
   <div class="panel zoekpanel">
     <div class="zoek">
       <input type="text" id="q" placeholder="Adres met huisnummer of Funda-link" autocomplete="off">
@@ -415,11 +433,8 @@
         <div><label for="oStaatBuiten">Staat buiten</label><select id="oStaatBuiten" data-staat="buiten"></select><p class="hint" id="hStaatBuiten"></p></div>
       </div>
       <div class="row" style="margin-top:12px">
-        <div><label for="oAdviseur">Adviseur (voor het adviseursrapport)</label><input type="text" id="oAdviseur" autocomplete="off"></div>
-        <div><label for="oKantoor">Kantoor</label><input type="text" id="oKantoor" autocomplete="off"></div>
         <div><label for="oType">Woningtype (overschrijft de herkenning)</label><select id="oType"><option value="">— Automatisch —</option><option value="Appartement">Appartement</option><option value="Tussenwoning">Tussenwoning</option><option value="Hoekwoning">Hoekwoning</option><option value="2-onder-1-kapwoning">2-onder-1-kapwoning</option><option value="Vrijstaande woning">Vrijstaande woning</option></select></div>
         <div><label for="oVerdieping">Verdieping en type (bijv. 1e verdieping, galerijflat)</label><input type="text" id="oVerdieping" autocomplete="off"></div>
-        <div><label for="oLogo">Logo (png of jpg, blijft in het geheugen)</label><input type="file" id="oLogo" accept="image/png,image/jpeg"></div>
         <div><label for="oKlant">Klant</label><input type="text" id="oKlant" autocomplete="off"></div>
       </div>
       <div style="margin-top:12px"><label for="oNotitie">Toelichting adviseur (optioneel)</label><textarea id="oNotitie" rows="2"></textarea></div>
@@ -453,6 +468,7 @@
     <div class="voet-kol">
       <h4>Menu</h4>
       <a href="#" id="voetHome">Home</a>
+      <a href="#" data-open-adviseur>Voor adviseurs</a>
       <a href="#" data-open-over>Over ons</a>
       <a href="#" data-open-disclaimer>Disclaimer</a>
       <a href="#insluiten">Insluiten op je site</a>
@@ -478,6 +494,33 @@
   </div>
 </footer>
 
+<dialog id="dlgAdviseur" class="dlg dlg-breed" aria-labelledby="dlgAdvKop">
+  <div class="dlg-kop"><h2 id="dlgAdvKop">Voor adviseurs</h2><button type="button" class="dlg-sluit" data-sluit aria-label="Sluiten">×</button></div>
+  <div class="dlg-body">
+    <p>Zet je eigen bedrijfsnaam, adres, e-mailadres, telefoonnummer en logo in het rapport, en sluit PandWise met jouw gegevens in op je website. Er wordt niets opgeslagen: de gegevens staan alleen in dit venster en in de insluitcode die je zelf kopieert.</p>
+    <h3>Jouw gegevens</h3>
+    <div class="av-grid">
+      <div><label for="avBedrijf">Bedrijfsnaam</label><input type="text" id="avBedrijf" maxlength="80" autocomplete="organization"></div>
+      <div><label for="avNaam">Naam adviseur</label><input type="text" id="avNaam" maxlength="80" autocomplete="name"></div>
+      <div><label for="avAdres">Adres (straat en huisnummer)</label><input type="text" id="avAdres" maxlength="120" autocomplete="street-address"></div>
+      <div><label for="avPlaats">Postcode en plaats</label><input type="text" id="avPlaats" maxlength="80" autocomplete="off"></div>
+      <div><label for="avEmail">E-mailadres</label><input type="email" id="avEmail" maxlength="120" autocomplete="email"></div>
+      <div><label for="avTel">Telefoonnummer</label><input type="tel" id="avTel" maxlength="24" autocomplete="tel"></div>
+      <div><label for="avWeb">Website (https://…)</label><input type="url" id="avWeb" maxlength="300" placeholder="https://"></div>
+      <div><label for="avKvk">KvK- of AFM-nummer (optioneel)</label><input type="text" id="avKvk" maxlength="40" autocomplete="off"></div>
+      <div><label for="avLogoFile">Logo uploaden (png of jpg, maximaal 600 kB)</label><input type="file" id="avLogoFile" accept="image/png,image/jpeg"></div>
+      <div><label for="avLogoUrl">of een https-link naar je logo</label><input type="url" id="avLogoUrl" maxlength="300" placeholder="https://"></div>
+    </div>
+    <h3>Voorbeeld</h3>
+    <div id="avPreview" class="av-preview"><span class="small">Vul je gegevens in om het voorbeeld te zien.</span></div>
+    <h3>Insluiten op je website</h3>
+    <p class="small">Kopieer de code en plak die in je website of in Google Sites (Invoegen, Insluiten). Je naam, adres, e-mailadres, telefoonnummer en logo staan in de code en komen bovenaan de tool en in elk rapport. Een geüpload logo past niet in de code; gebruik daarvoor een https-link.</p>
+    <pre id="avEmbed" class="av-embed"></pre>
+    <div class="btns"><button type="button" class="sec-btn" id="avKopie">Code kopiëren</button><button type="button" class="link" id="avWis">Gegevens wissen</button></div>
+    <p class="small" id="avLogoHint"></p>
+    <div class="notice" style="margin-top:12px"><b>Voor adviseurs.</b> PandWise geeft algemene informatie en geen advies. Jij blijft verantwoordelijk voor je eigen advies, je adviesdossier en je vermeldingen, zoals je AFM-vergunning. Vul een AFM- of KvK-nummer alleen in als dat voor jouw kantoor klopt. Laat klanten niet de indruk krijgen dat de indicatieve woningwaarde een taxatie is. Een logo via een https-link wordt rechtstreeks van jouw server geladen.</div>
+  </div>
+</dialog>
 <dialog id="dlgOver" class="dlg" aria-labelledby="dlgOverKop">
   <div class="dlg-kop"><h2 id="dlgOverKop">Over PandWise</h2><button type="button" class="dlg-sluit" data-sluit aria-label="Sluiten">×</button></div>
   <div class="dlg-body">
@@ -2269,7 +2312,40 @@ function duurzaamKnop(d){
   return `<div class="panel woz-knop duurzaam-knop"><div><h2 style="margin:0">Duurzaamheidsprofiel van deze woning</h2><p class="small" style="margin:4px 0 0">Bekijk verduurzamingsmogelijkheden, besparing en extra leenruimte voor energiebesparende maatregelen op duurzaamheidsprofiel.nl.</p></div>
     <a class="btn-woz" href="${esc(url)}" target="_blank" rel="noopener">Bekijk duurzaamheidsprofiel ↗</a></div>`;
 }
-let adviesLogo=null; // logo van de adviseur, alleen in het geheugen
+/* ============ adviseursprofiel (alleen in het geheugen; komt in rapporten en in de insluitcode) ============ */
+let advLogoData=null;
+const advWaarde=id=>(($(id)||{}).value||'').trim();
+const advOkEmail=e=>e.length<=120&&/^[^\s@<>"']{1,64}@[^\s@<>"']{1,100}\.[^\s@<>"']{2,24}$/.test(e);
+const advOkTel=t=>/^[0-9+()\-.\s]{6,24}$/.test(t);
+const advOkUrl=u=>/^https:\/\/[^\s<>"']{3,300}$/i.test(u);
+function advProfiel(){
+  const em=advWaarde('avEmail'), tl=advWaarde('avTel'), wb=advWaarde('avWeb'), lg=advWaarde('avLogoUrl');
+  return {bedrijf:advWaarde('avBedrijf').slice(0,80), naam:advWaarde('avNaam').slice(0,80), adres:advWaarde('avAdres').slice(0,120), plaats:advWaarde('avPlaats').slice(0,80),
+    email:advOkEmail(em)?em:'', tel:advOkTel(tl)?tl:'', web:advOkUrl(wb)?wb:'', kvk:advWaarde('avKvk').slice(0,40), logo:advLogoData||(advOkUrl(lg)?lg:'')};
+}
+const advLeeg=P=>!(P.bedrijf||P.naam||P.adres||P.plaats||P.email||P.tel||P.web||P.kvk||P.logo);
+const advAdresRegel=P=>[P.adres,P.plaats].filter(Boolean).join(', ');
+const advContactRegel=P=>[P.bedrijf||P.naam,advAdresRegel(P),P.tel,P.email,P.web&&P.web.replace(/^https:\/\//,'')].filter(Boolean).join(' · ');
+function advBalkHtml(P){
+  const naam=P.bedrijf||P.naam, sub=[P.bedrijf&&P.naam?P.naam:'',advAdresRegel(P)].filter(Boolean).join(' · ');
+  return (P.logo?`<img src="${esc(P.logo)}" alt="Logo ${esc(naam)}">`:'')+`<div><b>${esc(naam)}</b><span class="adv-adres">${esc(sub)}</span></div><div class="adv-contact">`
+    +(P.tel?`<a href="tel:${esc(P.tel.replace(/[^0-9+]/g,''))}">${esc(P.tel)}</a>`:'')+(P.email?`<a href="mailto:${esc(P.email)}">${esc(P.email)}</a>`:'')
+    +(P.web?`<a href="${esc(P.web)}" target="_blank" rel="noopener">${esc(P.web.replace(/^https:\/\//,''))}</a>`:'')+'</div>';
+}
+function advEmbedCode(){
+  const P=advProfiel(), basis=(location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://pandwise.nl/', q=new URLSearchParams(); q.set('embed','1');
+  if(P.naam) q.set('adviseur',P.naam); if(P.bedrijf) q.set('kantoor',P.bedrijf); if(advAdresRegel(P)) q.set('adres',advAdresRegel(P));
+  if(P.email) q.set('email',P.email); if(P.tel) q.set('tel',P.tel); if(P.web) q.set('web',P.web); if(P.kvk) q.set('kvk',P.kvk);
+  { const lu=advWaarde('avLogoUrl'); if(advOkUrl(lu)) q.set('logo',lu); }
+  return '<iframe src="'+basis+'?'+q.toString()+'" title="Woningcheck'+(P.bedrijf?' van '+P.bedrijf.replace(/["<>]/g,''):'')+'" style="width:100%;height:1000px;border:0" loading="lazy"></iframe>';
+}
+function advVernieuw(){
+  const P=advProfiel(), leeg=advLeeg(P), balk=$('advBalk'), pv=$('avPreview'), em=$('avEmbed'), hint=$('avLogoHint');
+  if(balk){ balk.innerHTML=leeg?'':advBalkHtml(P); balk.classList.toggle('hidden',leeg); }
+  if(pv) pv.innerHTML=leeg?'<span class="small">Vul je gegevens in om het voorbeeld te zien.</span>':'<div class="adv-balk" style="margin:0">'+advBalkHtml(P)+'</div>';
+  if(em) em.textContent=advEmbedCode();
+  if(hint) hint.textContent=(advLogoData&&!advOkUrl(advWaarde('avLogoUrl')))?'Let op: je geüploade logo staat wel in het rapport, maar niet in de insluitcode. Vul een https-link naar je logo in om het ook op je website te tonen.':'';
+}
 function uitgangspuntenPaneel(){ return `<div class="panel sec"><div class="kop"><div><span class="num-eye">Slot</span><h2>Uitgangspunten en beperkingen</h2></div></div>${uitgangspuntenHtml().replace(/^<h3>[^<]*<\/h3>/,'')}</div>`; }
 function samenvatting(d){
   const r=d.registers||{}, adr=r.adres||{}, a=d.advertentie||{}, an=d.analyse||{}, pand=r.pand||{}, vbo=r.verblijfsobject||{}, b=r.buurt;
@@ -2304,9 +2380,9 @@ function adviesVoorblad(d){
   const fmt=n=>n==null?'–':(Math.round(n*2)/2).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1});
   const kv=(k,x)=>(x==null||x===''||x==='null')?'':`<tr><td class="k">${k}</td><td>${x}</td></tr>`;
   let foto=''; try{ const a=d.registers.adres; if(a&&a.lon){ const bb=kaartBbox(d,900,600); const bx=[bb.minLat,bb.minLon,bb.maxLat,bb.maxLon].map(x=>x.toFixed(7)).join(','); foto=`<img class="voorblad-foto" alt="Luchtfoto" src="${LUCHT}?service=WMS&version=1.3.0&request=GetMap&layers=Actueel_orthoHR&styles=&crs=EPSG:4326&bbox=${bx}&width=900&height=600&format=image/jpeg"><p class="small" style="margin:2px 0 12px">Luchtfoto: PDOK. De kadastrale kaart staat in het dossier.</p>`; } }catch(e){}
-  return `<div class="panel sec blauw voorblad"><div class="kop"><div><span class="num-eye">Voorblad</span><h2>Adviseursrapport woningcheck</h2><p class="sub">${esc(sm.adres)}</p></div>${adviesLogo?`<img class="voorblad-logo" alt="Logo" src="${esc(adviesLogo)}">`:''}</div>${foto}
+  return `<div class="panel sec blauw voorblad"><div class="kop"><div><span class="num-eye">Voorblad</span><h2>Adviseursrapport woningcheck</h2><p class="sub">${esc(sm.adres)}</p></div>${advProfiel().logo?`<img class="voorblad-logo" alt="Logo" src="${esc(advProfiel().logo)}">`:''}</div>${foto}
     <div class="tabwrap"><table>
-      ${kv('Klant',esc(v('oKlant')))}${kv('Adviseur',esc(v('oAdviseur')))}${kv('Kantoor',esc(v('oKantoor')))}${kv('Datum',esc(datum))}
+      ${(()=>{ const P=advProfiel(); return kv('Klant',esc(v('oKlant')))+kv('Adviseur',esc(P.naam))+kv('Kantoor',esc(P.bedrijf))+kv('Adres',esc(advAdresRegel(P)))+kv('Telefoon',esc(P.tel))+kv('E-mail',esc(P.email))+kv('Website',esc(P.web.replace(/^https:\/\//,'')))+kv('KvK / AFM',esc(P.kvk))+kv('Datum',esc(datum)); })()}
     </table></div>
     <h3>Samenvatting</h3>
     <div class="tabwrap"><table>
@@ -2451,7 +2527,7 @@ function rapportAfdrukken(i,tabOverride){
   ${advies?adviesVoorblad(d):''}
   ${c.innerHTML}
   ${advies?uitgangspuntenPaneel():''}
-  <div class="rap-voet">Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.${advies?' Scores en bandbreedtes berusten deels op expertaannames en zijn niet gekalibreerd; gebruik ze niet als enige onderbouwing van een bod, een financiering of een taxatie. Geluidswaarden zijn RIVM-modelwaarden en geen metingen.':''}</div>
+  <div class="rap-voet">${advContactRegel(advProfiel())?'<b>Opgesteld door:</b> '+esc(advContactRegel(advProfiel()))+'<br>':''}Bronnen: BAG en BRK Kadastrale Kaart, CBS Wijken en Buurten, luchtfoto en Locatieserver via PDOK; gegevens opgehaald op ${esc(new Date(d.gemaakt).toLocaleString('nl-NL'))}. Dit rapport is een feitencheck en rekenkundige doorrekening van ingevoerde gegevens. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI, geen financieel advies in de zin van de Wft en geen juridisch of fiscaal advies.${advies?' Scores en bandbreedtes berusten deels op expertaannames en zijn niet gekalibreerd; gebruik ze niet als enige onderbouwing van een bod, een financiering of een taxatie. Geluidswaarden zijn RIVM-modelwaarden en geen metingen.':''}</div>
 </main>
 <script>
   (function(){ var imgs=[].slice.call(document.images), n=imgs.length, klaar=false;
@@ -2841,7 +2917,10 @@ function parseFundaTekst(t){
   const el=T.match(/Energielabel\s*:?\s*([A-G](?:\+{1,4})?)\b/i); r.energielabel=el?el[1].toUpperCase():null;
   return r;
 }
-$('oLogo').addEventListener('change',()=>{ const f=$('oLogo').files&&$('oLogo').files[0]; if(!f||f.size>600000){ adviesLogo=null; if(f) alert('Kies een logo kleiner dan 600 kB.'); return; } const r=new FileReader(); r.onload=()=>{ adviesLogo=String(r.result); }; r.readAsDataURL(f); });
+$('avLogoFile').addEventListener('change',()=>{ const f=$('avLogoFile').files&&$('avLogoFile').files[0]; if(!f||f.size>600000||!/^image\/(png|jpeg)$/.test(f.type)){ advLogoData=null; if(f) alert('Kies een png- of jpg-logo kleiner dan 600 kB.'); advVernieuw(); return; } const r=new FileReader(); r.onload=()=>{ advLogoData=String(r.result); advVernieuw(); }; r.readAsDataURL(f); });
+if($('dlgAdviseur')) $('dlgAdviseur').addEventListener('input',advVernieuw);
+if($('avKopie')) $('avKopie').onclick=()=>{ const t=advEmbedCode(); if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(t).then(()=>toonMsg('Code gekopieerd.')).catch(()=>prompt('Kopieer:',t)); else prompt('Kopieer:',t); };
+if($('avWis')) $('avWis').onclick=()=>{ ['avBedrijf','avNaam','avAdres','avPlaats','avEmail','avTel','avWeb','avKvk','avLogoUrl','avLogoFile'].forEach(i=>{ if($(i)) $(i).value=''; }); advLogoData=null; advVernieuw(); };
 $('btnPlak').onclick=()=>{
   const r=parseFundaTekst($('oPlak').value), m=$('plakMsg'), gevuld=[];
   if(r.vraagprijs){ $('oVraagprijs').value=r.vraagprijs.toLocaleString('nl-NL'); gevuld.push('vraagprijs'); }
@@ -2986,7 +3065,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.14.3'; const MODEL_DATUM = '2026-12-03';
+const MODEL_VERSIE = '2.15.1'; const MODEL_DATUM = '2026-12-10';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
@@ -2998,6 +3077,8 @@ const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet 
   const bl=$('dlgBedrijf'); if(bl) bl.textContent=info; else null;
   if($('navHome')) $('navHome').onclick=()=>{ sluitAlles(); if(dossiers.length&&$('btnNieuw')) $('btnNieuw').click(); window.scrollTo({top:0,behavior:'smooth'}); };
   if($('navOver')) $('navOver').onclick=()=>open(dlg.over);
+  if($('navAdviseur')) $('navAdviseur').onclick=()=>{ open($('dlgAdviseur')); if(typeof advVernieuw==='function') advVernieuw(); };
+  document.querySelectorAll('[data-open-adviseur]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); open($('dlgAdviseur')); if(typeof advVernieuw==='function') advVernieuw(); }));
   if($('navDisclaimer')) $('navDisclaimer').onclick=()=>open(dlg.disc);
   document.querySelectorAll('.dlg').forEach(d=>{ d.addEventListener('click',e=>{ if(e.target===d||e.target.closest('[data-sluit]')) d.close(); }); });
   if($('voetHome')) $('voetHome').onclick=e=>{ e.preventDefault(); $('navHome').click(); };
@@ -3011,9 +3092,11 @@ const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet 
 /* embed- en voorvulparameters in de query string (de hash blijft voor deellinks) */
 (function(){ try{ const p=new URLSearchParams(location.search);
   if(p.get('embed')==='1') document.body.classList.add('embed');
-  if(p.get('adviseur')&&$('oAdviseur')) $('oAdviseur').value=p.get('adviseur').slice(0,80);
-  if(p.get('kantoor')&&$('oKantoor')) $('oKantoor').value=p.get('kantoor').slice(0,80);
-  const lg=p.get('logo'); if(lg&&/^https:\/\//i.test(lg)&&lg.length<400) adviesLogo=lg;
+  const pv=(k,max)=>(p.get(k)||'').slice(0,max||120), zet=(id,w)=>{ if($(id)&&w) $(id).value=w; };
+  zet('avNaam',pv('adviseur',80)); zet('avBedrijf',pv('kantoor',80)); zet('avAdres',pv('adres',120)); zet('avKvk',pv('kvk',40));
+  if(advOkEmail(pv('email'))) zet('avEmail',pv('email')); if(advOkTel(pv('tel',24))) zet('avTel',pv('tel',24));
+  if(advOkUrl(pv('web',300))) zet('avWeb',pv('web',300)); if(advOkUrl(pv('logo',300))) zet('avLogoUrl',pv('logo',300));
+  advVernieuw();
   const q=p.get('q'); if(q&&!location.hash.includes('q=')){ $('q').value=q.slice(0,200); $('q').oninput(); if(p.get('auto')==='1') $('btnGo').click(); }
  }catch(e){} })();
 function laadDeelLink() { try { const p=new URLSearchParams(location.hash.slice(1)); const q=p.get('q'); if(!q) return; $('q').value=q; $('q').oninput(); if(p.get('vp')) $('oVraagprijs').value=(+p.get('vp')).toLocaleString('nl-NL'); if(p.get('st')) $('oStatus').value=p.get('st'); if(p.get('dt')) $('oPrijsdatum').value=p.get('dt'); $('btnGo').click(); } catch(e){} }
