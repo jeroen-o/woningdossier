@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.15.0 · december 2026**  
+> **Model 2.16.0 · december 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,11 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Energielabel en fundering in de waarde (2.16.0)
+- **Energielabel geschat uit het bouwjaar** aan de hand van de Bouwbesluit-periodes (EPC-eisen en eerdere isolatie-eisen), met een tabel "Hoe schatten we het energielabel?" in het klimaattabblad. Een geregistreerd of zelf ingevuld label gaat altijd voor; verbouwing en isolatie sinds de bouw zijn niet meegenomen. Het label staat als blokje in het dossier (met bron) en is aan te passen in de tussenstap en in het klimaattabblad.
+- **Tellen mee in de waarde (aannames, niet gekalibreerd):** label t.o.v. label D, ongeveer enkele procenten per stap (A tot A+++ +3,5 tot +5%, B +2%, C +0,5%, E -2%, F -4%, G -6%); een geschat label telt voor de helft. Het funderingscijfer (2 tot 8) corrigeert van +1% bij 8, neutraal bij 7 en tot -15% bij 2. De tabel toont D4 (energielabel) en D5 (fundering).
+- De indicatie ververst direct na aanpassen van het label of het bouwjaar in het funderingstabblad.
 
 ### Voor adviseurs (2.15.0)
 - **Knop "Voor adviseurs"** in het menu (en de footer) opent een venster met bedrijfsnaam, naam adviseur, adres, postcode en plaats, e-mailadres, telefoonnummer, website, KvK- of AFM-nummer en logo (upload of https-link), met een live voorbeeld.
