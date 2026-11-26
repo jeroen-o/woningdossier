@@ -129,12 +129,14 @@
   .stap-grid input,.stap-grid select{width:100%}
   .stap-grid .small{display:block;margin-top:3px;font-size:11.5px;line-height:1.35}
   @media(max-width:720px){.stap-grid{grid-template-columns:1fr}}
-  .ind3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+  .ind3{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:6px 0 4px}
   .ind3>div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
   .ind3>div.mid{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .ind3 bdi{white-space:nowrap}
   .ind3 i{display:block;font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .ind3 b{display:block;font-size:15px;color:var(--primary);white-space:nowrap;margin-top:2px}
   .ind3 span{display:block;font-size:12px;color:var(--muted)}
+  @media(max-width:960px){.ind3{grid-template-columns:repeat(3,minmax(0,1fr))}}
   @media(max-width:720px){.ind3{grid-template-columns:1fr}.ind3>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}.ind3 i{min-width:64px}.ind3 span{margin-left:auto;white-space:nowrap}}
   .kpi-ind{background:#FFF6E5;border:1px dashed var(--accent);grid-column:1/-1}
   .kpi b.band{font-size:21px}
@@ -215,6 +217,48 @@
   .del{border:none;background:none;color:var(--err);padding:2px 6px;font-weight:600}
   .del:hover{box-shadow:none}
   /* skeleton */
+  header .wrap.kopbalk{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .hoofdnav{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .navbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:99px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer}
+  .navbtn:hover,.navbtn:focus-visible{background:rgba(255,255,255,.24);border-color:#fff;outline:none}
+  .navbtn[aria-current=page]{background:var(--accent);border-color:var(--accent);color:var(--primary)}
+  @media(max-width:560px){.hoofdnav{margin-left:0;width:100%}.navbtn{flex:1 1 auto}}
+  .dlg{border:none;border-radius:14px;padding:0;max-width:720px;width:calc(100% - 28px);max-height:86vh;box-shadow:0 20px 60px rgba(0,30,60,.35);color:var(--text)}
+  .dlg::backdrop{background:rgba(0,30,60,.55)}
+  .dlg-kop{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;border-bottom:3px solid var(--accent);position:sticky;top:0;background:#fff}
+  .dlg-kop h2{margin:0;font-size:20px;color:var(--primary)}
+  .dlg-sluit{background:none;border:none;font-size:28px;line-height:1;color:var(--muted);cursor:pointer;padding:0 6px}
+  .dlg-body{padding:6px 22px 20px;overflow:auto;max-height:calc(86vh - 70px);font-size:14.5px}
+  .dlg-body h3{font-size:15px;color:var(--primary);margin:16px 0 4px}
+  .dlg-lijst{padding-left:20px} .dlg-lijst li{padding:5px 0}
+  @media print{.dlg{display:none!important}}
+  .laad{display:flex;gap:22px;align-items:center;padding:6px 4px 10px}
+  .laad h2{margin:0 0 4px;font-size:20px}
+  .laad p{margin:4px 0;font-size:14px}
+  .laad-tekst{flex:1;min-width:0}
+  .laad-melding{color:var(--primary);font-weight:600;min-height:20px}
+  .laad-balk{height:10px;border-radius:99px;background:#E6ECF2;overflow:hidden;margin:10px 0 6px}
+  .laad-balk i{display:block;height:100%;width:2%;border-radius:99px;background:linear-gradient(90deg,var(--primary-2),var(--accent));background-size:200% 100%;animation:laadglans 1.6s linear infinite;transition:width .8s ease}
+  @keyframes laadglans{to{background-position:-200% 0}}
+  .zandloper{width:78px;height:98px;flex:none}
+  .zl-flip{transform-origin:32px 40px;animation:zlflip 6s ease-in-out infinite}
+  .zl-top,.zl-bot{transform-box:fill-box;transform-origin:50% 100%}
+  .zl-top{animation:zltop 6s linear infinite}
+  .zl-bot{animation:zlbot 6s linear infinite}
+  .zl-draad{stroke-dasharray:3 4;animation:zldraad .5s linear infinite}
+  @keyframes zlflip{0%,86%{transform:rotate(0)}100%{transform:rotate(180deg)}}
+  @keyframes zltop{0%{transform:scaleY(1)}84%,100%{transform:scaleY(0)}}
+  @keyframes zlbot{0%{transform:scaleY(0)}84%,100%{transform:scaleY(1)}}
+  @keyframes zldraad{to{stroke-dashoffset:-7}}
+  .laad-bronnen{margin:6px 0 14px}
+  .laad-bronnen span{display:inline-flex;align-items:center;gap:6px}
+  .laad-bronnen span::before{content:'';width:9px;height:9px;border-radius:50%;background:#CBD5E0;flex:none}
+  .laad-bronnen span.ok::before{content:'✓';width:auto;height:auto;background:none;font-weight:800;line-height:1}
+  .laad-bronnen span.fail::before{content:'!';width:auto;height:auto;background:none;font-weight:800;line-height:1}
+  .laad-bronnen span.busy::before{width:9px;height:9px;background:none;border:2px solid var(--accent);border-top-color:transparent;animation:draai .8s linear infinite}
+  @keyframes draai{to{transform:rotate(360deg)}}
+  @media(max-width:560px){.laad{flex-direction:column;text-align:center}.zandloper{width:64px;height:80px}}
+  @media(prefers-reduced-motion:reduce){.zl-flip,.zl-top,.zl-bot,.zl-draad,.laad-balk i,.laad-bronnen span.busy::before{animation:none}.zl-top{transform:scaleY(.5)}.zl-bot{transform:scaleY(.5)}}
   .skel{background:linear-gradient(90deg,#EEF2F6 25%,#F7F9FB 50%,#EEF2F6 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px;height:18px;margin:8px 0}
   @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
   /* sticky balk */
@@ -243,8 +287,20 @@
   .bronrij{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
   .bronrij a{font-weight:600}
   .bronrij .sig{flex:none}
-  .over-pw{margin:26px 0 8px;font-size:13px;color:var(--muted)}
-  .over-pw h3{font-size:14px;color:var(--primary);margin:10px 0 4px}
+  .voet{background:linear-gradient(135deg,#003057 0%,#0A4A80 100%);color:#D6E4F2;margin-top:10px;border-top:4px solid var(--accent)}
+  .voet-wrap{max-width:1180px;margin:0 auto;padding:34px 24px 22px;display:grid;grid-template-columns:1.5fr 1fr 1.1fr 1.3fr;gap:30px}
+  .voet-kol h4{font-family:var(--head);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin:0 0 10px}
+  .voet-kol a{display:block;color:#D6E4F2;text-decoration:none;font-size:14px;padding:3px 0}
+  .voet-kol a:hover,.voet-kol a:focus-visible{color:#fff;text-decoration:underline;outline:none}
+  .voet-kol p{margin:0 0 8px;font-size:13.5px;line-height:1.55}
+  .voet-logo{display:flex;align-items:center;gap:10px;font-family:var(--head);font-size:24px;font-weight:700;color:#fff;margin-bottom:8px}
+  .voet-logo svg{width:34px;height:34px} .voet-logo b{color:var(--accent);font-weight:800}
+  .voet-klein{font-size:12.5px!important;opacity:.85}
+  .voet-onder{border-top:1px solid rgba(255,255,255,.18);max-width:1180px;margin:0 auto;padding:14px 24px 22px;display:flex;justify-content:space-between;gap:10px 24px;flex-wrap:wrap;font-size:12.5px;color:#B9CFE5}
+  .voet-onder a{color:#fff}
+  @media(max-width:900px){.voet-wrap{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.voet-wrap{grid-template-columns:1fr;padding:26px 18px 14px}.voet-onder{padding:14px 18px 20px}}
+  @media print{.voet{display:none!important}}
   .insluit pre{white-space:pre-wrap;word-break:break-all;background:#F3F6F9;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;margin:6px 0}
   body.embed header,body.embed .noembed{display:none!important}
   ol.stappen{margin:0;padding-left:22px}
@@ -263,11 +319,16 @@
 </head>
 <body>
 <header>
-  <div class="wrap">
+  <div class="wrap kopbalk">
     <div>
       <h1>PandWise</h1>
       <p>Jouw complete woningdossier en woningwaarderapport</p>
     </div>
+    <nav class="hoofdnav" aria-label="Hoofdmenu">
+      <button type="button" class="navbtn" id="navHome">Home</button>
+      <button type="button" class="navbtn" id="navOver">Over ons</button>
+      <button type="button" class="navbtn" id="navDisclaimer">Disclaimer</button>
+    </nav>
   </div>
 </header>
 <main>
@@ -293,7 +354,7 @@
     <h2 id="watDoetKop" style="margin-top:0">Wat doet PandWise?</h2>
     <p class="wd-lead">PandWise is een gratis feitencheck voor een woning. Vul een adres of Funda-link in en je krijgt in één dossier wat de openbare registers over het pand zeggen, met een herleidbare indicatie van de waarde.</p>
     <div class="wd-grid">
-      <div><b>Waarde-indicatie</b><span>Drie scenario's (slecht, redelijk, goed) met bandbreedte, gebaseerd op buurt-WOZ, prijsindex en eventueel de eigen WOZ van het pand.</span></div>
+      <div><b>Waarde-indicatie</b><span>Vijf scenario's (slecht, matig, redelijk, goed, uitstekend) met bandbreedte, gebaseerd op buurt-WOZ, prijsindex en eventueel de eigen WOZ van het pand.</span></div>
       <div><b>Fundering</b><span>Cijfer op bouwjaar, bodem, ligging en RVO-aandachtsgebieden, met de volledige rekentabel.</span></div>
       <div><b>Klimaat en geluid</b><span>Overstroming, hitte, wateroverlast, droogte en geluidsbelasting op het adres.</span></div>
       <div><b>Signalen</b><span>Wat in de advertentie afwijkt van BAG en kadaster: oppervlakte, perceel, bouwjaar en trefwoorden in de tekst.</span></div>
@@ -304,7 +365,27 @@
     <p class="small wd-slot">Een indicatie en geen taxatie, waardebepaling of financieel advies. Zie "Waarom gratis?" onderaan.</p>
   </section>
 
-  <div id="skelet" class="panel hidden">
+  <div id="skelet" class="panel hidden" role="status" aria-live="polite">
+    <div class="laad">
+      <svg class="zandloper" viewBox="0 0 64 80" aria-hidden="true">
+        <defs><clipPath id="zlGlas"><path d="M14 8c0 22 14 26 14 32S14 50 14 72h36c0-22-14-26-14-32s14-10 14-32z"/></clipPath></defs>
+        <g class="zl-flip">
+          <path d="M14 8c0 22 14 26 14 32S14 50 14 72h36c0-22-14-26-14-32s14-10 14-32z" fill="#EAF2FB"/>
+          <rect class="zl-top" x="10" y="8" width="44" height="32" fill="#E5A138" clip-path="url(#zlGlas)"/>
+          <rect class="zl-bot" x="10" y="40" width="44" height="32" fill="#E5A138" clip-path="url(#zlGlas)"/>
+          <line class="zl-draad" x1="32" y1="38" x2="32" y2="70" stroke="#E5A138" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M14 8c0 22 14 26 14 32S14 50 14 72h36c0-22-14-26-14-32s14-10 14-32z" fill="none" stroke="#003057" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M8 6h48M8 74h48" stroke="#003057" stroke-width="5" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <div class="laad-tekst">
+        <h2>Even geduld: we raadplegen alle registers</h2>
+        <p>Dit kan tot een minuut duren. We halen de gegevens op bij het Kadaster (BAG en BRK), CBS, RIVM, RVO, 3D BAG en meer. Laat dit venster open staan.</p>
+        <div class="laad-balk" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="laadBalk"></i></div>
+        <p class="laad-melding" id="laadMelding">Adres opzoeken…</p>
+      </div>
+    </div>
+    <div id="bronnen" class="bron laad-bronnen"></div>
     <div class="skel" style="width:40%;height:28px"></div>
     <div class="skel" style="width:25%"></div>
     <div class="kpis"><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div></div>
@@ -360,14 +441,74 @@
     <p class="small" style="margin:10px 0 0">Parameters achter <code>?</code>, gescheiden door <code>&amp;</code>: <code>embed=1</code> verbergt de kop; <code>q=adres</code> vult een adres in; <code>auto=1</code> start direct; <code>adviseur</code>, <code>kantoor</code> en <code>logo</code> (https-link naar een afbeelding) vullen het adviseursrapport voor. Een API en white label met eigen domein zijn nog niet beschikbaar.</p>
   </section>
 
-  <section class="over-pw noembed" id="overPandwise">
-    <h3>Waarom gratis?</h3>
-    <p>PandWise is gratis te gebruiken, zonder account en zonder cookies. De tool draait in je browser, haalt openbare gegevens op bij de bron en slaat niets op. Het is een feitencheck en geen taxatie, waardebepaling of financieel advies.</p>
-    <h3>Over PandWise</h3>
-    <p id="bedrijfsregel"></p>
-  </section>
-
 </main>
+
+<footer class="voet noembed" id="overPandwise">
+  <div class="voet-wrap">
+    <div class="voet-kol voet-merk">
+      <div class="voet-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 30 32 8l24 22v26H8z" fill="#E5A138"/><path d="M26 56V38h12v18z" fill="#003057"/><circle cx="32" cy="27" r="5" fill="#003057"/></svg><span>Pand<b>Wise</b></span></div>
+      <p>Gratis feitencheck voor een woning: fundering, klimaat, geluid en een herleidbare waarde-indicatie op open data.</p>
+      <p class="voet-klein" id="bedrijfsregel"></p>
+    </div>
+    <div class="voet-kol">
+      <h4>Menu</h4>
+      <a href="#" id="voetHome">Home</a>
+      <a href="#" data-open-over>Over ons</a>
+      <a href="#" data-open-disclaimer>Disclaimer</a>
+      <a href="#insluiten">Insluiten op je site</a>
+    </div>
+    <div class="voet-kol">
+      <h4>Bronnen</h4>
+      <a href="https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag" target="_blank" rel="noopener">BAG en BRK (Kadaster)</a>
+      <a href="https://www.pdok.nl" target="_blank" rel="noopener">PDOK</a>
+      <a href="https://www.cbs.nl" target="_blank" rel="noopener">CBS</a>
+      <a href="https://www.rivm.nl" target="_blank" rel="noopener">RIVM</a>
+      <a href="https://3dbag.nl" target="_blank" rel="noopener">3D BAG</a>
+      <a href="https://www.wozwaardeloket.nl" target="_blank" rel="noopener">WOZ-waardeloket</a>
+    </div>
+    <div class="voet-kol">
+      <h4>Waarom gratis?</h4>
+      <p>Zonder account en zonder cookies. De tool draait in je browser, haalt openbare gegevens bij de bron op en slaat niets op.</p>
+    </div>
+  </div>
+  <div class="voet-onder">
+    <span>© <span id="voetJaar"></span> PandWise</span>
+    <span id="voetVersie"></span>
+    <span>Indicatief: geen taxatie, waardebepaling of financieel advies. <a href="#" data-open-disclaimer>Disclaimer</a></span>
+  </div>
+</footer>
+
+<dialog id="dlgOver" class="dlg" aria-labelledby="dlgOverKop">
+  <div class="dlg-kop"><h2 id="dlgOverKop">Over PandWise</h2><button type="button" class="dlg-sluit" data-sluit aria-label="Sluiten">×</button></div>
+  <div class="dlg-body">
+    <p><b>PandWise is een gratis feitencheck voor een woning.</b> Je vult een adres of Funda-link in en krijgt in één dossier wat de openbare registers over het pand zeggen, met een herleidbare indicatie van de waarde, een funderings- en klimaatcijfer, signalen en een checklist voor de bezichtiging.</p>
+    <h3>Zo werkt het</h3>
+    <ul>
+      <li>De tool draait volledig in je browser en haalt gegevens op bij openbare bronnen: Kadaster (BAG en BRK), CBS, PDOK, RIVM, RVO, 3D BAG en de WOZ-gegevens die je zelf invult of plakt.</li>
+      <li>Er is geen account, geen cookie en geen opslag. Wat je invult blijft in je browser.</li>
+      <li>Elke uitkomst is herleidbaar: de berekening staat stap voor stap in het dossier en bij elke bron staat of die is opgehaald of geschat.</li>
+    </ul>
+    <h3>Wat PandWise niet is</h3>
+    <p>Geen taxatie, geen waardebepaling door een erkend taxateur en geen financieel advies. Gebruik de uitkomst als startpunt voor je eigen onderzoek en het gesprek met een makelaar, taxateur of hypotheekadviseur. Zie ook de disclaimer.</p>
+    <p class="small" id="dlgBedrijf"></p>
+  </div>
+</dialog>
+<dialog id="dlgDisclaimer" class="dlg" aria-labelledby="dlgDiscKop">
+  <div class="dlg-kop"><h2 id="dlgDiscKop">Disclaimer</h2><button type="button" class="dlg-sluit" data-sluit aria-label="Sluiten">×</button></div>
+  <div class="dlg-body">
+    <ol class="dlg-lijst">
+      <li><b>Geen taxatie.</b> De indicatieve woningwaarde is een rekenkundige benadering op basis van buurtgemiddelden, de CBS-prijsindex en de gegevens die je invult. Het is geen taxatie of waardebepaling in de zin van NRVT of NWWI en het is niet geschikt voor een hypotheekaanvraag, een financiering, een bod, een belastingbezwaar of een rechtszaak. Voor een gevalideerde waarde heb je een erkend taxateur nodig.</li>
+      <li><b>Geen financieel of ander advies.</b> PandWise geeft algemene informatie en geen advies in de zin van de Wft, geen juridisch, fiscaal of bouwkundig advies en geen advies over een financieel product. Laat je bij een aankoop, verkoop of financiering adviseren door een daarvoor bevoegde adviseur.</li>
+      <li><b>Aannames en nauwkeurigheid.</b> De maatcorrectie, de perceelcorrectie, de staatmarges, de modelonzekerheid en de standaardstaat zijn aannames en zijn niet gekalibreerd aan verkoopdata. De betrouwbaarheidsscore beoordeelt alleen of de gebruikte gegevens consistent zijn. Er wordt geen nauwkeurigheid gegarandeerd.</li>
+      <li><b>Brongegevens.</b> De gegevens komen uit openbare bronnen en kunnen onvolledig, verouderd of onjuist zijn. Waar een bron niet beschikbaar is, is een schatting gebruikt; dat staat bij «Bronnen en status». De WOZ-waarde is een fiscale waarde met een peildatum die achterloopt op de markt.</li>
+      <li><b>Cijfers en checks.</b> Het funderingscijfer, het klimaatcijfer, de geluidsbelasting en de trefwoordcontrole op advertentieteksten zijn indicaties. Ze vervangen geen funderingsonderzoek, bouwkundige keuring, waterbeoordeling of beoordeling van een advertentie.</li>
+      <li><b>Jouw invoer.</b> De uitkomst hangt af van wat je invult of plakt. Jij bent verantwoordelijk voor de juistheid daarvan en voor het rechtmatig gebruiken van gegevens van bewoners, zoals adressen, WOZ-waarden en verkoopgeschiedenis.</li>
+      <li><b>Geen rechten en beperkte aansprakelijkheid.</b> Aan de inhoud kunnen geen rechten worden ontleend. Voor zover de wet dat toestaat, is PandWise niet aansprakelijk voor schade door het gebruik van of het vertrouwen op de uitkomsten of door het niet beschikbaar zijn van bronnen.</li>
+      <li><b>Privacy.</b> PandWise slaat geen gegevens op en gebruikt geen cookies. Voor het ophalen van gegevens maakt je browser rechtstreeks verbinding met de genoemde bronnen en voor de luchtfoto en kaart met PDOK. Links naar externe sites vallen onder het beleid van die sites.</li>
+    </ol>
+    <p class="small">Deze tekst is algemene informatie en geen juridisch advies.</p>
+  </div>
+</dialog>
 
 <script>
 (function(){
@@ -386,7 +527,7 @@ const pctPlain = n => n==null?'–':n.toLocaleString('nl-NL',{maximumFractionDig
 const cbsVal = v => (v==null||v<=-99990)?null:v;
 
 /* ============ bronstatus ============ */
-const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', woz:'WOZ-waardeloket', fund:'Funderingscijfer', klim:'Klimaatcijfer'};
+const BRONNEN = {ls:'Locatieserver', vbo:'BAG verblijfsobject', pand:'BAG pand', brk:'BRK perceel', cbs:'CBS buurt', omg:'BAG omgeving', idx:'CBS prijsindex', woz:'WOZ-waardeloket', fund:'Funderingscijfer', klim:'Klimaatcijfer', gebouw:'3D BAG', geluid:'RIVM geluid', perc:'Percelen omgeving', mediaan:'CBS prijzen per type'};
 function bronReset(){ const el=$('bronnen'); if(!el) return; el.innerHTML = Object.entries(BRONNEN).map(([k,v])=>`<span id="b-${k}">${v}</span>`).join(''); }
 function bronStatus(k,cls,extra){ const el=$('b-'+k); if(el){ el.className=cls; el.textContent=BRONNEN[k]+(extra?' · '+extra:''); } }
 
@@ -733,7 +874,7 @@ async function bouwDossier(input){
     try{ const o=await bagOmgeving(pt); if(o){ d.registers.omgeving=o; bronStatus('omg','ok',o.pctVoor1970+'% vóór 1970'); } else bronStatus('omg','fail',''); }
     catch(e){ d.fouten.push('BAG omgeving: '+e.message); bronStatus('omg','fail','fout'); }
   })();
-  const pGeluid=(async()=>{ try{ d.registers.geluid=await rivmGeluid(adr.lat,adr.lon); }catch(e){ d.registers.geluid=null; d.fouten.push('RIVM geluid: '+e.message); } })();
+  const pGeluid=(async()=>{ bronStatus('geluid','busy'); try{ d.registers.geluid=await rivmGeluid(adr.lat,adr.lon); bronStatus('geluid',d.registers.geluid?'ok':'fail',d.registers.geluid?d.registers.geluid.db+' dB':'geen waarde'); }catch(e){ d.registers.geluid=null; bronStatus('geluid','fail','niet beschikbaar'); d.fouten.push('RIVM geluid: '+e.message); } })();
   const pIdx = (async()=>{
     bronStatus('idx','busy');
     try{ const ix=await cbsPrijsindex(adr.gemeentecode); if(ix){ d._index=ix; bronStatus('idx','ok',ix.niveau+' · '+kwartaalTekst(ix.laatste.p)); } else bronStatus('idx','fail','niet beschikbaar'); }
@@ -764,9 +905,11 @@ async function bouwDossier(input){
     delete d._fundRaw;
   } else bronStatus('fund','fail','niet beschikbaar');
   zetWoningtype(d,true);
-  try{ d.registers.gebouw=await bag3d(d.registers.pand&&d.registers.pand.identificatie); }catch(e){ d.registers.gebouw=null; }
-  await laadPerceelOmgeving(d);
+  bronStatus('gebouw','busy'); try{ d.registers.gebouw=await bag3d(d.registers.pand&&d.registers.pand.identificatie); bronStatus('gebouw',d.registers.gebouw?'ok':'fail',d.registers.gebouw?d.registers.gebouw.lagen+' lagen':'niet gevonden'); }catch(e){ d.registers.gebouw=null; bronStatus('gebouw','fail','niet beschikbaar'); }
+  bronStatus('perc','busy'); await laadPerceelOmgeving(d); bronStatus('perc',d.registers.perceelOmgeving?'ok':(isAppartement(d)?'ok':'fail'),d.registers.perceelOmgeving?d.registers.perceelOmgeving.aantal+' percelen':(isAppartement(d)?'niet nodig':'niet beschikbaar'));
+  bronStatus('mediaan','busy');
   d.registers.mediaan=await cbsTypeVerwachting(d.registers.adres&&d.registers.adres.gemeentecode, (d.fundering&&d.fundering.woningtype&&d.fundering.woningtype.naam)||((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3?'Appartement':null));
+  bronStatus('mediaan',d.registers.mediaan?'ok':'fail',d.registers.mediaan?'':'niet beschikbaar');
   try{ const kr=d.fundering?Klim.bereken(d):null; if(kr) bronStatus('klim','ok',num(kr.eind.cijfer,1)+'/10'); else bronStatus('klim','fail','niet beschikbaar'); }catch(e){ bronStatus('klim','fail','fout'); }
   if(d._index){
     const bu=d.registers.buurt, peiljaar=bu?bu.wozPeiljaar:null, ix=d._index, peil=peiljaar?indexOp1Januari(ix,peiljaar):null;
@@ -2276,15 +2419,16 @@ function rapportAfdrukken(i,tabOverride){
   .grid2{grid-template-columns:1fr 1fr!important;gap:0 24px!important}
   .row{grid-template-columns:1fr 1fr!important}
   .kpi-ind{grid-column:1/-1!important}
-  .ind3{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .ind3{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
   .ind3>div{display:block!important;padding:7px 9px}
-  .ind3 b{white-space:normal!important;font-size:13.5px!important} .ind3 span{margin-left:0!important}
+  .ind3 b{white-space:normal!important;font-size:11.5px!important;line-height:1.25;overflow-wrap:anywhere} .ind3 i{font-size:10px!important} .ind3 span{font-size:10.5px!important;overflow-wrap:anywhere} .ind3>div{padding:6px 7px!important} .ind-kopsub,.kpi-ind .src{font-size:10.5px!important} .ind3 span{margin-left:0!important}
   .ind-kop{font-size:26px!important}
   .nodruk{display:none!important}
   .dossier,.kpi,tr,.kaart,.stat,.bar{break-inside:avoid}
   h2{font-size:17px} h3{font-size:14px;break-after:avoid}
   .hero .adres,.hero .prijs{font-size:22px}
-  .kpis{grid-template-columns:repeat(4,1fr)!important} .kpi b{font-size:19px}
+  .kpis{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;margin:12px 0 4px!important} .kpi{padding:9px 10px!important} .kpi b{font-size:17px!important} .kpi .src{font-size:10.5px!important;line-height:1.35} .kpi .lab{font-size:9.5px!important}
+  .panel:has(.hero){break-inside:auto!important}
   .kaarten{grid-template-columns:1fr 1fr}
   .row3,.row4{grid-template-columns:repeat(3,1fr)}
   .printval{padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#FAFBFC;font-weight:600}
@@ -2422,11 +2566,11 @@ function indexUitleg(d,idx){
   return `Marktfactor = CBS prijsindex bestaande koopwoningen (2020=100), ${esc(mi.niveau)}: ${num(mi.indexPeil,1)} op ${esc(mi.peildatum)} (${esc(mi.peilUitleg)}, de WOZ-peildatum van de buurtcijfers) → ${num(mi.indexNu,1)} in ${esc(mi.periodeNu)} = ${num(mi.factor,3)}. Het laatste kwartaal kan voorlopig zijn.`
     + (st.handmatig ? ` <b>Handmatig aangepast.</b> <button class="link" data-indexherstel="${idx}">CBS-index herstellen</button>` : '');
 }
-/* Drie scenario's naar staat: binnen en buiten beide slecht (1), redelijk (3) of goed (4) */
-const INDIC_SCEN=[[1,1,'Slecht'],[3,3,'Redelijk'],[4,4,'Goed']];
+/* Scenario's naar staat: binnen en buiten gelijk, op elk niveau van de keuzelijst (1 tot 5) */
+const INDIC_SCEN=[[1,1,'Slecht'],[2,2,'Matig'],[3,3,'Redelijk'],[4,4,'Goed'],[5,5,'Uitstekend']]; // gelijk aan de keuzelijst Staat
 function indicScenarios(d){
   const st=indicInit(d), bewaard=[st.binnen,st.buiten];
-  try{ return INDIC_SCEN.map(([bi,bu,label])=>{ st.binnen=bi; st.buiten=bu; const x=indicBereken(d); return {label, hoofd:x&&x.hoofd, bag:x&&x.bag, adv:x&&x.adv}; }); }
+  try{ return INDIC_SCEN.map(([bi,bu,label])=>{ st.binnen=bi; st.buiten=bu; const x=indicBereken(d); return {label, niv:bi, hoofd:x&&x.hoofd, bag:x&&x.bag, adv:x&&x.adv}; }); }
   finally{ st.binnen=bewaard[0]; st.buiten=bewaard[1]; }
 }
 function stapKaart(d){
@@ -2467,8 +2611,8 @@ function indicKpi(d){
   return `<span class="lab">Indicatieve woningwaarde (geen taxatie)</span>
     <b class="ind-kop">${eur(h.midden)}</b>
     <span class="src ind-kopsub">Midden bij jouw staat: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()} · bandbreedte ${eur(h.laag)} – ${eur(h.hoog)} · gerekend op ${x.hoofdBasis}</span>
-    <span class="lab" style="margin-top:10px;display:block">Drie scenario's (binnen en buiten gelijk) · <button type="button" class="link" data-stapterug="1">Gegevens aanpassen</button></span>
-    <div class="ind3">${sc.map(z=>`<div${z.label==='Goed'?' class="mid"':''}><i>${z.label}</i><b>${eur(z.hoofd.laag)} – ${eur(z.hoofd.hoog)}</b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
+    <span class="lab" style="margin-top:10px;display:block">Vijf scenario's naar staat (binnen en buiten gelijk) · <button type="button" class="link" data-stapterug="1">Gegevens aanpassen</button></span>
+    <div class="ind3">${sc.map(z=>`<div${(x.binnen===x.buiten&&z.niv===x.binnen)?' class="mid"':''}><i>${z.label}</i><b><bdi>${eur(z.hoofd.laag)}</bdi> – <bdi>${eur(z.hoofd.hoog)}</bdi></b><span>midden ${eur(z.hoofd.midden)}</span></div>`).join('')}</div>
     <span class="src ind-aanname">Aanname: de staat staat standaard op uitstekend, binnen en buiten. Niet gebaseerd op data en geen oordeel over deze woning. Kies zelf de staat die erbij past.</span>
     ${x.anker?`<span class="src">Anker 2, eigen WOZ geïndexeerd: <b>${eur(x.anker.waarde)}</b> · jouw midden ${h.tovAnker!=null?pct(h.tovAnker):'–'} t.o.v. dit anker</span>`:''}
     <span class="src">betrouwbaarheid ${x.betrouwbaarheid.label.toLowerCase()} · jouw invoer: binnen ${STAAT.label[x.binnen].toLowerCase()}, buiten ${STAAT.label[x.buiten].toLowerCase()}: ${eur(h.laag)} – ${eur(h.hoog)} (midden ${eur(h.midden)})${h.positie?' · vraagprijs '+h.positie.t:''}</span>`;
@@ -2722,10 +2866,23 @@ $('btnGo').onclick=()=>{
   }
 };
 
+let laadTimer=null;
+const LAAD_BERICHTEN=['Adres opzoeken bij de Locatieserver…','BAG raadplegen: oppervlakte, bouwjaar en gebruiksdoel…','Kadaster: perceel en kadastrale kaart ophalen…','CBS: buurtcijfers, WOZ en prijsindex…','Funderingsrisico, bodem en grondwater beoordelen…','RIVM: geluid, hitte, wateroverlast en droogte…','3D BAG: bouwlagen en hoogte van het pand…','Alles bij elkaar leggen en doorrekenen…'];
+function laadStart(){
+  const balk=$('laadBalk'), melding=$('laadMelding'); if(!balk) return; const t0=Date.now(); let i=0;
+  if(laadTimer) clearInterval(laadTimer);
+  const stap=()=>{ const sec=(Date.now()-t0)/1000, gedaan=document.querySelectorAll('#bronnen span.ok,#bronnen span.fail').length, totaal=Math.max(1,Object.keys(BRONNEN).length);
+    const pct=Math.min(95,Math.max(92*(1-Math.exp(-sec/22)),gedaan/totaal*95));
+    balk.style.width=Math.max(3,pct).toFixed(0)+'%'; const bar=balk.parentElement; if(bar) bar.setAttribute('aria-valuenow',pct.toFixed(0));
+    if(melding){ melding.textContent=LAAD_BERICHTEN[Math.min(i,LAAD_BERICHTEN.length-1)]+(gedaan?' ('+gedaan+' van '+totaal+' bronnen klaar)':''); }
+    if(sec>0 && Math.floor(sec/4)>i) i=Math.floor(sec/4); };
+  balk.style.width='3%'; stap(); laadTimer=setInterval(stap,700);
+}
+function laadStop(){ if(laadTimer){ clearInterval(laadTimer); laadTimer=null; } const balk=$('laadBalk'); if(balk) balk.style.width='100%'; }
 async function run(input, btn){
   const wd0=$('watDoet'); if(wd0) wd0.classList.add('hidden');   // uitleg meteen weg zodra er geanalyseerd wordt
   const m=$('msg'); m.className='msg busy'; m.textContent='Registers bevragen…'; btn.disabled=true; $('btnGo').disabled=true;
-  $('skelet').classList.remove('hidden'); $('skelet').scrollIntoView({behavior:'smooth',block:'start'});
+  bronReset(); $('skelet').classList.remove('hidden'); $('skelet').scrollIntoView({behavior:'smooth',block:'start'}); laadStart();
   try{
     const d=await bouwDossier(input);
     dossiers.length=0; dossiers.push(d);
@@ -2736,7 +2893,7 @@ async function run(input, btn){
     try{ history.replaceState(null,'','#q='+encodeURIComponent(input.q)); }catch(e){}
     setTimeout(()=>{ const el=$('dossier-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },50);
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
-  finally{ btn.disabled=false; $('btnGo').disabled=false; $('skelet').classList.add('hidden'); }
+  finally{ laadStop(); btn.disabled=false; $('btnGo').disabled=false; $('skelet').classList.add('hidden'); }
 }
 
 document.querySelector('main').addEventListener('click',e=>{
@@ -2829,11 +2986,24 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.12.1'; const MODEL_DATUM = '2026-12-03';
+const MODEL_VERSIE = '2.14.2'; const MODEL_DATUM = '2026-12-03';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
 const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet getoond
+(function(){ const dlg={over:$('dlgOver'),disc:$('dlgDisclaimer')}; const nav=['navHome','navOver','navDisclaimer'].map($);
+  const open=d=>{ if(!d) return; if(typeof d.showModal==='function'){ if(!d.open) d.showModal(); } else d.setAttribute('open',''); };
+  const sluitAlles=()=>Object.values(dlg).forEach(d=>{ if(d&&d.open) d.close(); });
+  const info=[BEDRIJF.naam,BEDRIJF.kvk&&'KvK '+BEDRIJF.kvk,BEDRIJF.contact].filter(Boolean).join(' · ');
+  const bl=$('dlgBedrijf'); if(bl) bl.textContent=info; else null;
+  if($('navHome')) $('navHome').onclick=()=>{ sluitAlles(); if(dossiers.length&&$('btnNieuw')) $('btnNieuw').click(); window.scrollTo({top:0,behavior:'smooth'}); };
+  if($('navOver')) $('navOver').onclick=()=>open(dlg.over);
+  if($('navDisclaimer')) $('navDisclaimer').onclick=()=>open(dlg.disc);
+  document.querySelectorAll('.dlg').forEach(d=>{ d.addEventListener('click',e=>{ if(e.target===d||e.target.closest('[data-sluit]')) d.close(); }); });
+  if($('voetHome')) $('voetHome').onclick=e=>{ e.preventDefault(); $('navHome').click(); };
+  document.querySelectorAll('[data-open-disclaimer]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); open(dlg.disc); }));
+  document.querySelectorAll('[data-open-over]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); open(dlg.over); }));
+})();
 (function(){ const d=[BEDRIJF.naam,BEDRIJF.kvk&&'KvK '+BEDRIJF.kvk,BEDRIJF.contact].filter(Boolean); const el=$('bedrijfsregel'); if(el) el.textContent=d.length?d.join(' · '):'PandWise is een onafhankelijke feitencheck op openbare gegevens. Bronnen en rekenmethode staan per dossier onder "Bronnen en status" en in de rekentabellen.'; })();
 (function(){ const c=$('embedCode'); if(!c) return; const url=location.origin&&location.origin!=='null'?location.origin+location.pathname:'https://pandwise.nl/';
   c.textContent='<iframe src="'+url+'?embed=1" title="PandWise woningcheck" style="width:100%;height:900px;border:0" loading="lazy"></iframe>';
@@ -2847,6 +3017,7 @@ const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet 
   const q=p.get('q'); if(q&&!location.hash.includes('q=')){ $('q').value=q.slice(0,200); $('q').oninput(); if(p.get('auto')==='1') $('btnGo').click(); }
  }catch(e){} })();
 function laadDeelLink() { try { const p=new URLSearchParams(location.hash.slice(1)); const q=p.get('q'); if(!q) return; $('q').value=q; $('q').oninput(); if(p.get('vp')) $('oVraagprijs').value=(+p.get('vp')).toLocaleString('nl-NL'); if(p.get('st')) $('oStatus').value=p.get('st'); if(p.get('dt')) $('oPrijsdatum').value=p.get('dt'); $('btnGo').click(); } catch(e){} }
+if($('voetJaar')) $('voetJaar').textContent=new Date().getFullYear(); if($('voetVersie')) $('voetVersie').textContent='Model '+MODEL_VERSIE+' · '+MODEL_DATUM;
 laadDeelLink();
 })();
 </script>
