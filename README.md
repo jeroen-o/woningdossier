@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.9.1 · november 2026**  
+> **Model 2.11.0 · november 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,13 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Tussenstap, woningwaarde en links (2.10.0 tot 2.11.0)
+- **Tussenstap vóór de waarde:** na het dossier controleert de bezoeker eerst woonoppervlakte, perceeloppervlakte, bouwjaar, woningtype, staat binnen en buiten, optioneel de vraagprijs en de laatste WOZ-waarde met peildatum. Pas na "Toon indicatieve woningwaarde" verschijnen de waarde en sectie 03; via "Gegevens aanpassen" ga je terug. Het perceel wordt getoond en vergeleken met de BRK, maar telt nog niet mee in de waarde (niet gekalibreerd).
+- **Indicatieve woningwaarde:** één getal bovenaan, het midden bij de gekozen staat, met bandbreedte en de drie scenario's eronder. Het label zegt expliciet "geen taxatie".
+- **Links:** de laatst bekende WOZ-waarde staat in het WOZ-waardeloket (`wozwaardeloket.nl/?locatie=3825BG%2038`) en kadasterinformatie in de BAG Viewer (`bagviewer.kadaster.nl/?searchQuery=3825bg+38&objectId=…&geometry.x=…&geometry.y=…`, met RD-coördinaten uit de Locatieserver).
+- **Robuuster:** als de gemiddelde woonoppervlakte van de hele buurt niet op te halen is, valt PandWise terug op een steekproef van circa 300 m rond het adres (lagere betrouwbaarheid). Is er toch geen waarde te berekenen, dan staat er een melding met reden en een knop "Opnieuw proberen" in plaats van niets.
+- **Uitlijning:** knoppenbalk gegroepeerd, rapportknoppen niet meer als tabs gestijld, KPI-blokjes breken geen bedragen meer af en het waardeblok beslaat de volle breedte.
 
 ### Homepage (2.9.1)
 Voor het eerste dossier toont de homepage alleen het zoekveld en een blok "Wat doet PandWise?" (waarde-indicatie, fundering, klimaat en geluid, signalen, checklist en bronnen, rapport). Het blok "Woningdata uit woningadvertentie" is op de homepage verborgen en verschijnt onder het dossier, waar je het invult en op "Dossier bijwerken" klikt. Met `?embed=1` blijft het uitlegblok verborgen.
