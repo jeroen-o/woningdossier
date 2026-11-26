@@ -2612,11 +2612,11 @@ function adviesVoorblad(d){
       ${kv('Indicatieve woningwaarde (geen taxatie)',!sm.indic?'Nog niet berekend: de gegevens zijn niet bevestigd':(sm.indicMidden?eur(sm.indicMidden)+' (midden bij de gekozen staat), ':'')+'bandbreedte '+eur(sm.indic[0])+' tot '+eur(sm.indic[1])+(sm.indicPositie?' · vraagprijs '+esc(sm.indicPositie):''))}
       ${kv('Eigen WOZ, geïndexeerd (anker 2)',sm.anker?eur(sm.anker):null)}
       ${kv('Betrouwbaarheid indicatie',esc(sm.betrouwbaarheid))}
-      ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 8 (label '+esc(sm.fundLabel)+')'+(sm.fundHandmatig?' · handmatig aangepast':'')+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
+      ${kv('Funderingscijfer',sm.fund!=null?sm.fund+' / 10 (label '+esc(sm.fundLabel)+')'+(sm.fundHandmatig?' · handmatig aangepast':'')+(sm.rvo?' · RVO-aandachtsgebied':''):null)}
       ${kv('Klimaatcijfer',sm.klimaat!=null?fmt(sm.klimaat)+' / 10 (bandbreedte '+fmt(sm.klimaatBand[0])+' tot '+fmt(sm.klimaatBand[1])+')':null)}
       ${kv('Energielabel',sm.label?(/EP-online|handmatig/i.test(sm.labelBron||'')?esc(sm.label)+(/handmatig/i.test(sm.labelBron)?' (handmatig ingevoerd, niet geverifieerd)':' (EP-online)'):'onbekend; schatting uit bouwjaar: '+esc(sm.label)):null)}
       ${kv('Geluidsbelasting (Lden)',sm.geluid!=null?sm.geluid+' dB (RIVM-model)':null)}
-      ${kv('Signalen',sm.rood+' signaal'+(sm.rood===1?'':'en')+', '+sm.geel+' aandachtspunt'+(sm.geel===1?'':'en')+', '+sm.groen+' in orde')}
+      ${kv('Signalen',sm.rood+' '+(sm.rood===1?'signaal':'signalen')+', '+sm.geel+' aandachtspunt'+(sm.geel===1?'':'en')+', '+sm.groen+' in orde')}
     </table></div>
     ${v('oNotitie')?`<h3>Toelichting adviseur</h3><p style="white-space:pre-wrap">${esc(v('oNotitie'))}</p>`:''}
   </div>`;
@@ -2641,7 +2641,7 @@ function vergelijkHtml(){
     ${rij('Per m² BAG',x=>x.prijsM2?eur(x.prijsM2):'–')}
     ${rij('Gemiddelde WOZ buurt',x=>x.wozBuurt?eur(x.wozBuurt):'–')}
     ${rij('Indicatie naar staat',x=>x.indic?eur(x.indic[0])+' tot '+eur(x.indic[1]):'–')}
-    ${rij('Funderingscijfer (hoger is beter)',x=>x.fund!=null?x.fund+' / 8':'–')}
+    ${rij('Funderingscijfer (hoger is beter)',x=>x.fund!=null?x.fund+' / 10':'–')}
     ${rij('Klimaatcijfer (hoger is beter)',x=>x.klimaat!=null?fmt(x.klimaat)+' / 10':'–')}
     ${rij('Energielabel',x=>esc(x.label||'–'))}
     ${rij('Geluid (Lden)',x=>x.geluid!=null?x.geluid+' dB':'–')}
@@ -3317,7 +3317,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.20.1'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.20.2'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
