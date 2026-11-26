@@ -1744,7 +1744,7 @@ function verkoopHtml(d,idx){
   const stappen=['Laat een waardebepaling of verkoopadvies opstellen, onderbouwd met referentietransacties.','Zet de documenten klaar en vul de vragenlijst verkoper volledig in.','Kies verkoopmethode en vraagprijs met je makelaar; laat de oppervlakte volgens NEN 2580 meten.','Beoordeel biedingen op bedrag, voorbehouden, opleverdatum en financierbaarheid.','Na mondelinge overeenstemming stelt de makelaar de koopovereenkomst op; de koper heeft 3 dagen bedenktijd.','Na het verlopen van de voorbehouden: overdracht en aflossing via de notaris. Vraag tijdig een aflosnota en boeterenteberekening op bij je geldverstrekker.'];
 
   return strategieDisclaimer('verkoop')
-    + sectie('A / Positionering','Positionering','Vraagprijs rekenkundig naast de registers','blauw',positie)
+    + sectie('A / Positionering','Positionering','Vraagprijs rekenkundig naast de registers','blauw',positie+'<div class="nodruk" style="display:flex;justify-content:flex-end;margin-top:10px"><button type="button" data-naar-opties="verkoop">Gegevens aanpassen</button></div>')
     + sectie('B / Mededelingsplicht','Mededelingsplicht en aandachtspunten','Wat kopers gaan vragen, op basis van de registers','geel',meld.map(punt).join(''))
     + sectie('C / Documenten','Documenten klaarzetten','Afgestemd op dit object','groen',docTabel)
     + sectie('D / Verkoopmethode','Verkoopmethode','Neutraal overzicht van de gangbare methoden','',methodes)
@@ -2919,8 +2919,8 @@ function renderResult(){
   const wd=$('watDoet'); if(wd) wd.classList.toggle('hidden',!!dossiers.length);
   $('result').innerHTML=dossiers.map(render).join('');
   $('strat').innerHTML=dossiers.map((d,i)=>`<div class="dwrap" id="sw-${i}">
-    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
-    <div class="panel"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div></div></div>`).join('');
+    <div class="panel" id="bied-${i}"><div class="strat-head"><h2>Biedstrategie</h2><button class="printbtn" data-print="${i}" data-tab="bied">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="bied" data-scope="bied" data-i="${i}" aria-selected="true">Biedstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="bied" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="bied">${biedHtml(d,i)}</div><div class="btab-data nodruk" data-pane="biedData" hidden></div></div>
+    <div class="panel" id="verkoop-${i}"><div class="strat-head"><h2>Verkoopstrategie</h2><button class="printbtn" data-print="${i}" data-tab="verkoop">Rapport afdrukken</button></div><div class="btabs" role="tablist"><button type="button" role="tab" data-biedtab="verkoop" data-scope="verkoop" data-i="${i}" aria-selected="true">Verkoopstrategie</button><button type="button" role="tab" data-biedtab="data" data-scope="verkoop" data-i="${i}" aria-selected="false">Woningdata uit woningadvertentie</button></div><div data-pane="verkoop">${verkoopHtml(d,i)}</div><div class="btab-data nodruk" data-pane="verkoopData" hidden></div></div></div>`).join('');
   const o0=op&&op.querySelector('#oType option[value=""]'); if(o0){ const dn=dossiers.length&&dossiers[0]._typeAuto&&dossiers[0]._typeAuto.naam; o0.textContent=dn||'— Automatisch —'; }
   if(op){ const slot=document.querySelector('#bied-0 .btab-data'); if(dossiers.length&&slot){ slot.appendChild(op); op.classList.remove('hidden'); } else op.classList.add('hidden'); }
 }
@@ -3157,16 +3157,17 @@ async function run(input, btn){
   finally{ laadStop(); btn.disabled=false; $('btnGo').disabled=false; $('skelet').classList.add('hidden'); }
 }
 
-function biedTab(i,t,scroll){
-  const w=$('bied-'+i); if(!w) return;
+function biedTab(i,t,scroll,sc){
+  sc=sc||'bied'; const w=$(sc+'-'+i); if(!w) return;
   w.querySelectorAll('[data-biedtab]').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.biedtab===t)));
-  const pb=w.querySelector('[data-pane="bied"]'), pd=w.querySelector('[data-pane="biedData"]'); if(pb) pb.hidden=t!=='bied'; if(pd) pd.hidden=t!=='data';
+  const pb=w.querySelector('[data-pane="'+sc+'"]'), pd=w.querySelector('[data-pane="'+sc+'Data"]'); if(pb) pb.hidden=(t==='data'); if(pd) pd.hidden=t!=='data';
+  if(t==='data'&&pd){ const op=$('opties'); if(op){ pd.appendChild(op); op.classList.remove('hidden'); } const an=sc==='bied'?'verkoop':'bied'; if($(an+'-'+i)) biedTab(i,an,false,an); }
   if(scroll) w.scrollIntoView({behavior:'smooth',block:'start'});
 }
 document.querySelector('main').addEventListener('click',e=>{
   if(e.target.closest('[data-opnieuw]')){ $('btnGo').click(); return; }
-  const bt=e.target.closest('[data-biedtab]'); if(bt){ biedTab(+bt.dataset.i,bt.dataset.biedtab,false); return; }
-  if(e.target.closest('[data-naar-opties]')){ biedTab(0,'data',true); return; }
+  const bt=e.target.closest('[data-biedtab]'); if(bt){ biedTab(+bt.dataset.i,bt.dataset.biedtab,false,bt.dataset.scope); return; }
+  { const nb=e.target.closest('[data-naar-opties]'); if(nb){ biedTab(0,'data',true,nb.dataset.naarOpties==='verkoop'?'verkoop':'bied'); return; } }
   if(false){ const o=$('opties'); if(o){ o.classList.remove('hidden'); o.scrollIntoView({behavior:'smooth',block:'start'}); const f=o.querySelector('input,textarea,select'); if(f) setTimeout(()=>f.focus({preventScroll:true}),500); } return; }
   if(e.target.closest('[data-stapterug]')){ const d=dossiers[0]; if(d){ d.indicBevestigd=false; renderResult(); const el=$('ik-0'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
   if(e.target.closest('[data-stap]')){ const d=dossiers[0]; if(!d) return; const v=id=>(($(id)||{}).value||'').trim();
