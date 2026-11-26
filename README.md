@@ -1,6 +1,6 @@
 # PandWise — jouw complete woningdossier en woningwaarderapport
 
-> **Model 2.14.2 · december 2026**  
+> **Model 2.15.0 · december 2026**  
 > Één standalone HTML-bestand. Geen backend, geen API-sleutel, geen opslag.
 
 PandWise combineert openbare registers tot een feitencheck voor een woning: advertentiedata naast BAG, BRK, CBS, WOZ, Funderingscijfer en Klimaatcijfer — alles in één pagina die je rechtstreeks vanuit de browser draait.
@@ -49,6 +49,12 @@ Het hoofdtabblad met zeven secties:
 - **Advertentietekst-check:** de geplakte Funda-tekst wordt op trefwoorden gecontroleerd (o.a. erfpacht, asbest, VvE, casco, vocht, funderingsherstel). Het resultaat verschijnt als signaal. Dit is een trefwoordcontrole en geen beoordeling van de woning.
 - **Geluid:** RIVM-geluidskaart (Lden, alle bronnen) als modelwaarde op het adrespunt.
 - **Verduurzamen:** sectie 07 met energielabel en verwijzingen naar ISDE en Warmtefonds. Bedragen zijn bewust niet opgenomen.
+
+### Voor adviseurs (2.15.0)
+- **Knop "Voor adviseurs"** in het menu (en de footer) opent een venster met bedrijfsnaam, naam adviseur, adres, postcode en plaats, e-mailadres, telefoonnummer, website, KvK- of AFM-nummer en logo (upload of https-link), met een live voorbeeld.
+- **In het rapport:** het voorblad toont logo en contactgegevens en elk rapport krijgt onderaan "Opgesteld door …". Gegevens bovenaan de tool staan in een balk met aanklikbare telefoon-, e-mail- en websitelinks (niet in de afdruk).
+- **Insluiten met eigen gegevens:** het venster genereert een iframe-code met `embed=1` en de parameters `adviseur`, `kantoor`, `adres`, `email`, `tel`, `web`, `kvk` en `logo` (alleen https; een geüpload logo past niet in de code). Parameters worden gevalideerd (e-mail, telefoon en https-links) en altijd als tekst weergegeven, nooit als HTML.
+- **Geen opslag:** de gegevens staan alleen in het venster en in de code die de adviseur zelf kopieert. Een logo via een https-link wordt rechtstreeks van de server van de adviseur geladen. PandWise geeft algemene informatie en geen advies; de adviseur blijft zelf verantwoordelijk voor adviesdossier en vermeldingen zoals de AFM-vergunning.
 
 ### Laadscherm, navigatie, footer en vijf scenario's (2.13.0 tot 2.14.2)
 - **Laadscherm bij Analyseren:** een draaiende zandloper, een voortgangsbalk, wisselende berichten en een live lijst van 14 bronnen (bezig, klaar of niet beschikbaar). Tekst: "Dit kan tot een minuut duren". Respecteert `prefers-reduced-motion`.
