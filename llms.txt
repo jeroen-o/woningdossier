@@ -1,0 +1,54 @@
+# PandWise
+
+> PandWise is een gratis woningcheck voor Nederlandse woningen. Je vult een adres of Funda-link in en krijgt in één dossier wat openbare registers over het pand zeggen, met een herleidbare indicatieve woningwaarde. De tool draait in de browser, gebruikt open data en slaat niets op. Het is geen taxatie, geen waardebepaling door een erkend taxateur en geen financieel advies.
+
+Website: https://pandwise.nl/
+Taal: Nederlands. Prijs: gratis, geen account, geen cookies.
+
+## Wat PandWise doet
+- Indicatieve woningwaarde met bandbreedte en vijf scenario's naar staat (slecht, matig, redelijk, goed, uitstekend). Gebaseerd op de gemiddelde WOZ-waarde van de buurt per m² (CBS en BAG), de CBS-prijsindex en correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat. De correcties zijn aannames en niet gekalibreerd.
+- Funderingscijfer (2 tot 8) uit bouwjaar, bodem, ligging, grondwater en RVO-aandachtsgebieden, met een herleidbare rekentabel.
+- Klimaatcijfer: overstroming, hitte, wateroverlast en droogte.
+- Geluidsbelasting (RIVM), bouwlagen en gebouwhoogte (3D BAG).
+- Energielabel: geregistreerd, zelf ingevuld of geschat uit het bouwjaar aan de hand van de energie-eisen van het Bouwbesluit per periode (EPC-eisen en eerdere isolatie-eisen).
+- Signalen: afwijkingen tussen advertentie en registers (oppervlakte, perceel, bouwjaar) en trefwoorden in geplakte advertentieteksten.
+- Bezichtigingschecklist, adviseursrapport en kort rapport (print naar PDF), en tot drie adressen vergelijken.
+- Voor adviseurs: eigen bedrijfsnaam, adres, e-mail, telefoon en logo in het rapport en een iframe-code om PandWise op de eigen website in te sluiten (parameters: embed, q, auto, adviseur, kantoor, adres, email, tel, web, kvk, logo).
+
+## Bronnen
+BAG en BRK (Kadaster), CBS Wijken en Buurten en prijsindex, PDOK, RIVM, RVO, 3D BAG (TU Delft) en de WOZ-gegevens die de gebruiker zelf invult of plakt. Per dossier staat bij "Bronnen en status" welke bron is opgehaald en welke is geschat.
+
+## Beperkingen
+- Geen taxatie of waardebepaling (NRVT/NWWI), geen advies in de zin van de Wft, niet bedoeld voor hypotheekaanvragen, financiering of een bod.
+- De nauwkeurigheid is niet gemeten en niet gegarandeerd. De parameters (maatcorrectie, perceelcorrectie, energielabelcorrectie, funderingscorrectie, staatmarges en standaardstaat) zijn aannames.
+- Brongegevens kunnen onvolledig of verouderd zijn. De WOZ-waarde is een fiscale waarde met een peildatum die achterloopt op de markt.
+- Een energielabel dat uit het bouwjaar is geschat, is geen geregistreerd label.
+
+## Veelgestelde vragen
+
+### Wat is PandWise?
+PandWise is een gratis woningcheck. Je vult een adres of Funda-link in en krijgt in één dossier wat de openbare registers over het pand zeggen: een indicatieve woningwaarde met bandbreedte, een funderingscijfer, klimaatrisico's, geluidsbelasting, een geschat energielabel, signalen en een bezichtigingschecklist.
+
+### Is de woningwaarde van PandWise een taxatie?
+Nee. De indicatieve woningwaarde is een rekenkundige benadering op basis van buurtgemiddelden en de gegevens die je invult. Het is geen taxatie of waardebepaling door een erkend taxateur (NRVT of NWWI), geen financieel advies en niet geschikt voor een hypotheekaanvraag, financiering of bod.
+
+### Hoe berekent PandWise de indicatieve woningwaarde?
+PandWise deelt de gemiddelde WOZ-waarde van de buurt (CBS) door de gemiddelde woonoppervlakte (BAG) en rekent dat door naar jouw woning, met de CBS-prijsindex als marktfactor. Daarna volgen correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat, met een bandbreedte. De correcties zijn aannames en niet gekalibreerd; elke stap staat in de berekeningstabel.
+
+### Welke bronnen gebruikt PandWise?
+Openbare bronnen: BAG en BRK van het Kadaster, CBS Wijken en Buurten en prijsindex, PDOK, RIVM (geluid en klimaat), RVO (funderingsaandachtsgebieden), de 3D BAG en de WOZ-gegevens die je zelf invult. Per dossier staat bij 'Bronnen en status' welke bron is opgehaald en welke is geschat.
+
+### Is PandWise gratis en worden mijn gegevens opgeslagen?
+PandWise is gratis, werkt zonder account en zonder cookies en slaat niets op. De tool draait in je browser en haalt openbare gegevens rechtstreeks bij de bronnen op.
+
+### Hoe schat PandWise het energielabel?
+Zonder geregistreerd label schat PandWise het label uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit per periode (EPC-eisen en eerdere isolatie-eisen). Verbouwing en isolatie sinds de bouw zijn niet meegenomen. Je kunt het label zelf aanpassen; een ingevuld label gaat voor.
+
+### Kunnen adviseurs PandWise met hun eigen gegevens gebruiken?
+Ja. Via 'Voor adviseurs' vul je bedrijfsnaam, adres, e-mailadres, telefoonnummer en logo in. Die komen in het rapport, en je kunt PandWise met die gegevens als iframe op je eigen website insluiten. Er wordt niets opgeslagen.
+
+### Hoe nauwkeurig is PandWise?
+De nauwkeurigheid is niet gemeten en niet gegarandeerd. De parameters zijn niet gekalibreerd aan verkoopdata. De betrouwbaarheidsscore beoordeelt alleen of de gebruikte gegevens consistent zijn. Gebruik de uitkomst als startpunt voor je eigen onderzoek en laat een erkend taxateur een waarde vaststellen als dat nodig is.
+
+## Contact
+Bedrijfsgegevens staan nog niet op de site.

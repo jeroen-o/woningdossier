@@ -3,8 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PandWise — jouw complete woningdossier en woningwaarderapport</title>
-<meta name="description" content="Gratis feitencheck van elke woning: fundering, klimaat, geluid en een herleidbare waarde-indicatie op open data. Indicatief, geen taxatie.">
+<title>PandWise – gratis woningcheck: waarde, fundering, klimaat</title>
+<meta name="description" content="Gratis woningcheck op open data: indicatieve woningwaarde, funderingscijfer, klimaatrisico, geluid en energielabel per adres. Geen taxatie, geen account.">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<link rel="alternate" hreflang="nl" href="https://pandwise.nl/">
+<link rel="alternate" type="text/plain" href="/llms.txt" title="Samenvatting voor taalmodellen">
+<script type="application/ld+json">
+[
+ {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "PandWise",
+  "url": "https://pandwise.nl/",
+  "inLanguage": "nl-NL",
+  "description": "Gratis woningcheck op open data: indicatieve woningwaarde, funderingscijfer, klimaatrisico, geluid en energielabel per adres."
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PandWise",
+  "url": "https://pandwise.nl/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Alle moderne browsers",
+  "browserRequirements": "Vereist JavaScript",
+  "inLanguage": "nl-NL",
+  "isAccessibleForFree": true,
+  "offers": {
+   "@type": "Offer",
+   "price": "0",
+   "priceCurrency": "EUR"
+  },
+  "description": "Gratis feitencheck voor een woning: indicatieve woningwaarde met bandbreedte (geen taxatie), funderingscijfer, klimaatrisico, geluid, geschat energielabel, signalen en bezichtigingschecklist. Draait in de browser op openbare bronnen en slaat niets op.",
+  "featureList": [
+   "Indicatieve woningwaarde met bandbreedte en vijf scenario's naar staat",
+   "Funderingscijfer met herleidbare rekentabel",
+   "Klimaatcijfer: overstroming, hitte, wateroverlast en droogte",
+   "Geluidsbelasting (RIVM) en gebouwhoogte (3D BAG)",
+   "Energielabel geschat uit het bouwjaar volgens het Bouwbesluit",
+   "Adviseursrapport en insluiten op de eigen website"
+  ]
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+   {
+    "@type": "Question",
+    "name": "Wat is PandWise?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "PandWise is een gratis woningcheck. Je vult een adres of Funda-link in en krijgt in één dossier wat de openbare registers over het pand zeggen: een indicatieve woningwaarde met bandbreedte, een funderingscijfer, klimaatrisico's, geluidsbelasting, een geschat energielabel, signalen en een bezichtigingschecklist."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Is de woningwaarde van PandWise een taxatie?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Nee. De indicatieve woningwaarde is een rekenkundige benadering op basis van buurtgemiddelden en de gegevens die je invult. Het is geen taxatie of waardebepaling door een erkend taxateur (NRVT of NWWI), geen financieel advies en niet geschikt voor een hypotheekaanvraag, financiering of bod."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Hoe berekent PandWise de indicatieve woningwaarde?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "PandWise deelt de gemiddelde WOZ-waarde van de buurt (CBS) door de gemiddelde woonoppervlakte (BAG) en rekent dat door naar jouw woning, met de CBS-prijsindex als marktfactor. Daarna volgen correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat, met een bandbreedte. De correcties zijn aannames en niet gekalibreerd; elke stap staat in de berekeningstabel."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Welke bronnen gebruikt PandWise?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Openbare bronnen: BAG en BRK van het Kadaster, CBS Wijken en Buurten en prijsindex, PDOK, RIVM (geluid en klimaat), RVO (funderingsaandachtsgebieden), de 3D BAG en de WOZ-gegevens die je zelf invult. Per dossier staat bij 'Bronnen en status' welke bron is opgehaald en welke is geschat."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Is PandWise gratis en worden mijn gegevens opgeslagen?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "PandWise is gratis, werkt zonder account en zonder cookies en slaat niets op. De tool draait in je browser en haalt openbare gegevens rechtstreeks bij de bronnen op."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Hoe schat PandWise het energielabel?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Zonder geregistreerd label schat PandWise het label uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit per periode (EPC-eisen en eerdere isolatie-eisen). Verbouwing en isolatie sinds de bouw zijn niet meegenomen. Je kunt het label zelf aanpassen; een ingevuld label gaat voor."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Kunnen adviseurs PandWise met hun eigen gegevens gebruiken?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Ja. Via 'Voor adviseurs' vul je bedrijfsnaam, adres, e-mailadres, telefoonnummer en logo in. Die komen in het rapport, en je kunt PandWise met die gegevens als iframe op je eigen website insluiten. Er wordt niets opgeslagen."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Hoe nauwkeurig is PandWise?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "De nauwkeurigheid is niet gemeten en niet gegarandeerd. De parameters zijn niet gekalibreerd aan verkoopdata. De betrouwbaarheidsscore beoordeelt alleen of de gebruikte gegevens consistent zijn. Gebruik de uitkomst als startpunt voor je eigen onderzoek en laat een erkend taxateur een waarde vaststellen als dat nodig is."
+    }
+   }
+  ]
+ }
+]
+</script>
 <meta name="theme-color" content="#003057">
 <link rel="canonical" href="https://pandwise.nl/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23003057'/%3E%3Cpath d='M10 31 32 11l22 20v21H10z' fill='%23E5A138'/%3E%3Cpath d='M27 52V38h10v14z' fill='%23003057'/%3E%3C/svg%3E">
@@ -12,7 +122,7 @@
 <meta property="og:site_name" content="PandWise">
 <meta property="og:locale" content="nl_NL">
 <meta property="og:url" content="https://pandwise.nl/">
-<meta property="og:title" content="PandWise — de feitencheck van elke woning">
+<meta property="og:title" content="PandWise – gratis woningcheck: waarde, fundering, klimaat">
 <meta property="og:description" content="Fundering, klimaat, geluid en een herleidbare waarde-indicatie. Gratis, zonder account, op open data. Indicatief, geen taxatie.">
 <meta property="og:image" content="https://pandwise.nl/og-image.jpg">
 <meta property="og:image:type" content="image/jpeg">
@@ -20,7 +130,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="PandWise: de feitencheck van elke woning. Fundering, klimaat, geluid, waarde-indicatie en adviseursrapport.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PandWise — de feitencheck van elke woning">
+<meta name="twitter:title" content="PandWise – gratis woningcheck: waarde, fundering, klimaat">
 <meta name="twitter:description" content="Fundering, klimaat, geluid en een herleidbare waarde-indicatie. Gratis, zonder account, op open data.">
 <meta name="twitter:image" content="https://pandwise.nl/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -122,6 +232,7 @@
   .btn-woz{display:inline-block;background:var(--accent);color:var(--primary);font-weight:700;font-size:16px;padding:14px 24px;border-radius:8px;text-decoration:none;box-shadow:0 3px 10px rgba(229,161,56,.4)}
   .btn-woz:hover{background:#D9912A}
   @media(max-width:560px){.btn-woz{width:100%;text-align:center}}
+  .kpi b.ind-kop{white-space:normal}
   .ind-kop{display:block;font-size:30px;color:var(--primary);line-height:1.15;margin:2px 0}
   .kpi-ind>.src{display:block;margin-top:5px;line-height:1.5}
   .ind-kopsub{display:block;margin-bottom:4px;font-size:15px!important;line-height:1.45;color:var(--text)}
@@ -202,6 +313,10 @@
   .woz-jaren span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
   .notice{border-left:4px solid var(--accent);background:var(--warn-bg);padding:10px 14px;font-size:13px;margin:0 0 16px;border-radius:0 8px 8px 0}
   .hidden{display:none!important}
+  .row>*,.row3>*,.row4>*,.row5>*,.grid2>*,.kaarten>*,.kpis>*,.wd-grid>*,.stap-grid>*,.av-grid>*{min-width:0}
+  .tabwrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  img,svg,iframe{max-width:100%}
+  @media(max-width:560px){.row3,.row4,.row5{grid-template-columns:1fr}}
   .watdoet .wd-lead{font-size:15px;margin:0 0 14px}
   .wd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .wd-grid>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
@@ -210,6 +325,13 @@
   .wd-stappen{margin:14px 0 0;padding-left:22px;font-size:14px}
   .wd-stappen li{padding:3px 0}
   .wd-slot{margin:12px 0 0}
+  .wd-faqkop{margin:18px 0 6px;font-size:16px;color:var(--primary)}
+  .wd-faq details{border-bottom:1px solid var(--line);padding:2px 0}
+  .wd-faq summary{cursor:pointer;font-weight:600;padding:9px 0;list-style:none;color:var(--text)}
+  .wd-faq summary::-webkit-details-marker{display:none}
+  .wd-faq summary::after{content:'+';float:right;color:var(--primary-2);font-weight:800}
+  .wd-faq details[open] summary::after{content:'−'}
+  .wd-faq p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
   @media(max-width:860px){.wd-grid{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){.wd-grid{grid-template-columns:1fr}}
   details summary{cursor:pointer;font-weight:700;color:var(--primary);margin:10px 0;font-family:var(--head)}
@@ -348,6 +470,7 @@
     </nav>
   </div>
 </header>
+<noscript><div class="panel" style="margin:16px"><b>PandWise heeft JavaScript nodig.</b> Zet JavaScript aan om een adres te controleren. PandWise is een gratis woningcheck op open data (indicatieve woningwaarde, funderingscijfer, klimaatrisico, geluid en energielabel). Het is geen taxatie of financieel advies. Een samenvatting staat in <a href="/llms.txt">llms.txt</a>.</div></noscript>
 <main>
   <div id="advBalk" class="adv-balk hidden"></div>
   <div class="panel zoekpanel">
@@ -380,6 +503,7 @@
       <div><b>Rapport</b><span>Adviseursrapport of kort rapport met voorblad, en tot drie adressen naast elkaar vergelijken.</span></div>
     </div>
     <ol class="wd-stappen"><li>Vul een adres of Funda-link in en klik op Analyseren.</li><li>Bekijk het dossier. Pas daarna de woningdata aan, bijvoorbeeld vraagprijs, oppervlakte of staat.</li><li>Print het rapport of vergelijk adressen.</li></ol>
+    <h3 class="wd-faqkop">Veelgestelde vragen</h3><div class="wd-faq"><details><summary>Wat is PandWise?</summary><p>PandWise is een gratis woningcheck. Je vult een adres of Funda-link in en krijgt in één dossier wat de openbare registers over het pand zeggen: een indicatieve woningwaarde met bandbreedte, een funderingscijfer, klimaatrisico&#x27;s, geluidsbelasting, een geschat energielabel, signalen en een bezichtigingschecklist.</p></details><details><summary>Is de woningwaarde van PandWise een taxatie?</summary><p>Nee. De indicatieve woningwaarde is een rekenkundige benadering op basis van buurtgemiddelden en de gegevens die je invult. Het is geen taxatie of waardebepaling door een erkend taxateur (NRVT of NWWI), geen financieel advies en niet geschikt voor een hypotheekaanvraag, financiering of bod.</p></details><details><summary>Hoe berekent PandWise de indicatieve woningwaarde?</summary><p>PandWise deelt de gemiddelde WOZ-waarde van de buurt (CBS) door de gemiddelde woonoppervlakte (BAG) en rekent dat door naar jouw woning, met de CBS-prijsindex als marktfactor. Daarna volgen correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat, met een bandbreedte. De correcties zijn aannames en niet gekalibreerd; elke stap staat in de berekeningstabel.</p></details><details><summary>Welke bronnen gebruikt PandWise?</summary><p>Openbare bronnen: BAG en BRK van het Kadaster, CBS Wijken en Buurten en prijsindex, PDOK, RIVM (geluid en klimaat), RVO (funderingsaandachtsgebieden), de 3D BAG en de WOZ-gegevens die je zelf invult. Per dossier staat bij &#x27;Bronnen en status&#x27; welke bron is opgehaald en welke is geschat.</p></details><details><summary>Is PandWise gratis en worden mijn gegevens opgeslagen?</summary><p>PandWise is gratis, werkt zonder account en zonder cookies en slaat niets op. De tool draait in je browser en haalt openbare gegevens rechtstreeks bij de bronnen op.</p></details><details><summary>Hoe schat PandWise het energielabel?</summary><p>Zonder geregistreerd label schat PandWise het label uit het bouwjaar, aan de hand van de energie-eisen van het Bouwbesluit per periode (EPC-eisen en eerdere isolatie-eisen). Verbouwing en isolatie sinds de bouw zijn niet meegenomen. Je kunt het label zelf aanpassen; een ingevuld label gaat voor.</p></details><details><summary>Kunnen adviseurs PandWise met hun eigen gegevens gebruiken?</summary><p>Ja. Via &#x27;Voor adviseurs&#x27; vul je bedrijfsnaam, adres, e-mailadres, telefoonnummer en logo in. Die komen in het rapport, en je kunt PandWise met die gegevens als iframe op je eigen website insluiten. Er wordt niets opgeslagen.</p></details><details><summary>Hoe nauwkeurig is PandWise?</summary><p>De nauwkeurigheid is niet gemeten en niet gegarandeerd. De parameters zijn niet gekalibreerd aan verkoopdata. De betrouwbaarheidsscore beoordeelt alleen of de gebruikte gegevens consistent zijn. Gebruik de uitkomst als startpunt voor je eigen onderzoek en laat een erkend taxateur een waarde vaststellen als dat nodig is.</p></details></div>
     <p class="small wd-slot">Een indicatie en geen taxatie, waardebepaling of financieel advies. Zie "Waarom gratis?" onderaan.</p>
   </section>
 
@@ -1246,7 +1370,7 @@ function render(d, idx){
   /* --- perceel & pand --- */
   const percelenTabel=(r.percelen&&r.percelen.length>1)?`<h3>Kadastrale percelen uit de advertentie</h3><table><tr><th>Aanduiding</th><th class="num">Grootte (BRK)</th><th>Soort</th></tr>${r.percelen.map(x=>`<tr><td>${esc(x.aanduiding)}</td><td class="num">${m2(x.grootte)}</td><td>${esc(x.soort_grootte||'')}</td></tr>`).join('')}<tr class="tot"><td>Totaal</td><td class="num">${m2(r.percelenTotaal)}</td><td></td></tr></table>`:'';
   const registersBlok=`${kaartBlok(d)}${percelenTabel}
-    <div class="grid2" style="margin-top:10px">
+    <div class="grid2 reg2" style="margin-top:10px">
       <div><h3>Verblijfsobject en pand (BAG)</h3>${kv({'Verblijfsobject-ID':vbo.identificatie,'Oppervlakte':vbo.oppervlakte?m2(vbo.oppervlakte):null,'Gebruiksdoel':vbo.gebruiksdoel,'Status':vbo.status,'Bronhouder':vbo.bronhouder,'Documentdatum':vbo.documentdatum,'Pand-ID':pand.identificatie,'Bouwjaar':pand.bouwjaar,'Status pand':pand.status,'Verblijfsobjecten in pand':pand.aantal_verblijfsobjecten})}</div>
       <div><h3>Adres en perceel (BRK)</h3>${kv({'Adres':adr.weergavenaam,'Gemeente':adr.gemeente,'Buurt':adr.buurt,'Buurtcode':adr.buurtcode,'Wijk':adr.wijk,'Nummeraanduiding-ID':adr.nummeraanduiding_id,'Kadastrale aanduiding':perc.aanduiding,'Kadastrale grootte':perc.grootte?m2(perc.grootte):null,'Soort grootte':perc.soort_grootte,'Coördinaat':adr.lat?adr.lat.toFixed(6)+', '+adr.lon.toFixed(6):null})}
       <p class="small" style="margin-top:8px"><a href="https://www.google.com/maps?q=${adr.lat},${adr.lon}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://www.kadastralekaart.com/adres/${encodeURIComponent((adr.weergavenaam||'').replace(/,.*/,''))}" target="_blank" rel="noopener">Kadastralekaart.com</a></p></div>
@@ -2511,7 +2635,8 @@ function rapportAfdrukken(i,tabOverride){
   .panel.sec{break-inside:auto}
   .kop,.kop *{break-inside:avoid!important} .kop{break-after:avoid-page} .panel.sec .kop+*{break-before:avoid-page}
   .indtabel td.k{width:58%} .indtabel td.num{white-space:nowrap}
-  .grid2{grid-template-columns:1fr 1fr!important;gap:0 24px!important}
+  .grid2{grid-template-columns:1fr!important} .reg2{grid-template-columns:1fr 1fr!important;gap:0 24px!important}
+  .panel.sec:has(.fc-top){break-inside:avoid!important}
   .row{grid-template-columns:1fr 1fr!important}
   .kpi-ind{grid-column:1/-1!important}
   .ind3{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
@@ -2531,8 +2656,8 @@ function rapportAfdrukken(i,tabOverride){
   .rap-kop h1{font-family:var(--head);color:var(--primary);font-size:22px;margin:0}
   .rap-kop p{margin:2px 0 0;color:var(--muted);font-size:12px}
   .voorblad{break-after:page}
-  .voorblad td{padding:5px 8px} .voorblad h3{margin:10px 0 4px}
-  .voorblad-foto{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin:10px 0 2px;display:block}
+  .voorblad td,.voorblad th{padding:3px 8px!important;font-size:11.5px} .voorblad h3{margin:8px 0 3px} .voorblad .kop{margin-bottom:4px}
+  .voorblad-foto{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin:10px 0 2px;display:block}
   .voorblad-logo{max-height:44px;max-width:180px;object-fit:contain;margin-left:auto}
   ul.check{list-style:disc;padding-left:20px} ul.check li{padding:3px 0;border-bottom:none} ul.check li::before{display:none}
   ul.vink li{padding:3px 0 3px 26px}
@@ -3104,7 +3229,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.17.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.18.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
@@ -3130,7 +3255,7 @@ const BEDRIJF={naam:'', kvk:'', contact:''}; // vul in; lege velden worden niet 
   const b=$('btnEmbedKopie'); if(b) b.onclick=()=>{ if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(c.textContent).then(()=>toonMsg('Code gekopieerd.')).catch(()=>prompt('Kopieer:',c.textContent)); else prompt('Kopieer:',c.textContent); }; })();
 /* embed- en voorvulparameters in de query string (de hash blijft voor deellinks) */
 (function(){ try{ const p=new URLSearchParams(location.search);
-  if(p.get('embed')==='1') document.body.classList.add('embed');
+  if(p.get('embed')==='1'){ document.body.classList.add('embed'); const mr=document.querySelector('meta[name=robots]')||document.head.appendChild(Object.assign(document.createElement('meta'),{name:'robots'})); mr.content='noindex,follow'; }
   const pv=(k,max)=>(p.get(k)||'').slice(0,max||120), zet=(id,w)=>{ if($(id)&&w) $(id).value=w; };
   zet('avNaam',pv('adviseur',80)); zet('avBedrijf',pv('kantoor',80)); zet('avAdres',pv('adres',120)); zet('avKvk',pv('kvk',40));
   if(advOkEmail(pv('email'))) zet('avEmail',pv('email')); if(advOkTel(pv('tel',24))) zet('avTel',pv('tel',24));

@@ -267,6 +267,12 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 3. Test met een bekend adres en vergelijk het cijfer met de vorige versie
 4. Commit met een duidelijk versienummer in de commit-message
 
+### 2.18.x – SEO, GEO, mobiel en rapportuitlijning
+- **SEO:** titel/description, canonical, hreflang, Open Graph/Twitter, JSON-LD (WebSite, WebApplication, FAQPage), `robots.txt`, `sitemap.xml`; `?embed=1` krijgt `noindex`.
+- **GEO:** `llms.txt` met samenvatting, bronnen, beperkingen en FAQ; zichtbare FAQ op de homepage die overeenkomt met de JSON-LD; AI-crawlers expliciet toegestaan in `robots.txt`.
+- **Mobiel:** geen horizontale overflow meer op 390 px (lange kop in tussenstap, grids met `min-width:0`, tabellen scrollbaar).
+- **Rapport:** voorblad past op één pagina (compacter contactblok en foto), brontabellen BAG/BRK blijven twee kolommen, scorekaarten breken niet over pagina's.
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
