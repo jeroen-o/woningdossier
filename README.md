@@ -165,7 +165,7 @@ Alle bronnen zijn publiek en vrij toegankelijk (geen API-sleutel vereist).
 | BRK Kadastrale Kaart | Perceeloppervlak, kadastrale aanduiding | service.pdok.nl |
 | CBS Wijken en Buurten | Buurtcijfers: WOZ, bevolking, energie, criminaliteit | opendata.cbs.nl |
 | CBS Prijsindex (86247/86059NED) | Kwartaalindex bestaande koopwoningen per COROP/provincie | opendata.cbs.nl |
-| CBS Mediaan verkoopprijs (85773NED) | Mediaan verkoopprijs per gemeente en woningtype | opendata.cbs.nl |
+| CBS 85773NED | Prijsindex bestaande koopwoningen en landelijke gemiddelde verkoopprijs (geen mediaan, geen gemeentecijfers) | opendata.cbs.nl |
 | AHN4 | Maaiveldhoogte (LiDAR, 0,5 m raster) | service.pdok.nl |
 | BRO Bodemkaart (TNO/DINOloket) | Grondsoort ter plaatse | service.pdok.nl |
 | BRO Grondwaterspiegeldiepte (WDM) | GHG, GLG en grondwatertrap (50×50 m raster) | service.pdok.nl |
@@ -273,10 +273,19 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 - **Mobiel:** geen horizontale overflow meer op 390 px (lange kop in tussenstap, grids met `min-width:0`, tabellen scrollbaar).
 - **Rapport:** voorblad past op één pagina (compacter contactblok en foto), brontabellen BAG/BRK blijven twee kolommen, scorekaarten breken niet over pagina's.
 
+### 2.21.0 – Bouwjaar- en woningtypecorrectie
+- **Bouwjaar (D6):** object t.o.v. het mediaanbouwjaar van de omgeving, 0,4% per decennium, maximaal ±4%; halve correctie als het energielabel al meetelt (voorkomt dubbeltelling). Alleen bij minstens 10 panden in de omgeving.
+- **Woningtype (D7):** object t.o.v. de woningmix van de buurt (CBS-aandeel eengezins/meergezins). Aanname: appartement per m² 10% duurder dan een eengezinswoning, maximaal ±8%. Alleen als het woningtype is vastgesteld.
+- Beide zijn aannames en niet gekalibreerd; ze staan in `INDIC` en in de berekeningstabel (D6 en D7).
+
+### 2.21.1 – Scheve verdeling van de buurt
+- Het buurtgemiddelde woonoppervlak wordt vergeleken met de BAG-mediaan. Wijken ze meer dan 15% af, dan geldt de verdeling als scheef: de betrouwbaarheid daalt een halve punt en de modelonzekerheid stijgt met 1%. De maatcorrectie blijft op het gemiddelde rekenen, omdat de buurt-WOZ per m² ook een gemiddelde is (er is geen mediaan-WOZ beschikbaar).
+- README gecorrigeerd: het CBS biedt geen mediaan verkoopprijs.
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
-- **CBS 85773NED:** de mediaan verkoopprijs is beschikbaar per gemeente en woningtype. Gemeenten met weinig transacties kunnen een verouderd of ontbrekend kwartaal hebben; PandWise valt dan terug op `TotaleTabel`.
+- **CBS-verkoopprijzen:** het CBS publiceert alleen gemiddelden (geen mediaan): de gemiddelde WOZ-waarde per buurt en de gemiddelde verkoopprijs per woningtype (85791NED) en per gemeente (83625NED). Gemeenten met weinig transacties kunnen een verouderd of ontbrekend kwartaal hebben; PandWise valt dan terug op `TotaleTabel`.
 
 ---
 
