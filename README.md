@@ -282,6 +282,9 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 - Het buurtgemiddelde woonoppervlak wordt vergeleken met de BAG-mediaan. Wijken ze meer dan 15% af, dan geldt de verdeling als scheef: de betrouwbaarheid daalt een halve punt en de modelonzekerheid stijgt met 1%. De maatcorrectie blijft op het gemiddelde rekenen, omdat de buurt-WOZ per m² ook een gemiddelde is (er is geen mediaan-WOZ beschikbaar).
 - README gecorrigeerd: het CBS biedt geen mediaan verkoopprijs.
 
+### 2.22.0 – Overige inpandige ruimte telt mee in de waarde
+- Het rekenoppervlak van het aangepaste woonoppervlak is woonoppervlak plus 50% van de overige inpandige ruimte (garage, berging). Reden: de buurtwaarde per m² is gedeeld door het gemiddelde BAG-gebruiksoppervlak, en dat telt zulke ruimte al mee. Het gewicht 0,5 (`INDIC.overigGewicht`) is een aanname en niet gekalibreerd; bij leeg of 0 m² verandert er niets. De BAG-berekening (zonder aangepast oppervlak) is ongewijzigd.
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
