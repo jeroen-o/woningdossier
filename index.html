@@ -2804,6 +2804,8 @@ const INDIC = {
   // Woningtype t.o.v. de woningmix van de buurt (CBS: aandeel eengezins- en meergezinswoningen). Aanname, niet gekalibreerd:
   appPremie: 0.10,           // appartementen kosten per m² gemiddeld 10% meer dan eengezinswoningen
   typeCap: 8,                // maximale correctie in %, beide kanten
+  scheefDrempel: 15,       // % verschil tussen gemiddelde en mediaan woonoppervlakte van de buurt waarbij de verdeling als scheef geldt
+  extraScheef: 1,          // extra onzekerheid in % bij een scheve verdeling (grote woningen trekken het buurtgemiddelde op)
   ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
   extraAnkerAfwijking: 2,  // extra onzekerheid in % bij zo'n verschil
   medianeWaarschuwing: 30, // % afwijking midden t.o.v. verwachte gemiddelde prijs waarbij een waarschuwing volgt
@@ -2830,6 +2832,8 @@ function indicBereken(d){
   const st=indicInit(d), f=st.factor||1, bi=+st.binnen||STAAT_STANDAARD, bu=+st.buiten||STAAT_STANDAARD, a=d.advertentie;
   const bag=d.registers.verblijfsobject&&d.registers.verblijfsobject.oppervlakte;
   const perM2=b.wozGem/wm.gemiddelde, mg=staatMarge(bi,bu);
+  const scheefPct=(wm.mediaan>0)?(wm.gemiddelde/wm.mediaan-1)*100:null, scheefAfw=scheefPct!=null&&Math.abs(scheefPct)>INDIC.scheefDrempel;
+  const scheefInfo={gem:wm.gemiddelde, med:wm.mediaan||null, pct:scheefPct, afw:scheefAfw};
   const med=d.registers.mediaan||null;
   let labelInfo={toegepast:false,pct:0,label:null,bron:null}, fundInfo={toegepast:false,pct:0,cijfer:null};
   try{ const kb=d.fundering?Klim.bereken(d):null; if(kb&&kb.lab&&kb.lab.label&&kb.lab.label!=='Onbekend'){ const tk=String(kb.lab.label).match(/A\+{0,4}|[B-G]/g)||[]; const eff=tk.map(t=>INDIC.labelEffect[t]).filter(x=>x!=null); if(eff.length){ const gem=eff.reduce((a,b)=>a+b,0)/eff.length, w=kb.lab.bron==='schatting'?INDIC.labelGeschatGewicht:1; labelInfo={toegepast:true,pct:gem*w,label:kb.lab.label,bron:kb.lab.bron}; } } }catch(e){}
@@ -2858,7 +2862,7 @@ function indicBereken(d){
     const mediaanAfw=tovMed!=null&&Math.abs(tovMed)>INDIC.medianeWaarschuwing;
     const tovAnker=anker?(midden-anker.waarde)/anker.waarde*100:null;
     const ankerAfw=tovAnker!=null&&Math.abs(tovAnker)>INDIC.ankerWaarschuwing;
-    const onz=INDIC.onzekerheid+(st.handmatig?INDIC.extraZonderIndex:0)+(afwijkend?INDIC.extraAfwijkendM2:0)+(mediaanAfw?INDIC.extraAfwijkingControle:0)+(ankerAfw?INDIC.extraAnkerAfwijking:0);
+    const onz=INDIC.onzekerheid+(st.handmatig?INDIC.extraZonderIndex:0)+(afwijkend?INDIC.extraAfwijkendM2:0)+(mediaanAfw?INDIC.extraAfwijkingControle:0)+(ankerAfw?INDIC.extraAnkerAfwijking:0)+(scheefAfw?INDIC.extraScheef:0);
     const laag=r5(geind*(1+mg.lo/100)*(1-onz/100)), hoog=r5(geind*(1+mg.hi/100)*(1+onz/100));
     const vp=a.vraagprijs;
     let positie=null;
@@ -2875,11 +2879,12 @@ function indicBereken(d){
   if(hf&&hf.tovAnker!=null){ const ta=Math.abs(hf.tovAnker); if(ta>INDIC.ankerWaarschuwing) pen(1,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); else if(ta>10) pen(0.5,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); }
   if(hf&&hf.tovMed!=null&&Math.abs(hf.tovMed)>INDIC.medianeWaarschuwing) pen(1,'Het midden wijkt meer dan '+INDIC.medianeWaarschuwing+'% af van het controlegetal.');
   if(!app0&&percObj&&!typPerc) pen(0.5,'Geen typisch perceel in de omgeving beschikbaar; de perceelcorrectie is niet toegepast.');
+  if(scheefAfw) pen(0.5,'Het gemiddelde woonoppervlak van de buurt ligt '+Math.round(Math.abs(scheefPct))+'% '+(scheefPct>0?'boven':'onder')+' de mediaan: de verdeling is scheef en de gemiddelde WOZ per m² is minder representatief.');
   if(wm.omgeving) pen(0.5,'De gemiddelde woonoppervlakte komt uit een steekproef rond het adres, niet uit de hele buurt.');
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, scheef:scheefInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -2957,6 +2962,7 @@ function indicUit(d){
     <tr><td class="k">A. Gemiddelde WOZ-waarde buurt (CBS ${x.jaar}, peildatum 1-1-${x.peiljaar})</td><td class="num" colspan="${kn}">${eur(x.woz)}</td></tr>
     <tr><td class="k">B. Gemiddelde woningoppervlakte ${d.registers.buurt&&d.registers.buurt.woningM2&&d.registers.buurt.woningM2.omgeving?'in de omgeving, circa 300 m (BAG; de hele buurt was niet op te halen)':'buurt (BAG)'}</td><td class="num" colspan="${kn}">${m2(x.gemM2)}</td></tr>
     <tr><td class="k">C. Gemiddelde WOZ per m² (A ÷ B)</td><td class="num" colspan="${kn}">${eur(x.perM2)}</td></tr>
+    ${x.scheef.med?`<tr><td class="k">B2. Spreiding woonoppervlak buurt (gemiddelde ${m2(x.scheef.gem)}, mediaan ${m2(x.scheef.med)})</td><td class="num small" colspan="${kn}">${pctS(x.scheef.pct)} · ${x.scheef.afw?`scheve verdeling: +${INDIC.extraScheef}% modelonzekerheid`:'geen scheve verdeling'}</td></tr>`:''}
     ${row('D. Oppervlakte object',k=>m2(k.m2))}
     ${row('D2. Maatcorrectie (grotere woning = lagere prijs per m²)',k=>pctS(k.maatPct))}
     ${x.perceel.toegepast?row(`D3. Perceelcorrectie (${num(x.perceel.obj)} m² t.o.v. typisch ${num(x.perceel.typ)} m² in de omgeving; aanname, maximaal ±${INDIC.perceelCap}%)`,k=>pctS(k.perceelPct)):`<tr><td class="k">D3. Perceelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.perceel.reden||'')}</td></tr>`}
@@ -3345,7 +3351,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.21.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.21.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
