@@ -2790,8 +2790,10 @@ const INDIC = {
   extraZonderIndex: 4,     // extra onzekerheid in % als de CBS-prijsindex ontbreekt of handmatig is aangepast
   extraAfwijkendM2: 2,     // extra onzekerheid in % als het object >50% van het buurtgemiddelde afwijkt
   fallbackFactor: 1.15,    // marktfactor als de CBS-index niet beschikbaar is
-  perceelElasticiteit: 0.08, // waarde ~ (perceel / typisch perceel) ^ 0,08: expertaanname, niet gekalibreerd
-  perceelCap: 10,            // maximale perceelcorrectie in %, beide kanten
+  perceelElasticiteit: 0.08, // perceel kleiner dan typisch: waarde ~ (perceel / typisch perceel) ^ 0,08 (expertaanname, niet gekalibreerd)
+  perceelCap: 10,            // maximale perceelkorting in % bij een kleiner perceel dan typisch
+  perceelElasticiteitBoven: 0.20, // perceel groter dan typisch: sterker effect, aanname op basis van een eerste vergelijking met vraagprijzen (niet gekalibreerd)
+  perceelCapBoven: 20,       // maximale perceeltoeslag in % bij een groter perceel dan typisch
   // Aannames, niet gekalibreerd: orde van grootte van enkele procenten per labelstap, ten opzichte van label D
   labelEffect:{'A':3.5,'A+':4,'A++':4.5,'A+++':5,'A++++':5,'B':2,'C':0.5,'D':0,'E':-2,'F':-4,'G':-6},
   labelGeschatGewicht:0.5, // een label dat uit het bouwjaar is geschat telt voor de helft mee
@@ -2848,7 +2850,8 @@ function indicBereken(d){
   let typeInfo={toegepast:false,pct:0,reden:!typeBekend?'woningtype niet vastgesteld':'aandeel eengezins- en meergezinswoningen van de buurt ontbreekt'};
   if(typeBekend&&_mg!=null&&_eg!=null&&(_mg+_eg)>0){ const sm=_mg/(_mg+_eg), isApp=isAppartement(d), pi=INDIC.appPremie; let tp=((isApp?1+pi:1)/(1+sm*pi)-1)*100; tp=Math.max(-INDIC.typeCap,Math.min(INDIC.typeCap,tp)); typeInfo={toegepast:true,pct:tp,app:isApp,aandeelMeergezins:sm*100}; }
   const percObj=a0perceel(d), typPerc=(d.registers.perceelOmgeving&&d.registers.perceelOmgeving.mediaan)||null, app0=isAppartement(d);
-  const perceelPct=(!app0&&percObj&&typPerc)?Math.max(-INDIC.perceelCap,Math.min(INDIC.perceelCap,(Math.pow(percObj/typPerc,INDIC.perceelElasticiteit)-1)*100)):0;
+  const perceelRatio=(percObj&&typPerc)?percObj/typPerc:1;
+  const perceelPct=(!app0&&percObj&&typPerc)?(perceelRatio>=1?Math.min(INDIC.perceelCapBoven,(Math.pow(perceelRatio,INDIC.perceelElasticiteitBoven)-1)*100):Math.max(-INDIC.perceelCap,(Math.pow(perceelRatio,INDIC.perceelElasticiteit)-1)*100)):0;
   const perceelInfo={obj:percObj, typ:typPerc, pct:perceelPct, toegepast:!app0&&!!percObj&&!!typPerc, reden:app0?'appartement of meergezinspand: geen eigen grond':!percObj?'geen perceeloppervlakte bekend':!typPerc?'geen vergelijkingsgegevens in de omgeving':null};
   let Wz=null; try{ Wz=wozBereken(d); }catch(e){}
   const anker=Wz?{waarde:(Wz.geind?Wz.geind.waarde:Wz.laatste.waarde), jaar:Wz.laatste.jaar, bron:Wz.laatste.bron, geind:!!Wz.geind}:null;
@@ -2922,7 +2925,7 @@ function stapKaart(d){
     <div class="stap-grid">
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
       <div><label for="stov">Overige inpandige ruimte (m²)</label><input type="text" id="stov" inputmode="numeric" value="${esc(f(a.overigInpandig||''))}" placeholder="0"><span class="small">Berging, garage of ruimte binnen het pand buiten het wonen.</span></div>
-      <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
+      <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als correctie (aanname) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
       <div><label for="stt">Woningtype</label><select id="stt"><option value="">${esc(auto||'Onbekend')}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Dit denken we op basis van de BAG-pandgeometrie. Kies zelf een type om het te overschrijven.</span>':''}</div>
       <div><label for="stlbl">Energielabel</label><select id="stlbl"><option value="">${estLabel?'Schatting uit bouwjaar ('+esc(estLabel)+')':'Onbekend'}</option>${['A++++','A+++','A++','A+','A','B','C','D','E','F','G'].map(l=>`<option value="${l}"${curLabel===l?' selected':''}>${l}</option>`).join('')}</select><span class="small">Telt mee in de waarde. Geregistreerd label? Zoek het op <a href="https://www.ep-online.nl" target="_blank" rel="noopener">ep-online.nl</a>.</span></div>
@@ -2970,7 +2973,7 @@ function indicUit(d){
     ${row(x.overig.toegepast?'D. Rekenoppervlak object (woonoppervlak + deel overige inpandige ruimte)':'D. Oppervlakte object',k=>m2(k.m2))}
     ${x.overig.toegepast?`<tr><td class="k">D1. Overige inpandige ruimte (${num(x.overig.m2,0)} m² × ${num(x.overig.gewicht*100,0)}% = ${num(x.overig.eff,1)} m² erbij; aanname, niet gekalibreerd)</td><td class="num small" colspan="${kn}">alleen bij het aangepaste woonoppervlak; de BAG-gebruiksoppervlakte telt deze ruimte al mee</td></tr>`:''}
     ${row('D2. Maatcorrectie (grotere woning = lagere prijs per m²)',k=>pctS(k.maatPct))}
-    ${x.perceel.toegepast?row(`D3. Perceelcorrectie (${num(x.perceel.obj)} m² t.o.v. typisch ${num(x.perceel.typ)} m² in de omgeving; aanname, maximaal ±${INDIC.perceelCap}%)`,k=>pctS(k.perceelPct)):`<tr><td class="k">D3. Perceelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.perceel.reden||'')}</td></tr>`}
+    ${x.perceel.toegepast?row(`D3. Perceelcorrectie (${num(x.perceel.obj)} m² t.o.v. typisch ${num(x.perceel.typ)} m² in de omgeving; aanname, niet gekalibreerd: toeslag maximaal +${INDIC.perceelCapBoven}% bij een groter, korting maximaal −${INDIC.perceelCap}% bij een kleiner perceel)`,k=>pctS(k.perceelPct)):`<tr><td class="k">D3. Perceelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.perceel.reden||'')}</td></tr>`}
     ${x.labelInfo.toegepast?row(`D4. Energielabelcorrectie (label ${esc(x.labelInfo.label)}, ${x.labelInfo.bron==='EP-online'?'geregistreerd':x.labelInfo.bron==='handmatig'?'handmatig ingevoerd':'geschat uit bouwjaar, half gewicht'}; aanname t.o.v. label D)`,k=>pctS(k.labelPct)):`<tr><td class="k">D4. Energielabelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: label onbekend</td></tr>`}
     ${x.fundInfo.toegepast?row(`D5. Funderingscorrectie (cijfer ${x.fundInfo.cijfer} van 8; 7 is neutraal, slechter verlaagt de waarde, maximaal -15%; aanname)`,k=>pctS(k.fundPct)):''}
     ${x.bouwjaarInfo.toegepast?row(`D6. Bouwjaarcorrectie (${x.bouwjaarInfo.obj} t.o.v. mediaan ${x.bouwjaarInfo.med} in de omgeving, ${num(INDIC.bouwjaarPerDecennium,1)}% per decennium${x.bouwjaarInfo.half?', half gewicht omdat het energielabel al meetelt':''}; aanname, maximaal ±${INDIC.bouwjaarCap}%)`,k=>pctS(k.bouwjaarPct)):`<tr><td class="k">D6. Bouwjaarcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.bouwjaarInfo.reden||'')}</td></tr>`}
@@ -3356,7 +3359,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.22.2'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.23.0'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }

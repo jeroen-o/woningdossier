@@ -285,6 +285,11 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 ### 2.22.0 en 2.22.1 – Overige inpandige ruimte telt mee in de waarde
 - Het rekenoppervlak van het aangepaste woonoppervlak is woonoppervlak plus 25% van de overige inpandige ruimte (garage, berging). Reden: de buurtwaarde per m² is gedeeld door het gemiddelde BAG-gebruiksoppervlak, en dat telt zulke ruimte al mee. Het gewicht 0,25 (`INDIC.overigGewicht`) is een aanname en niet gekalibreerd; bij leeg of 0 m² verandert er niets. De BAG-berekening (zonder aangepast oppervlak) is ongewijzigd.
 
+### 2.23.0 – Asymmetrische perceelcorrectie
+- Perceel **kleiner** dan het typische perceel van de omgeving: ongewijzigd, waarde ~ (perceel ÷ typisch) ^ 0,08, korting maximaal −10%.
+- Perceel **groter** dan typisch: waarde ~ (perceel ÷ typisch) ^ 0,20, toeslag maximaal +20% (was ^ 0,08 en maximaal +10%).
+- Aanleiding: een eerste vergelijking van 117 woningen (zonder appartementen) met Funda-vraagprijzen liet zien dat het model bij kavels boven 300 m² ongeveer 14% onder de vraagprijs zat, bij kleinere kavels niet. De nieuwe waarden zijn aannames, niet gekalibreerd (vraagprijzen zijn geen transactieprijzen) en moeten met een nieuw monster worden gecontroleerd. Constanten in `INDIC` (`perceelElasticiteitBoven`, `perceelCapBoven`).
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
