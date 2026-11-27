@@ -2921,7 +2921,7 @@ function stapKaart(d){
     <span class="src ind-kopsub">De uitkomst hangt sterk af van deze gegevens. Ze zijn ingevuld uit de registers; wijzig ze als het anders is of anders gaat worden.</span>
     <div class="stap-grid">
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
-      <div><label for="stov">Overige inpandige ruimte (m²)</label><input type="text" id="stov" inputmode="numeric" value="${esc(f(a.overigInpandig||''))}" placeholder="0"><span class="small">Berging, garage of ruimte binnen het pand buiten het wonen. Telt voor een kwart mee in de woningwaarde (aanname) en in de vergelijking met de BAG-gebruiksoppervlakte.</span></div>
+      <div><label for="stov">Overige inpandige ruimte (m²)</label><input type="text" id="stov" inputmode="numeric" value="${esc(f(a.overigInpandig||''))}" placeholder="0"><span class="small">Berging, garage of ruimte binnen het pand buiten het wonen.</span></div>
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
       <div><label for="stt">Woningtype</label><select id="stt"><option value="">${esc(auto||'Onbekend')}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Dit denken we op basis van de BAG-pandgeometrie. Kies zelf een type om het te overschrijven.</span>':''}</div>
@@ -3356,7 +3356,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.22.1'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.22.2'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
