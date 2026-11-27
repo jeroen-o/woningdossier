@@ -6,7 +6,7 @@ Website: https://pandwise.nl/
 Taal: Nederlands. Prijs: gratis, geen account, geen cookies.
 
 ## Wat PandWise doet
-- Indicatieve woningwaarde met bandbreedte en vijf scenario's naar staat (slecht, matig, redelijk, goed, uitstekend). Gebaseerd op de gemiddelde WOZ-waarde van de buurt per m² (CBS en BAG), de CBS-prijsindex en correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat. De correcties zijn aannames en niet gekalibreerd.
+- Indicatieve woningwaarde met bandbreedte en vijf scenario's naar staat (slecht, matig, redelijk, goed, uitstekend). Gebaseerd op de gemiddelde WOZ-waarde van de buurt per m² (CBS en BAG), de CBS-prijsindex en correcties voor oppervlakte, perceel, energielabel, funderingscijfer, bouwjaar, woningtype en staat. De correcties zijn aannames en niet gekalibreerd.
 - Funderingscijfer (2 tot 8) uit bouwjaar, bodem, ligging, grondwater en RVO-aandachtsgebieden, met een herleidbare rekentabel.
 - Klimaatcijfer: overstroming, hitte, wateroverlast en droogte.
 - Geluidsbelasting (RIVM), bouwlagen en gebouwhoogte (3D BAG).
@@ -33,7 +33,7 @@ PandWise is een gratis woningcheck. Je vult een adres of Funda-link in en krijgt
 Nee. De indicatieve woningwaarde is een rekenkundige benadering op basis van buurtgemiddelden en de gegevens die je invult. Het is geen taxatie of waardebepaling door een erkend taxateur (NRVT of NWWI), geen financieel advies en niet geschikt voor een hypotheekaanvraag, financiering of bod.
 
 ### Hoe berekent PandWise de indicatieve woningwaarde?
-PandWise deelt de gemiddelde WOZ-waarde van de buurt (CBS) door de gemiddelde woonoppervlakte (BAG) en rekent dat door naar jouw woning, met de CBS-prijsindex als marktfactor. Daarna volgen correcties voor oppervlakte, perceel, energielabel, funderingscijfer en staat, met een bandbreedte. De correcties zijn aannames en niet gekalibreerd; elke stap staat in de berekeningstabel.
+PandWise deelt de gemiddelde WOZ-waarde van de buurt (CBS) door de gemiddelde woonoppervlakte (BAG) en rekent dat door naar jouw woning, met de CBS-prijsindex als marktfactor. Daarna volgen correcties voor oppervlakte, perceel, energielabel, funderingscijfer, bouwjaar, woningtype en staat, met een bandbreedte. De correcties zijn aannames en niet gekalibreerd; elke stap staat in de berekeningstabel.
 
 ### Welke bronnen gebruikt PandWise?
 Openbare bronnen: BAG en BRK van het Kadaster, CBS Wijken en Buurten en prijsindex, PDOK, RIVM (geluid en klimaat), RVO (funderingsaandachtsgebieden), de 3D BAG en de WOZ-gegevens die je zelf invult. Per dossier staat bij 'Bronnen en status' welke bron is opgehaald en welke is geschat.

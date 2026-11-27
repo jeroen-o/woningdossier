@@ -273,6 +273,11 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 - **Mobiel:** geen horizontale overflow meer op 390 px (lange kop in tussenstap, grids met `min-width:0`, tabellen scrollbaar).
 - **Rapport:** voorblad past op één pagina (compacter contactblok en foto), brontabellen BAG/BRK blijven twee kolommen, scorekaarten breken niet over pagina's.
 
+### 2.21.0 – Bouwjaar- en woningtypecorrectie
+- **Bouwjaar (D6):** object t.o.v. het mediaanbouwjaar van de omgeving, 0,4% per decennium, maximaal ±4%; halve correctie als het energielabel al meetelt (voorkomt dubbeltelling). Alleen bij minstens 10 panden in de omgeving.
+- **Woningtype (D7):** object t.o.v. de woningmix van de buurt (CBS-aandeel eengezins/meergezins). Aanname: appartement per m² 10% duurder dan een eengezinswoning, maximaal ±8%. Alleen als het woningtype is vastgesteld.
+- Beide zijn aannames en niet gekalibreerd; ze staan in `INDIC` en in de berekeningstabel (D6 en D7).
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
