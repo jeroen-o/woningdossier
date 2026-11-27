@@ -2804,6 +2804,7 @@ const INDIC = {
   // Woningtype t.o.v. de woningmix van de buurt (CBS: aandeel eengezins- en meergezinswoningen). Aanname, niet gekalibreerd:
   appPremie: 0.10,           // appartementen kosten per m² gemiddeld 10% meer dan eengezinswoningen
   typeCap: 8,                // maximale correctie in %, beide kanten
+  overigGewicht: 0.5,      // overige inpandige ruimte (garage, berging) telt voor 50% mee in het rekenoppervlak; aanname, niet gekalibreerd
   scheefDrempel: 15,       // % verschil tussen gemiddelde en mediaan woonoppervlakte van de buurt waarbij de verdeling als scheef geldt
   extraScheef: 1,          // extra onzekerheid in % bij een scheve verdeling (grote woningen trekken het buurtgemiddelde op)
   ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
@@ -2869,12 +2870,14 @@ function indicBereken(d){
     if(vp){ positie = vp<laag ? {t:'onder de bandbreedte',p:(vp-laag)/laag*100} : vp>hoog ? {t:'boven de bandbreedte',p:(vp-hoog)/hoog*100} : {t:'binnen de bandbreedte',p:null}; }
     return {m2:m, maatPct, perceelPct, labelPct:labelInfo.pct, fundPct:fundInfo.pct, bouwjaarPct:bouwjaarInfo.pct, typePct:typeInfo.pct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
   };
-  const adv=kol(a.wonen), bg=kol(bag);
+  const overigM2=+a.overigInpandig>0?+a.overigInpandig:0, overigEff=a.wonen?overigM2*INDIC.overigGewicht:0, wonenEff=a.wonen?a.wonen+overigEff:null;
+  const overigInfo={m2:overigM2, gewicht:INDIC.overigGewicht, eff:overigEff, toegepast:!!a.wonen&&overigM2>0};
+  const adv=kol(wonenEff), bg=kol(bag);
   const hf=adv||bg, rd=[]; let sc=5; const pen=(n,t)=>{ sc-=n; rd.push(t); };
   if(st.handmatig) pen(1,'De marktfactor komt niet uit de CBS-prijsindex.');
   if(!med) pen(0.5,'Geen controlegetal beschikbaar (CBS-prijs per woningtype).');
   if(!(d.fundering&&d.fundering.woningtype)&&!((d.registers.pand&&d.registers.pand.aantal_verblijfsobjecten)>=3)) pen(0.5,'Het woningtype is niet vastgesteld; de buurtgemiddelde mengt alle typen.');
-  if(bag&&a.wonen&&Math.abs(bag-a.wonen)/a.wonen>0.06) pen(1,'BAG-oppervlakte en aangepast oppervlak wijken meer dan 6% af.');
+  if(bag&&a.wonen&&Math.abs(bag-(a.wonen+overigM2))/(a.wonen+overigM2)>0.06) pen(1,'BAG-oppervlakte en aangepast oppervlak wijken meer dan 6% af.');
   if(hf&&Math.abs(hf.m2/wm.gemiddelde-1)>0.5) pen(1,'Het oppervlak wijkt meer dan 50% af van het buurtgemiddelde.');
   if(hf&&hf.tovAnker!=null){ const ta=Math.abs(hf.tovAnker); if(ta>INDIC.ankerWaarschuwing) pen(1,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); else if(ta>10) pen(0.5,'De buurtmethode wijkt '+Math.round(ta)+'% af van de eigen WOZ (geïndexeerd).'); }
   if(hf&&hf.tovMed!=null&&Math.abs(hf.tovMed)>INDIC.medianeWaarschuwing) pen(1,'Het midden wijkt meer dan '+INDIC.medianeWaarschuwing+'% af van het controlegetal.');
@@ -2884,7 +2887,7 @@ function indicBereken(d){
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, scheef:scheefInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, scheef:scheefInfo, overig:overigInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -2918,7 +2921,7 @@ function stapKaart(d){
     <span class="src ind-kopsub">De uitkomst hangt sterk af van deze gegevens. Ze zijn ingevuld uit de registers; wijzig ze als het anders is of anders gaat worden.</span>
     <div class="stap-grid">
       <div><label for="stw">Woonoppervlakte (m²)</label><input type="text" id="stw" inputmode="numeric" value="${esc(f(wonen))}"><span class="small">${vbo.oppervlakte?'BAG gebruiksoppervlakte: '+vbo.oppervlakte+' m². Een advertentie noemt vaak een kleiner woonoppervlak.':''}</span></div>
-      <div><label for="stov">Overige inpandige ruimte (m²)</label><input type="text" id="stov" inputmode="numeric" value="${esc(f(a.overigInpandig||''))}" placeholder="0"><span class="small">Berging, garage of ruimte binnen het pand buiten het wonen. Telt mee in de vergelijking met de BAG-gebruiksoppervlakte, niet in de woningwaarde.</span></div>
+      <div><label for="stov">Overige inpandige ruimte (m²)</label><input type="text" id="stov" inputmode="numeric" value="${esc(f(a.overigInpandig||''))}" placeholder="0"><span class="small">Berging, garage of ruimte binnen het pand buiten het wonen. Telt voor de helft mee in de woningwaarde (aanname) en in de vergelijking met de BAG-gebruiksoppervlakte.</span></div>
       <div><label for="stp">Perceeloppervlakte (m²)</label><input type="text" id="stp" inputmode="numeric" value="${esc(f(perc))}"><span class="small">Telt mee als kleine correctie (aanname, maximaal ±10%) bij woningen met eigen grond.${bagViewerLink(adr)?` <a href="${esc(bagViewerLink(adr))}" target="_blank" rel="noopener">Kadaster-info in de BAG Viewer ↗</a>`:''}</span></div>
       <div><label for="stbj">Bouwjaar</label><input type="text" id="stbj" inputmode="numeric" value="${esc(f(bj))}"></div>
       <div><label for="stt">Woningtype</label><select id="stt"><option value="">${esc(auto||'Onbekend')}</option>${types.map(t=>`<option value="${t}"${a.typeHandmatig===t?' selected':''}>${t}</option>`).join('')}</select>${auto?'<span class="small">Dit denken we op basis van de BAG-pandgeometrie. Kies zelf een type om het te overschrijven.</span>':''}</div>
@@ -2964,7 +2967,8 @@ function indicUit(d){
     <tr><td class="k">B. Gemiddelde woningoppervlakte ${d.registers.buurt&&d.registers.buurt.woningM2&&d.registers.buurt.woningM2.omgeving?'in de omgeving, circa 300 m (BAG; de hele buurt was niet op te halen)':'buurt (BAG)'}</td><td class="num" colspan="${kn}">${m2(x.gemM2)}</td></tr>
     <tr><td class="k">C. Gemiddelde WOZ per m² (A ÷ B)</td><td class="num" colspan="${kn}">${eur(x.perM2)}</td></tr>
     ${x.scheef.med?`<tr><td class="k">B2. Spreiding woonoppervlak buurt (gemiddelde ${m2(x.scheef.gem)}, mediaan ${m2(x.scheef.med)})</td><td class="num small" colspan="${kn}">${pctS(x.scheef.pct)} · ${x.scheef.afw?`scheve verdeling: +${INDIC.extraScheef}% modelonzekerheid`:'geen scheve verdeling'}</td></tr>`:''}
-    ${row('D. Oppervlakte object',k=>m2(k.m2))}
+    ${row(x.overig.toegepast?'D. Rekenoppervlak object (woonoppervlak + deel overige inpandige ruimte)':'D. Oppervlakte object',k=>m2(k.m2))}
+    ${x.overig.toegepast?`<tr><td class="k">D1. Overige inpandige ruimte (${num(x.overig.m2,0)} m² × ${num(x.overig.gewicht*100,0)}% = ${num(x.overig.eff,1)} m² erbij; aanname, niet gekalibreerd)</td><td class="num small" colspan="${kn}">alleen bij het aangepaste woonoppervlak; de BAG-gebruiksoppervlakte telt deze ruimte al mee</td></tr>`:''}
     ${row('D2. Maatcorrectie (grotere woning = lagere prijs per m²)',k=>pctS(k.maatPct))}
     ${x.perceel.toegepast?row(`D3. Perceelcorrectie (${num(x.perceel.obj)} m² t.o.v. typisch ${num(x.perceel.typ)} m² in de omgeving; aanname, maximaal ±${INDIC.perceelCap}%)`,k=>pctS(k.perceelPct)):`<tr><td class="k">D3. Perceelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.perceel.reden||'')}</td></tr>`}
     ${x.labelInfo.toegepast?row(`D4. Energielabelcorrectie (label ${esc(x.labelInfo.label)}, ${x.labelInfo.bron==='EP-online'?'geregistreerd':x.labelInfo.bron==='handmatig'?'handmatig ingevoerd':'geschat uit bouwjaar, half gewicht'}; aanname t.o.v. label D)`,k=>pctS(k.labelPct)):`<tr><td class="k">D4. Energielabelcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: label onbekend</td></tr>`}
@@ -3352,7 +3356,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.21.2'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.22.0'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
