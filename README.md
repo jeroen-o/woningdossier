@@ -290,6 +290,10 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 - Perceel **groter** dan typisch: waarde ~ (perceel ÷ typisch) ^ 0,20, toeslag maximaal +20% (was ^ 0,08 en maximaal +10%).
 - Aanleiding: een eerste vergelijking van 117 woningen (zonder appartementen) met Funda-vraagprijzen liet zien dat het model bij kavels boven 300 m² ongeveer 14% onder de vraagprijs zat, bij kleinere kavels niet. De nieuwe waarden zijn aannames, niet gekalibreerd (vraagprijzen zijn geen transactieprijzen) en moeten met een nieuw monster worden gecontroleerd. Constanten in `INDIC` (`perceelElasticiteitBoven`, `perceelCapBoven`).
 
+### 2.24.0 – Toeslag voor vrijstaande woningen
+- Een vrijstaande woning krijgt een toeslag van +15% (`INDIC.vrijToeslag`) ten opzichte van het buurtgemiddelde, dat vooral tussenwoningen bevat. Aanleiding: in twee steekproeven (144 en 98 woningen) zaten vrijstaande woningen 15–26% onder de vraagprijs, ook na de perceelcorrectie. Hoek- en 2-onder-1-kapwoningen en tussenwoningen krijgen geen toeslag.
+- De toeslag is een aanname, niet gekalibreerd (vraagprijzen zijn geen transactieprijzen) en staat als regel D8 in de berekeningstabel. Hij is niet gecorrigeerd voor buurten die uit vrijstaande woningen bestaan.
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
