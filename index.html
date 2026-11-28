@@ -2807,6 +2807,7 @@ const INDIC = {
   appPremie: 0.10,           // appartementen kosten per m² gemiddeld 10% meer dan eengezinswoningen
   typeCap: 8,                // maximale correctie in %, beide kanten
   overigGewicht: 0.25,     // overige inpandige ruimte (garage, berging) telt voor 25% mee in het rekenoppervlak; aanname, niet gekalibreerd
+  vrijToeslag: 12,         // vrijstaande woning t.o.v. het buurtgemiddelde (vooral tussenwoningen), in %: aanname uit een vergelijking met vraagprijzen, niet gekalibreerd
   scheefDrempel: 15,       // % verschil tussen gemiddelde en mediaan woonoppervlakte van de buurt waarbij de verdeling als scheef geldt
   extraScheef: 1,          // extra onzekerheid in % bij een scheve verdeling (grote woningen trekken het buurtgemiddelde op)
   ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
@@ -2849,6 +2850,8 @@ function indicBereken(d){
   const _mg=b.meergezins, _eg=b.eengezins;
   let typeInfo={toegepast:false,pct:0,reden:!typeBekend?'woningtype niet vastgesteld':'aandeel eengezins- en meergezinswoningen van de buurt ontbreekt'};
   if(typeBekend&&_mg!=null&&_eg!=null&&(_mg+_eg)>0){ const sm=_mg/(_mg+_eg), isApp=isAppartement(d), pi=INDIC.appPremie; let tp=((isApp?1+pi:1)/(1+sm*pi)-1)*100; tp=Math.max(-INDIC.typeCap,Math.min(INDIC.typeCap,tp)); typeInfo={toegepast:true,pct:tp,app:isApp,aandeelMeergezins:sm*100}; }
+  const _wtNaam=(d.fundering&&d.fundering.woningtype&&d.fundering.woningtype.naam)||'';
+  const typeToeslagInfo={toegepast:/vrijstaand/i.test(_wtNaam), pct:/vrijstaand/i.test(_wtNaam)?INDIC.vrijToeslag:0};
   const percObj=a0perceel(d), typPerc=(d.registers.perceelOmgeving&&d.registers.perceelOmgeving.mediaan)||null, app0=isAppartement(d);
   const perceelRatio=(percObj&&typPerc)?percObj/typPerc:1;
   const perceelPct=(!app0&&percObj&&typPerc)?(perceelRatio>=1?Math.min(INDIC.perceelCapBoven,(Math.pow(perceelRatio,INDIC.perceelElasticiteitBoven)-1)*100):Math.max(-INDIC.perceelCap,(Math.pow(perceelRatio,INDIC.perceelElasticiteit)-1)*100)):0;
@@ -2860,7 +2863,7 @@ function indicBereken(d){
     if(!m) return null;
     const maatPct=Math.max(-INDIC.maatCap,Math.min(INDIC.maatCap,(Math.pow(m/wm.gemiddelde,INDIC.maatElasticiteit-1)-1)*100));
     const afwijkend=Math.abs(m/wm.gemiddelde-1)>0.5;
-    const basis=m*perM2*(1+maatPct/100)*(1+perceelPct/100)*(1+labelInfo.pct/100)*(1+fundInfo.pct/100)*(1+bouwjaarInfo.pct/100)*(1+typeInfo.pct/100), geind=basis*f;
+    const basis=m*perM2*(1+maatPct/100)*(1+perceelPct/100)*(1+labelInfo.pct/100)*(1+fundInfo.pct/100)*(1+bouwjaarInfo.pct/100)*(1+typeInfo.pct/100)*(1+typeToeslagInfo.pct/100), geind=basis*f;
     const midden=r1(geind*(1+mg.mid/100));
     const tovMed=med&&med.mediaan?(midden-med.mediaan)/med.mediaan*100:null;
     const mediaanAfw=tovMed!=null&&Math.abs(tovMed)>INDIC.medianeWaarschuwing;
@@ -2871,7 +2874,7 @@ function indicBereken(d){
     const vp=a.vraagprijs;
     let positie=null;
     if(vp){ positie = vp<laag ? {t:'onder de bandbreedte',p:(vp-laag)/laag*100} : vp>hoog ? {t:'boven de bandbreedte',p:(vp-hoog)/hoog*100} : {t:'binnen de bandbreedte',p:null}; }
-    return {m2:m, maatPct, perceelPct, labelPct:labelInfo.pct, fundPct:fundInfo.pct, bouwjaarPct:bouwjaarInfo.pct, typePct:typeInfo.pct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
+    return {m2:m, maatPct, perceelPct, labelPct:labelInfo.pct, fundPct:fundInfo.pct, bouwjaarPct:bouwjaarInfo.pct, typePct:typeInfo.pct, typeToeslagPct:typeToeslagInfo.pct, onz, tovMed, tovAnker, basis, geind:r1(geind), laag, hoog, midden, tovVraag:vp?(midden-vp)/vp*100:null, tovBod:a.bod?(midden-a.bod)/a.bod*100:null, positie};
   };
   const overigM2=+a.overigInpandig>0?+a.overigInpandig:0, overigEff=a.wonen?overigM2*INDIC.overigGewicht:0, wonenEff=a.wonen?a.wonen+overigEff:null;
   const overigInfo={m2:overigM2, gewicht:INDIC.overigGewicht, eff:overigEff, toegepast:!!a.wonen&&overigM2>0};
@@ -2890,7 +2893,7 @@ function indicBereken(d){
   if(wm.aantal&&wm.aantal<30) pen(0.5,'Het buurtgemiddelde berust op minder dan 30 woningen.');
   sc=Math.max(1,Math.round(sc*2)/2);
   const betrouwbaarheid={score:sc, label:sc>=4?'Redelijk':sc>=3?'Matig':sc>=2?'Laag':'Zeer laag', redenen:rd};
-  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, scheef:scheefInfo, overig:overigInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
+  return {woz:b.wozGem, jaar:b.wozJaar||b.jaar, peiljaar:b.wozPeiljaar, handmatig:!!st.handmatig, index:d.registers.marktindex||null, gemM2:wm.gemiddelde, perM2, factor:f, binnen:bi, buiten:bu, marge:mg, mediaan:med, anker, perceel:perceelInfo, labelInfo, fundInfo, bouwjaarInfo, typeInfo, typeToeslagInfo, scheef:scheefInfo, overig:overigInfo, betrouwbaarheid, bag:bg, adv, hoofd:adv||bg, hoofdBasis:adv?'aangepast woonoppervlak':'BAG-oppervlakte'};
 }
 function indexUitleg(d,idx){
   const mi=d.registers.marktindex, st=indicInit(d);
@@ -2978,7 +2981,8 @@ function indicUit(d){
     ${x.fundInfo.toegepast?row(`D5. Funderingscorrectie (cijfer ${x.fundInfo.cijfer} van 8; 7 is neutraal, slechter verlaagt de waarde, maximaal -15%; aanname)`,k=>pctS(k.fundPct)):''}
     ${x.bouwjaarInfo.toegepast?row(`D6. Bouwjaarcorrectie (${x.bouwjaarInfo.obj} t.o.v. mediaan ${x.bouwjaarInfo.med} in de omgeving, ${num(INDIC.bouwjaarPerDecennium,1)}% per decennium${x.bouwjaarInfo.half?', half gewicht omdat het energielabel al meetelt':''}; aanname, maximaal ±${INDIC.bouwjaarCap}%)`,k=>pctS(k.bouwjaarPct)):`<tr><td class="k">D6. Bouwjaarcorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.bouwjaarInfo.reden||'')}</td></tr>`}
     ${x.typeInfo.toegepast?row(`D7. Woningtypecorrectie (${x.typeInfo.app?'appartement':'eengezinswoning'} in een buurt met ${num(x.typeInfo.aandeelMeergezins,0)}% meergezinswoningen; appartement ${Math.round(INDIC.appPremie*100)}% duurder per m² aangenomen; aanname, maximaal ±${INDIC.typeCap}%)`,k=>pctS(k.typePct)):`<tr><td class="k">D7. Woningtypecorrectie</td><td class="num small" colspan="${kn}">niet toegepast: ${esc(x.typeInfo.reden||'')}</td></tr>`}
-    ${row(`E. C × D × maat-, perceel-, label-, funderings-, bouwjaar- en typecorrectie × marktfactor ${num(x.factor,3)} ${x.index&&!x.handmatig?'(CBS-prijsindex)':'(handmatig of vaste aanname)'}`,k=>eur(k.geind))}
+    ${x.typeToeslagInfo.toegepast?row(`D8. Toeslag vrijstaande woning (t.o.v. het buurtgemiddelde, dat vooral tussenwoningen bevat; aanname, niet gekalibreerd)`,k=>pctS(k.typeToeslagPct)):''}
+    ${row(`E. C × D × maat-, perceel-, label-, funderings-, bouwjaar-, type- en vrijstaand-toeslag × marktfactor ${num(x.factor,3)} ${x.index&&!x.handmatig?'(CBS-prijsindex)':'(handmatig of vaste aanname)'}`,k=>eur(k.geind))}
     <tr><td class="k">F. Correctie staat (binnen ${x.binnen} · buiten ${x.buiten})</td><td class="num" colspan="${kn}">${pctS(x.marge.lo)} tot ${pctS(x.marge.hi)}</td></tr>
     <tr><td class="k">G. Modelonzekerheid, aan beide kanten van de bandbreedte</td>${c.map(k=>`<td class="num">${k?'± '+num(k.onz,0)+'%':'–'}</td>`).join('')}</tr>
     <tr><td class="k">Betrouwbaarheid indicatie (consistentie van de gegevens, niet gekalibreerd)</td><td class="num" colspan="${kn}">${x.betrouwbaarheid.label} (${num(x.betrouwbaarheid.score,1)} van 5)</td></tr>
@@ -3359,7 +3363,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.23.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.24.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }

@@ -290,6 +290,11 @@ const dom=new JSDOM(require('fs').readFileSync('index.html','utf8'),
 - Perceel **groter** dan typisch: waarde ~ (perceel ÷ typisch) ^ 0,20, toeslag maximaal +20% (was ^ 0,08 en maximaal +10%).
 - Aanleiding: een eerste vergelijking van 117 woningen (zonder appartementen) met Funda-vraagprijzen liet zien dat het model bij kavels boven 300 m² ongeveer 14% onder de vraagprijs zat, bij kleinere kavels niet. De nieuwe waarden zijn aannames, niet gekalibreerd (vraagprijzen zijn geen transactieprijzen) en moeten met een nieuw monster worden gecontroleerd. Constanten in `INDIC` (`perceelElasticiteitBoven`, `perceelCapBoven`).
 
+### 2.24.0 en 2.24.1 – Toeslag voor vrijstaande woningen
+- Een vrijstaande woning krijgt een toeslag van +12% (`INDIC.vrijToeslag`) ten opzichte van het buurtgemiddelde, dat vooral tussenwoningen bevat. Hoek-, 2-onder-1-kap- en tussenwoningen krijgen geen toeslag.
+- Onderbouwing: 41 vrijstaande woningen uit drie steekproeven met Funda-vraagprijzen zaten zonder toeslag mediaan 18,5% onder de vraagprijs (90%-interval 11,5 tot 22,5%). De afwijking is het kleinst bij een toeslag van 12 tot 15%; 12% is gekozen omdat de laatste, kleinste steekproef (n=6) bij 15% te hoog uitkwam. Een toeslag afgesteld op twee steekproeven (7%) verbeterde de derde (gerichte) steekproef van een gemiddelde afwijking van 20,0% naar 16,7%.
+- De toeslag is een aanname, niet gekalibreerd (vraagprijzen zijn geen transactieprijzen), staat als regel D8 in de berekeningstabel en is niet gecorrigeerd voor buurten die uit vrijstaande woningen bestaan.
+
 ### Bekende beperkingen om op te letten
 - **KEA-laagnamen:** de Klimaateffectatlas-laagnamen (`hitte_stress_2050`, etc.) zijn gebaseerd op de PDOK-service van september 2026. Controleer via [PDOK WMS Capabilities](https://service.pdok.nl/rivm/klimaateffectatlas/wms/v1_0?SERVICE=WMS&REQUEST=GetCapabilities) als scores onverwacht op regioprofiel terugvallen.
 - **Regioprofielen:** de klimaatregioprofielen zijn expertwaarden per postcodegebied, geen gemeten data. Ze zijn bedoeld als vangnet voor locaties zonder live KEA-data.
