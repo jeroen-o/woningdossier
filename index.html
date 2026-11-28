@@ -2807,7 +2807,7 @@ const INDIC = {
   appPremie: 0.10,           // appartementen kosten per m² gemiddeld 10% meer dan eengezinswoningen
   typeCap: 8,                // maximale correctie in %, beide kanten
   overigGewicht: 0.25,     // overige inpandige ruimte (garage, berging) telt voor 25% mee in het rekenoppervlak; aanname, niet gekalibreerd
-  vrijToeslag: 15,         // vrijstaande woning t.o.v. het buurtgemiddelde (vooral tussenwoningen), in %: aanname uit een vergelijking met vraagprijzen, niet gekalibreerd
+  vrijToeslag: 12,         // vrijstaande woning t.o.v. het buurtgemiddelde (vooral tussenwoningen), in %: aanname uit een vergelijking met vraagprijzen, niet gekalibreerd
   scheefDrempel: 15,       // % verschil tussen gemiddelde en mediaan woonoppervlakte van de buurt waarbij de verdeling als scheef geldt
   extraScheef: 1,          // extra onzekerheid in % bij een scheve verdeling (grote woningen trekken het buurtgemiddelde op)
   ankerWaarschuwing: 20,   // % verschil tussen buurtmethode en eigen WOZ (geindexeerd) waarbij een waarschuwing volgt
@@ -3363,7 +3363,7 @@ document.addEventListener('input',e=>{
 });
 
 bronReset();
-const MODEL_VERSIE = '2.24.0'; const MODEL_DATUM = '2026-12-17';
+const MODEL_VERSIE = '2.24.1'; const MODEL_DATUM = '2026-12-17';
 function maakDeelLink(adres, vraagprijs, status, datum) {
   const p=new URLSearchParams(); if(adres) p.set('q',adres); if(vraagprijs) p.set('vp',String(Math.round(vraagprijs))); if(status) p.set('st',status); if(datum) p.set('dt',datum);
   return location.pathname+'#'+p.toString(); }
